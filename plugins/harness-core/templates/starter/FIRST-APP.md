@@ -82,14 +82,71 @@ Pick one. Build it. Repeat.
 list is finished and then immediately hands you a backlog you own — so you never again have to answer
 "what should I build?" from a blank page.
 
-## Step 5 · When you want the rails
+## Step 5 · Put it somewhere real
 
-Once it is real enough that breaking it would annoy you, that is the moment for tests, CI, and the
-gates — not before. Open a session on the folder and paste the setup prompt from
-[the dungeon-crawler README](https://github.com/ejclark/dungeon-crawler#get-started).
+Right now it exists on one machine and a spilled coffee ends it. Give it a home:
 
-Doing it in this order is deliberate. You now know what the rails are protecting, because it is
-yours.
+1. Go to **github.com/new**. Name it, leave everything else alone, **Create repository**.
+2. That page then shows you the commands to push an existing folder. Paste them in your terminal, in
+   your project folder. Refresh the page — your code is there.
+
+If any of that goes sideways, ask Claude: *"I have a folder with my app in it and an empty GitHub
+repo at <url>. Get my code into it."* Being handed the commands is not cheating; nobody memorises
+them.
+
+**Something changed here that is worth noticing.** It is not a folder any more, it is a project with
+a history — every version you have had, kept, and undoable.
+
+## Step 6 · Wire up the pipeline
+
+Now the rails, and now is the right moment: it is real enough that breaking it would annoy you.
+
+Open a Claude Code session on the folder and paste:
+
+```
+Set up the dungeon-crawler engineering harness in this repository.
+
+Clone https://github.com/ejclark/dungeon-crawler to a temp directory, run its
+plugins/harness-core/bin/harness-bootstrap --auto here, then walk me through what it
+wrote, what opinions it imposes, and what is left for me to do.
+```
+
+It writes the pipeline, the git hooks, the formatter, and freezes today's debt as the budget you
+ratchet down from. It never overwrites a file you already have, and it tells you every opinion it is
+imposing so you can disagree on purpose.
+
+**Two things it cannot do for you**, because they need repository-admin rights and it will say so:
+
+- *Settings → General → Pull Requests* → tick **Allow auto-merge** and **Automatically delete head
+  branches**
+- *Settings → Rules* → a ruleset on your **default branch only**, requiring a pull request and the
+  `verify` check — **but turn it on only after `verify` has gone green once**, or every pull request
+  waits forever on a check that has never reported
+
+Push, then open the **Actions** tab. Watching your own pipeline run for the first time is the moment
+this stops feeling borrowed.
+
+## Step 7 · Take one change all the way round
+
+Now do the whole loop once, deliberately, on something trivial — change the heading colour.
+
+Branch → commit → pull request → checks go green → merge. **On purpose, while nothing is at stake**,
+so the first time you do it under pressure it is already familiar.
+
+You now have what most projects never get around to: **a machine that catches your mistakes before
+anyone else sees them.** Everything from here is just deciding what to build.
+
+## Step 8 · The better ideas start here
+
+Look back at the list you wrote in step 4. You will notice something: **the ideas got bigger while
+you were not looking.** *Remember my tasks* became *sync across my phone*, which is an API, which is
+a real project.
+
+That is the actual point of all this. You did not learn a to-do list — you got the machinery and the
+loop, and now the only open question is what to point them at. Nobody can answer that for you, and
+you no longer need them to.
+
+Bring one back and someone here will help you scope it.
 
 ---
 

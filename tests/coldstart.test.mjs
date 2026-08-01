@@ -229,3 +229,38 @@ test("nvmrc, CI and engines agree on the Node version", () => {
   assert.match(shipped, /node-version-file:\s*'\.nvmrc'/, "the shipped pipeline must take the version from the adopter's .nvmrc");
   assert.doesNotMatch(shipped, /node-version:\s*'?\d/, "a hardcoded Node version in the shipped workflow is our opinion imposed as their requirement");
 });
+
+// ── 7 · the first-app walkthrough is a complete arc ────────────────────────────
+
+test("FIRST-APP.md walks the whole journey, and every command in it is real", () => {
+  // The version before this pointed at the pipeline instead of walking it, so someone who followed
+  // the advice landed on a working app with no idea how to get it anywhere. The arc is the product
+  // here: app → repository → pipeline → one full loop → their own ideas. Losing any leg leaves
+  // somebody stranded at exactly the step they could not have done alone.
+  const doc = readFileSync(join(TEMPLATES, "starter/FIRST-APP.md"), "utf8");
+  for (const [leg, cue] of [
+    ["something on screen", /index\.html/],
+    ["make it theirs", /change how it looks|Make it yours/i],
+    ["a real dev server", /npx serve/],
+    ["their own backlog", /localStorage/],
+    ["a repository", /github\.com\/new/],
+    ["the pipeline", /harness-bootstrap --auto/],
+    ["one change all the way round", /pull request/i],
+    ["the segue out", /what to build/i],
+  ]) {
+    assert.match(doc, cue, `the walkthrough lost its "${leg}" leg — that strands someone mid-journey`);
+  }
+
+  // The credentialed steps must be named as such. A beginner who cannot do a step, and was not told
+  // it needs rights they may not have, concludes the fault is theirs.
+  assert.match(doc, /admin/i, "the owner-only steps must be flagged, or a beginner reads them as their own failure");
+  assert.match(doc, /green once/, "turning the ruleset on before verify has reported is the deadlock this must warn about");
+
+  // The paste it hands over must be the same one the README ships. Two divergent copies of the
+  // setup instruction is the drift this project exists to prevent, in the one file read by the
+  // person least able to spot it.
+  const readme = readFileSync(join(REPO, "README.md"), "utf8");
+  const canon = [...readme.matchAll(/```\n(Set up the dungeon-crawler[\s\S]*?)```/g)][0]?.[1];
+  assert.ok(canon, "the README's setup prompt moved — this test pins the walkthrough against it");
+  assert.ok(doc.includes(canon.trim()), "FIRST-APP.md ships a DIFFERENT setup prompt from the README");
+});
