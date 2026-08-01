@@ -285,3 +285,19 @@ Prevention ranks, best first:
 - **SIDE QUESTS:** the failure is asymmetric and that is the part worth remembering. A stale base
   invents violations that are not there — noisy, self-correcting — and HIDES violations that are.
   A false clear from the gate that guards the irreversible class is the direction that costs.
+
+### The parity gate passed by seeing almost nothing
+- **SHA:** `n/a`   **DATE:** 2026-08-01   **STATUS:** closed
+- **SIGNAL:** a **negative control that failed to fail.** Removing the allow-list entry for
+  shellcheck should have made the new gate refuse; it stayed green. Zero lag, because the control was
+  run on purpose.
+- **ROOT CAUSE:** the gate parsed the CI workflow for `run:` on a single line. A `run: |` block puts
+  its commands on the FOLLOWING lines, and that is where shellcheck and the CLI validator live — so
+  every multi-line step contributed nothing, and the gate passed by measuring almost nothing. It was
+  written specifically to stop "a dimension nobody measures", and it was one.
+- **PREVENTION:** gate — the parser now consumes block bodies by indentation, plus a self-check
+  asserting it found the shellcheck step at all. A parser that finds nothing must fail loudly rather
+  than report a clean sweep.
+- **SIDE QUESTS:** a negative control is not ceremony. Both gates written tonight passed on first
+  run; one of them was measuring nothing, and only the deliberate attempt to break it told them
+  apart. **A gate nobody has seen refuse is a gate nobody knows works.**
