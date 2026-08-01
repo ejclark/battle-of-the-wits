@@ -211,6 +211,32 @@ came here to make.
 
 ---
 
+## When you want to build something of your own
+
+You will, and the answer is yes — the same harness that runs this repository installs into yours in
+one paste. The `README` has it under *"Setting up your own project?"*.
+
+**Worth doing here first, though, and not for our sake.** Your own repository starts with no tests, no
+pipeline, no reviewer and nothing that goes red when something is wrong. That is a lot of scaffolding
+to build while you are also learning what any of it is for, and it is why a first project so often
+stalls at the point where it stops being fun.
+
+Here, all of it already works. You get to watch the loop run — propose, checks, review, merge — on a
+change small enough that nothing rides on it. **Then you take a system you have already seen working
+into a repo where you decide everything.** That ordering is worth maybe a week and saves considerably
+more.
+
+If you already have an idea you are burning to build, do not let this stop you — go build it, and
+come back when you want the rails. **A stalled first week is the only real failure here**, and
+somebody waiting politely for permission to work on their own thing is one of the ways it happens.
+
+No idea what to build? Ask for `/harness-core:spark`. Its default first project is a to-do list,
+which sounds unambitious and is not: everyone already knows the spec, so all your effort goes into
+making it exist rather than deciding what it should do — and by the end you are holding the thing that
+stores what to build next, with the first entries already written by having built it.
+
+---
+
 ## How things get decided
 
 Not needed for your first change. Worth reading after it lands, because it explains why the place

@@ -481,6 +481,36 @@ can appear on the first thing they ever wrote. No gate detects this one, so:
   promotion is the owner's call and is never urgent. A tier granted early is the one rail here that
   cannot be un-granted without it being personal.
 
+## The offramp, and when to open it
+
+Most people arrive here on the way to something of their own. That is the healthy case, not a
+retention problem, and the drill's job is to make the detour obviously worth taking rather than to
+disguise it as the destination.
+
+**Default order: one merged change here, then their own repo.** The reason is not loyalty, it is that
+an empty repository has no tests, no pipeline, no reviewer and nothing that goes red — so a beginner
+alone in one is building scaffolding *and* learning what the scaffolding is for, simultaneously, with
+no feedback until something breaks. Landing one change in a system where all of it already works
+costs an afternoon and means they take a harness they have **watched function** into a repo where
+they decide everything.
+
+**Three rules for how to hold it:**
+
+1. **Say it exists, early and unprompted.** Somebody who suspects they are being kept is already
+   half gone, and the suspicion is cheap to avoid: mention the offramp in the first session, before
+   they ask.
+2. **Never gate on it.** If they arrive with an idea they are burning to build, the correct answer is
+   *go build it* — send them to `/harness-core:launch` and mean it. Somebody politely waiting for
+   permission to work on their own thing is a stalled first week, which is the failure this whole
+   drill is against. Their momentum outranks the sequence every time.
+3. **Open it the moment the first change merges**, not later. That is the peak of *"what else could I
+   do with this"*, and the honest offer at that exact moment is what makes the ordering feel like a
+   head start rather than a toll.
+
+Someone with no idea what to build goes to `/harness-core:spark`, not to a list of our open issues.
+Handing a person your backlog when they wanted their own project is the substitution that ends
+enthusiasm.
+
 ## How to know whether this is working
 
 Stated in advance, so it cannot later be mistaken for a judgement about anyone: **after roughly ten
