@@ -319,3 +319,31 @@ Prevention ranks, best first:
   When the counter and the code disagree at that scale, the counter is the thing to fix. The
   discipline is that the fix must be a claim about STRUCTURE, checkable from source, not another list
   of excused names: a list can be extended to excuse anything, and eventually is.
+
+### A read-only tool wrote a document browsers open in quirks mode
+- **SHA:** `n/a`   **DATE:** 2026-08-01   **STATUS:** closed
+- **SIGNAL:** none, ever. `harness-map` was the one shipped launcher no test referenced at all, found
+  by auditing which commands anything had exercised. It ran fine and produced a file that opened.
+- **ROOT CAUSE:** the renderer returns page CONTENT — `<title>`, `<style>`, then markup — which is
+  the correct shape for an embedding host that supplies its own skeleton. Written to disk there is no
+  host, so the file had no doctype and every browser opened it in **quirks mode**, where box-sizing
+  and several inherited properties differ from the standards mode its CSS was written against. It
+  rendered, which is exactly why nothing complained; it did not render as designed.
+- **PREVENTION:** gate — `mapDocument()` emits the full skeleton, with six cases covering doctype,
+  the required tags, standalone-ness (no external stylesheet, script, font, or image), HTML escaping
+  of ADR titles, a repo with no ADRs, and the `-o` path. The output is also gitignored, in this repo
+  and in the shipped template: a read surface must not dirty the tree an athlete then preflights.
+- **SIDE QUESTS:** same family as the whole week — an artifact correct in the context it was authored
+  for, moved to a context that needs more, with nothing in between to notice. "It opens" is not the
+  same claim as "it is a document."
+
+### A test fixture transcribed the template it was testing against
+- **SHA:** `n/a`   **DATE:** 2026-08-01   **STATUS:** closed
+- **SIGNAL:** adding one line to the shipped `.gitignore` template turned a passing bootstrap case
+  red. Zero lag, but the failure pointed at the wrong thing.
+- **ROOT CAUSE:** the case hand-wrote a `.gitignore` matching the template's contents, so it asserted
+  on the transcription rather than the behaviour ("a repo already covering the harness's needs is
+  left alone"). A copied fixture is a second source of truth, and the copy goes stale silently in the
+  direction that matters: it would also have kept passing while covering the wrong set.
+- **PREVENTION:** gate — the fixture is now read from the shipped template, so it cannot drift.
+- **SIDE QUESTS:** the enumeration-versus-category lesson applies to fixtures, not just to rules.

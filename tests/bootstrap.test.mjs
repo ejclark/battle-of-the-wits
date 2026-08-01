@@ -369,7 +369,14 @@ test("an existing .gitignore is appended to, never replaced", () => {
 });
 
 test("a .gitignore that already covers it is left alone", () => {
-  const root = makeRepo({ "package.json": "{}\n", ".gitignore": "node_modules/\n.harness/\n*.log\n.DS_Store\n" });
+  // The fixture is READ FROM THE TEMPLATE rather than transcribed. A hand-written copy is a second
+  // source of truth: adding one line to the shipped template broke this case, and the case was
+  // asserting on the transcription, not on the behaviour.
+  const shipped = readFileSync(
+    join(dirname(fileURLToPath(import.meta.url)), "../plugins/harness-core/templates/common/gitignore"),
+    "utf8",
+  );
+  const root = makeRepo({ "package.json": "{}\n", ".gitignore": shipped });
   try {
     const out = run(root);
     assert.match(out, /already covers what the harness needs/);

@@ -7,3 +7,6 @@ node_modules/
 
 # Runtime coordination state — live territory claims, never committed.
 .harness/
+
+# harness-map output — a READ surface, regenerate it any time
+dungeon-map.html

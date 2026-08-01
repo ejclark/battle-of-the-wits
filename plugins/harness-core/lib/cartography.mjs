@@ -1,16 +1,12 @@
 // CARTOGRAPHY — render the dungeon map as a standalone HTML page.
 //
-// The reframe this implements: **the dungeon is a theming of the ADR process.** An ADR is what a
-// cleared room *is* — the durable record of a fight already won. That is not decoration; it fixes a
-// real, well-known weakness of the ADR practice.
+// The reframe: **the dungeon is a theming of the ADR process.** A cleared room IS an ADR — the
+// durable record of a fight already won — and that fixes a real weakness of the practice. ADRs are
+// famously disconnected: a numbered list where `ADR-0007: Use Postgres` tells you nothing about what
+// it unlocked or closed off. A map gives them structure, so history reads as a route.
 //
-// ADRs are famously DISCONNECTED: a numbered list of unrelated decisions with no narrative and no
-// spatial sense. `ADR-0007: Use Postgres` tells you nothing about what it unlocked or what it made
-// unreachable. A map gives them structure — which room led where, what territory each one covers,
-// what is still dark — so the accumulated history reads as a route rather than a filing cabinet.
-//
-// Everything rendered is derived: rooms come from docs/adr, bosses from committed budgets, fog from
-// dimensions the repo cannot measure. Nothing is invented, so the map cannot flatter the repository.
+// Everything is derived: rooms from docs/adr, bosses from committed budgets, fog from dimensions the
+// repo cannot measure. Nothing is invented, so the map cannot flatter the repository.
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { bossList, unlitDimensions } from "./state.mjs";
@@ -35,7 +31,7 @@ function rooms(root) {
 const esc = (s) =>
   String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 
-export function mapHtml(root, repoName) {
+function mapHtml(root, repoName) {
   const cleared = rooms(root);
   const ahead = bossList(root).slice(0, 6);
   const dark = unlitDimensions(root).map((d) => d.label);
@@ -119,6 +115,8 @@ export function mapHtml(root, repoName) {
   .note{margin-top:28px;color:var(--muted);font-size:13px;line-height:1.65;max-width:66ch;}
   .note strong{color:var(--text);}
 </style>
+</head>
+<body>
 <div class="wrap">
   <div class="eyebrow">${esc(name)} · dungeon map</div>
   <h1>The route so far</h1>
@@ -168,4 +166,24 @@ export function mapHtml(root, repoName) {
     the record of how. Nothing here is invented — rooms come from <code>docs/adr</code>, bosses from
     committed budgets, and unlit regions are dimensions the repo genuinely cannot measure yet.</p>
 </div>`;
+}
+
+/**
+ * The same map as a COMPLETE, standalone HTML document.
+ *
+ * `mapHtml` returns page CONTENT — the shape an embedding host wraps in its own skeleton. A file on
+ * disk has no host, so written out as-is it had no doctype and every browser opened it in QUIRKS
+ * MODE, where box-sizing behaves differently from the standards mode its CSS was written against. It
+ * rendered, which is why nothing complained. It just did not render as designed.
+ */
+export function mapDocument(root, repoName) {
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+${mapHtml(root, repoName)}
+</body>
+</html>
+`;
 }

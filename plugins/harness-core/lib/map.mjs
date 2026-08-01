@@ -4,20 +4,29 @@
 //   harness-map                 # writes dungeon-map.html in the repo root
 //   harness-map -o path.html    # writes somewhere else
 //
-// Output is standalone: no external stylesheet, font, or script, so it opens from disk, survives
-// being emailed, and renders under a strict CSP. It is a READ surface — regenerate it any time; it
-// cannot drift, because every element is derived from committed state at the moment it runs.
+// Standalone output: no external stylesheet, font, or script, so it opens from disk and renders
+// under a strict CSP. A READ surface — regenerate any time; every element is derived from state.
 import { writeFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
 import { basename, resolve } from "node:path";
-import { mapHtml } from "./cartography.mjs";
+import { mapDocument } from "./cartography.mjs";
 
-// Named specifically rather than `args`: the duplication gate flagged a collision with another
-// CLI's argv parse. Two two-line argv reads are a coincidental name match, not a shared abstraction
-// waiting to be extracted — the fix is a distinct name, not a premature module.
+// Named specifically rather than `args`: two two-line argv reads are a coincidental name match, not
+// a shared abstraction waiting to be extracted.
 const cliArgs = process.argv.slice(2);
 const outIdx = Math.max(cliArgs.indexOf("-o"), cliArgs.indexOf("--out"));
 const out = resolve(outIdx >= 0 ? cliArgs[outIdx + 1] : "dungeon-map.html");
 const root = process.cwd();
 
-writeFileSync(out, mapHtml(root, basename(root)));
+// The REPOSITORY's name, not the checkout's directory name — a worktree is routinely called
+// something like `repo-2`, and that in the title of a shared file reads as a different project.
+let repoName = basename(root);
+try {
+  const url = execFileSync("git", ["remote", "get-url", "origin"], { cwd: root, encoding: "utf8" });
+  repoName = basename(url.trim().replace(/\.git$/, ""));
+} catch {
+  /* no remote — the directory name is the best available answer */
+}
+
+writeFileSync(out, mapDocument(root, repoName));
 console.log(`✓ dungeon map written — ${out}`);
