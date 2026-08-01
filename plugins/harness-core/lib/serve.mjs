@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 // THE LOCAL VIEW — every visual surface, live, at one address.
 //
-//   harness-serve            # http://localhost:4173
-//   harness-serve --port N
+//   npm start                # http://localhost:4173, and opens a tab
+//   npm start -- --port N
+//   npm start -- --no-open   # server only; CI is detected and never opens one
 //
 // `harness-map` and `harness-city` each write an HTML file you then open by hand — which means the
 // thing on your screen is a photograph of a repository as it was when you last remembered to re-run
@@ -21,6 +22,7 @@
 //
 // NO DEPENDENCIES, same rule as the starter. `node:http` is enough, and a visualiser that needs an
 // install before it renders anything is a visualiser nobody opens twice.
+import { spawn } from "node:child_process";
 import { createServer } from "node:http";
 import { cityDocument } from "./city.mjs";
 import { historyDocument } from "./history.mjs";
@@ -105,11 +107,52 @@ export function handle(root, url) {
   }
 }
 
+/**
+ * Open the page in whatever the machine calls a browser.
+ *
+ * Three commands, one per platform, and NONE of them goes through a shell — the URL is built here
+ * and would still be an argument a shell could interpret. `start` on Windows is a `cmd` builtin
+ * rather than a program, hence the wrapper, and the empty string is its title argument: omit it and
+ * `cmd` treats the URL as the window title and opens nothing.
+ *
+ * NEVER FATAL, and never even loud. A headless box, a container, an SSH session and a machine with no
+ * default browser are all completely normal places to run this, and in every one of them the failure
+ * to open a tab says nothing about whether the server came up. The URL is already printed; the tab is
+ * a convenience on top of it, so a convenience that fails must not look like a server that did.
+ */
+function openBrowser(url) {
+  const [cmd, args] =
+    process.platform === "darwin"
+      ? ["open", [url]]
+      : process.platform === "win32"
+        ? ["cmd", ["/c", "start", "", url]]
+        : ["xdg-open", [url]];
+  try {
+    // Detached and unref'd: the browser must outlive nothing and hold nothing. Left attached, a
+    // child that ignores SIGINT keeps the terminal captive after Ctrl-C, which turns a nicety into
+    // the thing you have to kill from another window.
+    const child = spawn(cmd, args, { stdio: "ignore", detached: true });
+    // A MISSING OPENER ARRIVES AS AN EVENT, NOT A THROW, and an unhandled 'error' event on a child
+    // process takes the whole process down. So the try/catch alone was decoration: on a box with no
+    // xdg-open — a container, a CI image, a headless server — the server printed its URL and then
+    // died on the very convenience meant to sit on top of it. Caught here rather than by the caller,
+    // because there is exactly one thing to do about it and it is nothing.
+    child.on("error", () => {});
+    child.unref();
+  } catch {
+    /* no browser, no display, no problem — the URL is on screen either way */
+  }
+}
+
 // ── CLI ────────────────────────────────────────────────────────────────────────
 if (process.argv[1]?.endsWith("serve.mjs")) {
   const argv = process.argv.slice(2);
   const port = Number(argv[argv.indexOf("--port") + 1]) || 4173;
   const root = process.cwd();
+  // Opening a tab is the right default for somebody who typed `npm start` and wants to look at
+  // something. It is the wrong default for CI, for a container, and for anyone who just wants the
+  // process — so the escape is a flag, and CI is detected rather than left to remember the flag.
+  const openTab = !argv.includes("--no-open") && !process.env.CI;
 
   createServer((req, res) => {
     const { status = 200, type, body } = handle(root, (req.url ?? "/").split("?")[0]);
@@ -123,5 +166,7 @@ if (process.argv[1]?.endsWith("serve.mjs")) {
     console.log("      /city     the repository as a skyline\n");
     console.log("  Live: every view re-derives on request and the page reloads when the repo moves.");
     console.log("  Localhost only, by construction — a map names every file and its debt.\n");
+    if (openTab) openBrowser(`http://${HOST}:${port}/`);
+    else console.log("  (not opening a tab — --no-open, or CI is set)\n");
   });
 }
