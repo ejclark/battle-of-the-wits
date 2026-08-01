@@ -5,12 +5,12 @@ description: >-
   REST (the plentiful core bucket) → one auto-merge call → STOP. No polling; the merge webhook is
   the completion signal. Use whenever you're opening a PR or merging a green branch in this repo,
   and instead of hand-rolling the GitHub MCP PR dance (which spends the scarce GraphQL bucket by
-  the thousands). Wraps scripts/ship.sh.
+  the thousands). Wraps harness-ship.
 ---
 
 # /ship — the cheap, no-poll path to landing a PR
 
-The mechanics live in `scripts/ship.sh` (a one-time build cost, ~free per run). This skill is the
+The mechanics live in `harness-ship` (a one-time build cost, ~free per run). This skill is the
 **policy** that makes the model reach for it instead of the expensive habit. The rule that matters:
 **never poll GitHub for status, and never route bulk operations through the GraphQL MCP.**
 
@@ -23,7 +23,7 @@ drained it. See `https://github.com/ejclark/battle-of-the-wits/blob/main/plugins
 
 ## The flow
 
-1. **Verify locally first.** `scripts/ship.sh open` runs `npm run verify` (parity with CI) and
+1. **Verify locally first.** `harness-ship open` runs `npm run verify` (parity with CI) and
    refuses to push on red — never spend a runner or a PR on a known loser.
 2. **Open over REST.** It pushes the branch and `POST`s the PR on the core bucket, printing the PR
    number. (If the proxy blocks REST writes, it exits 2 and tells you to fall back to **one**
@@ -39,7 +39,7 @@ drained it. See `https://github.com/ejclark/battle-of-the-wits/blob/main/plugins
 
 **When GraphQL is exhausted** (can't make the arm call): don't wait or poll. **Eric web-merges** —
 his browser session isn't rate-limited, and a green PR merges in one click. That's the escape hatch,
-not `ship.sh merge`. (`scripts/ship.sh merge <n>` works only for an *unprotected* base branch — never
+not `ship.sh merge`. (`harness-ship merge <n>` works only for an *unprotected* base branch — never
 `main` here — so it's rarely used.)
 
 ## Carve-outs — never auto-land (open the PR, hand to Eric)
@@ -48,7 +48,7 @@ not `ship.sh merge`. (`scripts/ship.sh merge <n>` works only for an *unprotected
 - **Credentials / spend / outward-facing irreversible class** (CLAUDE.md hard boundaries).
 - **Visual/taste work Eric asked to eyeball first.**
 
-For these: `scripts/ship.sh open` to create the PR, but do **not** arm auto-merge.
+For these: `harness-ship open` to create the PR, but do **not** arm auto-merge.
 
 ## Batching
 

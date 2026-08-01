@@ -2,7 +2,7 @@
 name: decompose
 description: >-
   Split a god file into smaller, cohesive modules — one safe, behavior-preserving move per PR, verified
-  green and ratcheted. Use when the architecture fitness gate (scripts/arch-scan.mjs) flags a large or
+  green and ratcheted. Use when the architecture fitness gate (harness-arch-scan) flags a large or
   low-cohesion file, when a file feels like it's doing too many jobs, or when asked to "decompose",
   "break up", or "extract from" a module. The corrective drill the decomposer agent runs; also invokable
   interactively as /decompose.
@@ -10,14 +10,14 @@ description: >-
 
 # Decompose — the split drill
 
-The *correction* half of the god-file Coach: the fitness gate (`scripts/arch-scan.mjs` + `arch-budget.json`,
+The *correction* half of the god-file Coach: the fitness gate (`harness-arch-scan` + `arch-budget.json`,
 enforced by `tests/arch/budget.spec.ts`) is the eye that says a file won't scale; this is the drill that
 fixes it. One split per PR — that discipline is the whole value.
 
 ## 1. Take the gate's target (don't guess)
 
 ```bash
-node scripts/arch-scan.mjs --candidate
+harness-arch-scan --candidate
 ```
 
 Emits the highest-leverage target as JSON, scored by size-over-budget **×** a cohesion penalty for many
@@ -42,7 +42,7 @@ exports — so a smaller file doing many jobs outranks a bigger cohesive one. Ta
 ## 3. Verify green, by exit status
 
 ```bash
-npm run typecheck && npm run lint && npm test && node scripts/arch-scan.mjs
+npm run typecheck && npm run lint && npm test && harness-arch-scan
 ```
 
 Never pipe a check to `tail` — a pipeline exits with `tail`'s status and masks failures.
@@ -50,7 +50,7 @@ Never pipe a check to `tail` — a pipeline exits with `tail`'s status and masks
 ## 4. Ratchet the win in
 
 ```bash
-node scripts/arch-scan.mjs --update    # budgets only ever lower
+harness-arch-scan --update    # budgets only ever lower
 ```
 
 Commit the updated `arch-budget.json` in the same PR so the limit permanently tightens.

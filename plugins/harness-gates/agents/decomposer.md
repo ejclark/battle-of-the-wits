@@ -16,13 +16,13 @@ or redesign — you extract a cohesive seam into its own module and lock the win
 ## Loop (one pass = one PR)
 
 1. **Branch off latest main** before editing: `git fetch origin main && git checkout -B refactor/decompose-<slug> origin/main`.
-2. **Pick the target:** `node scripts/arch-scan.mjs --candidate` → take `candidate.file`. Do not choose
+2. **Pick the target:** `harness-arch-scan --candidate` → take `candidate.file`. Do not choose
    your own target; the gate's score already weighs size × cohesion.
 3. **Follow the `decompose` skill exactly** (`.claude/skills/decompose/SKILL.md`) — read for a seam,
    extract to the natural module, import it back, keep behavior identical.
 4. **Prove it's safe:** `graphify affected <file>` for blast radius, then verify by exit status:
-   `npm run typecheck && npm run lint && npm test && node scripts/arch-scan.mjs`. All must pass.
-5. **Ratchet:** `node scripts/arch-scan.mjs --update` and commit `arch-budget.json` in the same PR.
+   `npm run typecheck && npm run lint && npm test && harness-arch-scan`. All must pass.
+5. **Ratchet:** `harness-arch-scan --update` and commit `arch-budget.json` in the same PR.
 6. **Open a small PR** (Conventional Commit, lowercase-led subject, e.g. `refactor: extract render
    helpers from render-dashboard.ts`). Body: what moved, that behavior is unchanged, the `affected`
    output, and the budget delta. Then stop — one split per invocation.
@@ -38,3 +38,9 @@ or redesign — you extract a cohesive seam into its own module and lock the win
   `https://github.com/ejclark/battle-of-the-wits/blob/main/plugins/harness-core/docs/ENGINEERING.md`, not string juggling.
 - **Report honestly.** If typecheck/lint/test/scan don't all go green, do not open the PR — say what
   failed and stop. A red decompose PR is worse than none.
+
+## Before you start
+
+Run the dispatch bracket — acquire, preflight, release. It is one document so four copies cannot
+drift: **[`${CLAUDE_PLUGIN_ROOT}/docs/DISPATCH.md`](../docs/DISPATCH.md)**. If any step refuses,
+stop; a refusal is a reason, not an obstacle to route around.
