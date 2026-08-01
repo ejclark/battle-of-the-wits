@@ -117,8 +117,10 @@ Set up the dungeon-crawler engineering harness in this repository.
 
 Assume I am new to this and check things rather than assuming them:
 
-1. This needs Node and git. If either is missing, tell me what it is for and help me
-   install it before going further.
+1. This needs node, npm and git. Check each one actually runs, not just that it is
+   installed somewhere — a fresh install is often invisible to the shell that is
+   already open, and that looks exactly like the install failing. If one is missing,
+   tell me what it is for, help me install it, and re-check in a way that works.
 2. If this folder is not a git repository yet, say so and set one up — the pipeline
    and the hooks cannot do anything without one.
 3. Get a copy of https://github.com/ejclark/dungeon-crawler (clone it, or download it

@@ -340,7 +340,11 @@ test("the setup paste is self-contained for a session that knows nothing", () =>
   assert.ok(paste, "the setup paste is gone or its shape changed");
 
   for (const [assumption, cue] of [
-    ["the toolchain exists", /Node and git/],
+    ["the toolchain exists", /node, npm and git/],
+    // The trap that is worse than a missing tool: an installed one the open shell cannot see. That
+    // is indistinguishable from a failed install to anybody who has not hit it before, and it is
+    // exactly what happened on the first Windows machine to try this.
+    ["a fresh install the shell cannot see", /invisible to the shell/],
     ["a missing tool gets explained, not just reported", /what it is for/],
     ["the folder is already a repository", /not a git repository/],
     ["git is the only way to obtain the harness", /download it/],
