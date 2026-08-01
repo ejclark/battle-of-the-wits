@@ -14,7 +14,7 @@
 // offered that the repo cannot currently see — unmeasured dimensions become fog, never silence.
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-import { readJson } from "./state.mjs";
+import { bossList, readJson, unlitDimensions } from "./state.mjs";
 
 /** One encounter per real, named target — sized so it fits in a single reviewable PR. */
 function encounters(root) {
@@ -98,28 +98,9 @@ function encounters(root) {
   return out;
 }
 
-/** What the repo cannot currently see. Fog is an encounter too — the move is to light it. */
-function unlit(root) {
-  const out = [];
-  const has = (p) => existsSync(join(root, p));
-  for (const [budget, label, fix] of [
-    ["dead-budget.json", "dead code", "npm i -D knip, commit a knip.json, then harness-dead-scan --update"],
-    ["spec-gap-budget.json", "the spec gap", "harness-spec-gap-scan --update"],
-    ["clone-budget.json", "copy-paste", "harness-clone-scan --update"],
-    ["dupe-budget.json", "duplication", "harness-dupe-scan --update"],
-    ["arch-budget.json", "file size", "harness-arch-scan --update"],
-  ]) {
-    if (!has(budget)) out.push({ label, fix });
-  }
-  if (!has("docs/LESSONS.md")) {
-    out.push({ label: "incidents", fix: "harness-bootstrap writes docs/LESSONS.md — nothing is learning today" });
-  }
-  return out;
-}
-
 export function forge(root) {
   const found = encounters(root).sort((a, b) => b.weight - a.weight);
-  const dark = unlit(root);
+  const dark = unlitDimensions(root);
   const L = [];
 
   L.push("");
