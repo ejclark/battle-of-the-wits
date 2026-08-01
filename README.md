@@ -8,8 +8,18 @@ adopting it is an install rather than a port.
 
 ## Start here
 
-**Joining this project, or new to git?** → **[`CONTRIBUTING.md`](CONTRIBUTING.md)**
-No terminal, no prior experience, everything happens in the browser.
+**Joining this project, or new to git?** Paste this into a Claude Code session opened on this repo
+and it takes you from nothing to a merged change — no terminal, no git, nothing to install:
+
+```shell
+/plugin marketplace add ejclark/dungeon-crawler
+/plugin install harness-core@dungeon-crawler
+/reload-plugins
+/harness-core:onboard
+```
+
+Prefer to read rather than be walked through it? Everything works in the browser instead →
+**[`CONTRIBUTING.md`](CONTRIBUTING.md)**
 
 **Setting up your own project?** Paste this into a Claude Code session opened on your repo:
 

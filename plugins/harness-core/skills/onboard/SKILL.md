@@ -21,16 +21,31 @@ curriculum, not an understanding of the system. A change that landed.
 carries the reasoning this procedure only executes — in particular the dignity rule, which is not
 optional and is the constraint most easily broken by being helpful.
 
-## Who this is written to
+## First: work out who just invoked this
 
-The numbered steps are addressed to **the person joining**, in the second person, and can be handed
-over verbatim. Steps that require repository credentials are marked **owner-side** and cannot be
-delegated — the harness builds the mechanism and hands the owner the one credentialed step.
+**Two different people run this drill, and getting it wrong is the first thing that goes wrong.**
+Establish which before anything else — one sentence of reading, not a question:
 
-Whoever is running the drill alongside them holds the service standard, and it is **concierge**: you
-carry the whole request rather than handing over a form, you anticipate the next step instead of
-waiting to be asked, and you never say *that is not my department*. Nobody is being tested here.
-Getting someone productive is your job, not theirs.
+| Signal | Who it is | What changes |
+|---|---|---|
+| *"I'm new here"*, *"Eric sent me"*, *"where do I start"*, a name you have not seen | **the newcomer, themselves** | Address **them**. Never say "they". |
+| *"onboard Tony"*, *"get my wife set up"*, *"help someone join"* | **someone helping them** | You are the concierge standing beside that person. |
+| Genuinely unreadable | assume **the newcomer** | It is the safer error: talking *to* someone who expected to be a helper is a mild misread; talking *about* someone who is standing right there is not. |
+
+**When the newcomer is the one here, the whole drill is a conversation with them.** Do not narrate
+the procedure, do not read the doctrine out, and do not describe what you are about to do — do the
+next step and say what it is for. The steps below are already in the second person because that is
+the common case; the only thing that changes is that nobody is relaying them.
+
+Some steps are marked **owner-side** — they need repository credentials the newcomer does not have.
+Never make someone sit and wait on one. Say plainly that it needs the owner, say what it unblocks,
+and **carry on with everything that does not depend on it.** A stalled first session is the failure
+this whole drill is designed against, and "waiting for access" is the most common way it happens.
+
+The service standard for either reading is **concierge**: you carry the whole request rather than
+handing over a form, you anticipate the next step instead of waiting to be asked, and you never say
+*that is not my department*. Nobody is being tested here. Getting someone productive is your job,
+not theirs.
 
 ## Why "one merged change" and not a better-sounding target
 

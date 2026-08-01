@@ -122,6 +122,46 @@ test("every task offered on the page is pinned here", () => {
   assert.equal(offered, TASKS.length, `CONTRIBUTING.md offers ${offered} tasks but ${TASKS.length} are pinned — an unpinned task is one nobody is watching`);
 });
 
+test("every copy/paste one-shot in the README names things that exist", () => {
+  // The README's shell blocks are the single most-pasted text in this project, and a wrong line in
+  // one fails in someone else's terminal where nobody here can see it. Every name in them is
+  // checkable against the repository, so none of it has any business being unverified.
+  const readme = read("README.md");
+  const marketplace = JSON.parse(read(".claude-plugin/marketplace.json"));
+  const declared = new Set(marketplace.plugins.map((p) => p.name));
+
+  const blocks = [...readme.matchAll(/```shell\n([\s\S]*?)```/g)].map((m) => m[1]);
+  assert.ok(blocks.length >= 2, "the README lost a one-shot block — the newcomer path and the adopter path");
+
+  for (const line of blocks.join("\n").split("\n").filter(Boolean)) {
+    const market = line.match(/^\/plugin marketplace add ([\w-]+)\/([\w-]+)$/);
+    if (market) {
+      assert.equal(market[2], marketplace.name, `the block adds marketplace "${market[2]}"; this one is named "${marketplace.name}"`);
+      continue;
+    }
+    const install = line.match(/^\/plugin install ([\w-]+)@([\w-]+)$/);
+    if (install) {
+      assert.ok(declared.has(install[1]), `the block installs "${install[1]}", which marketplace.json does not declare`);
+      assert.equal(install[2], marketplace.name);
+      continue;
+    }
+    const skill = line.match(/^\/([\w-]+):([\w-]+)$/);
+    if (skill) {
+      const dir = join(REPO, "plugins", skill[1], "skills", skill[2], "SKILL.md");
+      assert.ok(existsSync(dir), `the block invokes /${skill[1]}:${skill[2]}, which is not a shipped skill`);
+      // The frontmatter name is what actually resolves — a directory that disagrees with it is a
+      // drill nobody can invoke by the name the README prints.
+      assert.match(read(`plugins/${skill[1]}/skills/${skill[2]}/SKILL.md`), new RegExp(`^name:\\s*${skill[2]}$`, "m"));
+      continue;
+    }
+    const cmd = line.match(/^(harness-[\w-]+)/);
+    if (cmd) {
+      const found = ["harness-core", "harness-gates"].some((p) => existsSync(join(REPO, "plugins", p, "bin", cmd[1])));
+      assert.ok(found, `the block runs \`${cmd[1]}\`, which is not a launcher this repo ships`);
+    }
+  }
+});
+
 test("no path CONTRIBUTING.md names is one a newcomer cannot find", () => {
   // A first-week reader follows every path on the page literally. One that does not resolve reads as
   // "I have already broken something", which is the opposite of what this page is for.
