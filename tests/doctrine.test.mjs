@@ -74,3 +74,24 @@ test("the DESCRIPTOR convenience copy is byte-identical to the shipped one", () 
   const b = readFileSync(join(PLUGINS, "harness-core/docs/DESCRIPTOR.md"), "utf8");
   assert.equal(a, b, "the root copy has drifted from the shipped copy — regenerate or delete it");
 });
+
+// The harness must run every gate it ships.
+//
+// The shipped gates template is the promise made to an adopter: install the plugins and these
+// dimensions get measured. If this repository's own suite runs a smaller set, the difference is a
+// blind spot in the one codebase best placed to find bugs in the gates — and it drifts silently,
+// because a gate nobody wired in never fails. Scoped by category, not by enumeration: the assertion
+// reads the template rather than restating its list, so a gate added there cannot be forgotten here.
+test("this repository runs every gate the shipped template wires in", () => {
+  const gates = (file) => [...readFileSync(file, "utf8").matchAll(/gate\("(harness-[\w-]+)"\)/g)].map((m) => m[1]);
+  const promised = gates(join(PLUGINS, "harness-core/templates/specs/gates.test.mjs"));
+  const kept = new Set(gates(join(REPO, "tests/arch/gates.test.mjs")));
+  assert.ok(promised.length > 0, "the shipped template names no gates — the parse is wrong");
+  const missing = promised.filter((g) => !kept.has(g));
+  assert.deepEqual(
+    missing,
+    [],
+    `the template promises gates this repo does not run: ${missing.join(", ")}\n` +
+      "Wire them into tests/arch/gates.test.mjs and freeze their budgets, or stop shipping them.",
+  );
+});

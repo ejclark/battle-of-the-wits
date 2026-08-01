@@ -176,3 +176,85 @@ still exists in both repos and removing it needs a scope call. Managing skynet *
 needs cross-repo write credentials, which is the blast-radius multiplier the preflight now exists to
 contain — mechanised before granted, in that order.
 
+
+---
+
+## 2026-08-01 (night) · The Unmapped
+
+**Instruction:** *"keep crawling. I'm going to bed for the next 8 hours."* So the fight was picked by
+the tool rather than by a person, which is the first time that has happened here. `harness-dungeon
+--today` offered three campaigns and named its own prerequisite: *every other dungeon is a guess
+until this one is cleared*.
+
+### What "unmapped" actually meant
+
+The harness ships a gates template that wires **six** dimensions into an adopter's test suite. This
+repository ran **three**. Nothing was failing, because nothing was looking.
+
+Each of the three missing gates had a *soft* prerequisite and each degraded politely rather than
+loudly — `knip` was never installed, so the dead-code gate skipped; there was no `docs/LESSONS.md`,
+so the incident gate had nothing to audit; no budget was ever frozen, so neither had a bar to fail.
+Every one of those choices is right in isolation. **The sum was a blind spot with no owner.** Nobody
+decided to run three gates; three is simply what happened when six polite skips met nobody counting.
+
+That is the shape worth remembering: *graceful degradation without a census is indistinguishable
+from coverage.* The fix is not "make the gates loud" — a gate that fails because a repo hasn't
+installed an optional tool is a bad neighbour. The fix is that something must **count the promise
+against the practice**, which is now a test: the shipped template's gate list is parsed and every
+gate in it must appear in this repository's suite. Scoped by category, not enumeration — a seventh
+gate cannot be forgotten here, because forgetting it fails.
+
+### The number that was wrong in the comfortable direction
+
+Bringing the spec-gap gate online produced **24 untested files of 24** — in a repository with 81
+tests that drive those exact files end to end. The gate counted only one relationship: *does a spec
+`import` this module?* For a library that is the whole story. For a codebase whose deliverable is a
+set of **commands**, it is close to a lie.
+
+The tempting fix was `specExempt` — declare CLI mains unexemptable-from and move on. That would have
+been exempting 24 of 24, i.e. deleting the gate while appearing to configure it. The descriptor doc
+already warns about exactly this, in writing, and it was still the first idea.
+
+What landed instead teaches the gate the second relationship. A thin launcher under a `bin/`
+directory whose body names a module is an **alias** for that module; a spec that runs
+`harness-arch-scan` really does execute `lib/arch-scan.mjs`. The mapping is derived from the
+launcher's own text rather than declared in config, so there is nothing to keep in sync. Honest
+number: **10 untested of 23**, frozen there.
+
+A wrong number in the *failing* direction gets fixed within the hour, because it blocks someone. A
+wrong number in the *passing* direction survives indefinitely — and its real cost is not the one bad
+measurement, it is that it makes the honest reading of every other gate suspect.
+
+### Four bugs the act of measuring found
+
+Turning on measurement is never just turning on measurement:
+
+- The clone gate had **no `.jscpd.json` at all** — its own header comment claimed one. It had been
+  scanning `package-lock.json` and the docs tree for months. Installing one dev dependency pushed it
+  over budget and that is the only reason anyone looked. Honest debt after scoping: 16 → **10**.
+- The spec-gap gate ignored the `exclude` descriptor key that `arch-scan` and `dupe-scan` both read,
+  so it scored shipped **templates** as untested product code. Two readers of a documented key out of
+  five is not a convention, it is drift.
+- `harness-incident-scan` read `docs/LESSONS.md` unguarded and would have crashed on any repository
+  that had not adopted the ledger — the exact first-run moment a gate must not fail.
+- `harness-arch-scan --update` **silently deleted the prose** explaining a deliberate budget raise.
+  The number survived; the reasoning did not. Nothing failed, and nothing would have. Now `_`-prefixed
+  keys carry through, with a test that ratchets a throwaway budget and checks the note survives.
+
+None of these were the dungeon. All of them were found by walking into it.
+
+### The gates refused their author four times, again
+
+`spec-gap-scan`, `incident-scan`, and `arch-scan` all went over their line budgets because of the
+comments explaining these fixes. Each one was answered by *cutting stale prose from the same file* —
+usage blocks still telling readers to run `node scripts/arch-scan.mjs`, a path that stopped existing
+when the harness became a plugin — rather than by raising a budget. Three files ended smaller and
+more accurate, and no budget moved up. That is the ratchet working as designed: the pressure is
+supposed to be uncomfortable, and the discomfort is supposed to be productive.
+
+### Left open
+
+Still no athlete has ever been dispatched. Decoupling from `skynet-capital` still waits on a scope
+call. And a new one: the bootstrap's `knip.json` and `.jscpd.json` templates hardcode `src` and
+`.spec.ts` — the identical assumption that made the scanners measure 1 file of 10 in this repository.
+The scanners were fixed; the configs they depend on were not. Same bug, one layer down.

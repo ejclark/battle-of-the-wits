@@ -4,31 +4,29 @@
 // The dimension it watches: HOW LONG a process gap goes unrecognized. The motivating failure is
 // recorded in docs/LESSONS.md — branch protection silently broke `deploy` and nobody noticed for
 // four merges, because nothing in the system watches a red `main`. Every other eye looks at the
-// code; this one looks at the *process*, and its debt number is "incidents nobody has learned from
-// yet."
+// code; this one looks at the *process*. Its debt number: incidents nobody has learned from yet.
 //
 // Signal: a failed workflow run on `main` (the ground truth for "a gap escaped every net"). An
 // incident is CLOSED when docs/LESSONS.md carries an entry naming its commit sha. The budget is
 // the count of un-retro'd incidents and only ever ratchets DOWN — practically, it lives at 0: run
 // `/retro` on the finding, land the lesson, and the number returns to zero.
 //
-//   node scripts/incident-scan.mjs             # report + enforce (exit 1 if incidents are unlearned)
-//   node scripts/incident-scan.mjs --update    # rewrite incident-budget.json (ratchet: only lower)
-//   node scripts/incident-scan.mjs --candidate # the oldest unlearned incident as JSON
-//   node scripts/incident-scan.mjs --days 14   # lookback window (default 14)
+//   harness-incident-scan              # report + enforce (exit 1 if incidents are unlearned)
+//   harness-incident-scan --update     # rewrite incident-budget.json (ratchet: only lower)
+//   harness-incident-scan --candidate  # the oldest unlearned incident as JSON
+//   harness-incident-scan --days 14    # lookback window (default 14)
 //
 // Resource doctrine (docs/COACHES.md): REST *core* bucket only — one request, no polling, no
 // GraphQL. Degrades to a clean no-op (exit 0) with no token or no network, so it never becomes a
-// flaky gate; the ledger's own well-formedness is enforced offline by tests/arch/lessons.spec.ts.
+// flaky gate; the ledger's own well-formedness is checked offline, which is the part CI enforces.
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 const ROOT = process.cwd();
 // --- capability descriptor -------------------------------------------------
-// The harness is repo-agnostic: every path it scans comes from harness.json at
-// the target repo root, never from an assumption about layout. Missing file =
-// the documented defaults, so a conventional repo needs no config at all.
+// Repo-agnostic: every path comes from harness.json at the target repo root, never from an
+// assumption about layout. Missing file = the documented defaults, so a conventional repo needs none.
 const DESC = (() => {
   const d = { sourceDir: "src", testDir: "tests", specSuffix: ".spec.ts", sourceExt: ".ts" };
   try { Object.assign(d, JSON.parse(readFileSync(join(ROOT, "harness.json"), "utf8"))); } catch {}
@@ -77,7 +75,9 @@ async function failedMainRuns() {
   }));
 }
 
-const ledger = readFileSync(LEDGER_FILE, "utf8");
+// No ledger yet = nothing to audit, the same grandfather posture as the budget below. Crashing here
+// would fail the gate at the one moment it must not: the first run in a repo that has not adopted it.
+const ledger = existsSync(LEDGER_FILE) ? readFileSync(LEDGER_FILE, "utf8") : "";
 /** An incident is learned-from once the ledger names its sha on a `**SHA:**` line. */
 const isLearned = (sha) => new RegExp(`\\*\\*SHA:\\*\\*\\s*\`?${sha}`).test(ledger);
 

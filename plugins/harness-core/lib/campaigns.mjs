@@ -47,7 +47,7 @@ const DUNGEONS = [
   },
 ];
 
-export function campaigns(root) {
+function campaigns(root) {
   const bosses = bossList(root);
   const dark = unlitDimensions(root);
 

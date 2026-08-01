@@ -1,5 +1,5 @@
 {
-  "_why_dupe_scan": "108 \u2192 112: four lines of comment explaining why the IGNORE list covers per-CLI entrypoint scaffolding. The rule is non-obvious and a future maintainer who removes it would reintroduce four bad renames, so the explanation is the point. Decomposing a 112-line scanner would be absurd \u2014 this is the justified-growth branch the scanner's own message describes.",
+  "_why_dupe_scan": "108 → 112: four lines of comment explaining why the IGNORE list covers per-CLI entrypoint scaffolding. The rule is non-obvious and a future maintainer who removes it would reintroduce four bad renames, so the explanation is the point. Decomposing a 112-line scanner would be absurd — this is the justified-growth branch the scanner's own message describes.",
   "plugins/harness-core/lib/auto.mjs": 146,
   "plugins/harness-core/lib/bootstrap.mjs": 238,
   "plugins/harness-core/lib/campaigns.mjs": 115,
@@ -12,11 +12,15 @@
   "plugins/harness-core/lib/phases.mjs": 123,
   "plugins/harness-core/lib/state.mjs": 102,
   "plugins/harness-gates/lib/arch-scan.mjs": 143,
-  "plugins/harness-gates/lib/claims.mjs": 157,
+  "plugins/harness-gates/lib/claims.mjs": 112,
   "plugins/harness-gates/lib/clone-scan.mjs": 107,
   "plugins/harness-gates/lib/dead-scan.mjs": 116,
+  "plugins/harness-gates/lib/dispatch.mjs": 69,
   "plugins/harness-gates/lib/dupe-scan.mjs": 112,
+  "plugins/harness-gates/lib/fleet.mjs": 138,
   "plugins/harness-gates/lib/incident-scan.mjs": 170,
   "plugins/harness-gates/lib/preflight.mjs": 165,
-  "plugins/harness-gates/lib/spec-gap-scan.mjs": 133
+  "plugins/harness-gates/lib/references.mjs": 90,
+  "plugins/harness-gates/lib/registry.mjs": 72,
+  "plugins/harness-gates/lib/spec-gap-scan.mjs": 132
 }
