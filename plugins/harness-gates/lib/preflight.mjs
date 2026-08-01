@@ -122,6 +122,29 @@ if (agent) {
 // 6 — zoning, when a principal is named. Fails closed on an unknown one: see `zoningViolations`.
 if (principalId) violations.push(...zoningViolations(REPO, principalId, touched));
 
+// 7 — .harness/ must never become tracked. THE HOLE THIS CLOSES WAS LIVE.
+//
+// `.harness/` holds the claims registry and the ROSTER, and the roster names real people and their
+// email addresses. `principals.mjs` says plainly that publishing it is "a disclosure no revert
+// undoes — same irreversibility as a leaked credential", and the preflight refuses `.env` for exactly
+// that reason while permitting this. The only thing standing in the way was a `.gitignore` line, and
+// **a .gitignore is not a gate**: it does not stop `git add -f`, it does not stop an agent, and it
+// does not stop GitHub's web editor, which commits through the API and never consults it — while
+// being the one interface `/onboard` tells a new contributor to use.
+//
+// Asked of git DIRECTLY rather than of the diff, because `changedFiles` filters `.harness/` out
+// before anything sees it (correctly — counting live coordination state would fail every athlete's
+// own territory check). That filter is why the four refusals above could never have caught this: the
+// dangerous file was removed from the evidence on its way in.
+try {
+  const tracked = git(["ls-files", "--", ".harness/"]).split("\n").filter(Boolean);
+  for (const f of tracked) {
+    violations.push(`${f} — .harness/ is local coordination state and names real people; committing it publishes them`);
+  }
+} catch {
+  /* no such path, or not a repository — nothing tracked is the answer either way */
+}
+
 const who = principalId ?? agent ?? "this change";
 if (violations.length) {
   console.error(`\n✗ PREFLIGHT REFUSED — ${who} reached further than the safe radius:\n`);

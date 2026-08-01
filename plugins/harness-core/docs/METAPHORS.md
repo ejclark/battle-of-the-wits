@@ -131,9 +131,18 @@ protection rather than by anyone's reflexes, which is why zoning is enforced and
 *never climb above your last piece of protection* becomes **never hand someone work whose mistakes
 the gates cannot catch** — the single rule that decides what a new contributor is given first.
 **Predicts:** that roping in a second person *slows the leader before it speeds the party*, because
-acclimatisation is real and a rope team moves at the pace of its slowest member. That is
+half the party is belaying at any moment and the belayer's attention is spent, not banked. That is
 counterintuitive against the reason people add contributors, it contradicts the premise this work
-started from, and it is the prediction most worth checking.
+started from, and it is the prediction most worth checking. Two further distinctions fall straight
+out of it and are the reason this entry earns its length:
+**Fixed line vs. pitched belay** — work whose verification routes through the constraint's live
+attention costs it 1:1, while work on ground a lead already ran, with the gates green behind it, costs
+it nothing. So the goal of onboarding is *raise the fixed-line fraction*, not *add a person*, which
+turns the throughput premise from a hope into something measurable.
+**Objective vs. subjective hazard** — subjective hazard (a mistake) is mitigated by skill; objective
+hazard (rockfall, a serac) is indifferent to skill and is mitigated only by not being there. That is
+why competence must never unlock the irreversible class: conflating the two is how a good climber
+dies under a serac.
 **Breaks when:** it suggests the follower's risk is always arrestable. A rope catches a fall; nothing
 catches a published credential or a leaked confidence. The irreversible class has no belay, which is
 exactly why it is refused to every principal rather than granted to trusted ones — and it is the

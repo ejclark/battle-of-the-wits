@@ -156,6 +156,9 @@ test("defaults apply when no descriptor is present", () => {
 function makeZonedRepo(principals) {
   const root = makeRepo(
     {
+      // Not scenery: without it the scratch repo TRACKS .harness/, which the preflight now refuses.
+      // The fixture has to look like a real adopter's repo, or it tests a state nobody is ever in.
+      ".gitignore": ".harness/\n",
       "lib/base.ts": "export const base = 1;\n",
       "spec/.keep": "",
       "documentation/.keep": "",
@@ -223,6 +226,36 @@ test("zoning fails CLOSED for a principal the roster does not know", () => {
     const { code, out } = runGate("harness-preflight", root, ["--as", "stranger"]);
     assert.equal(code, 1, "an unknown principal must be refused, never waved through");
     assert.match(out, /nothing is permitted/, "and the message must state the rule rather than imply it");
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("the preflight refuses a roster that has been force-added into the index", () => {
+  // The planted violation for the hole that was live: `.gitignore` kept `.harness/` out of commits
+  // by convention, and a convention is not a gate. `git add -f` walks past it, an agent walks past
+  // it, and GitHub's web editor — the one interface /onboard tells a new contributor to use — never
+  // consults it at all. The roster names real people and their email addresses.
+  const root = makeZonedRepo(ROSTER);
+  try {
+    execFileSync("git", ["add", "-f", ".harness/roster.json"], { cwd: root, stdio: "pipe" });
+    const { code, out } = runGate("harness-preflight", root);
+    assert.equal(code, 1, "a tracked roster must be refused by the preflight, not only by .gitignore");
+    assert.match(out, /\.harness\/roster\.json/, "the refusal must name the file");
+    assert.match(out, /names real people/, "and must say why, since the reason is the whole point");
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("an untracked .harness/ is not a violation — the gate catches publishing, not existing", () => {
+  // The negative control. Live coordination state is present in every working repository; a gate
+  // that fired on its mere existence would be refused into uselessness on the first run.
+  const root = makeZonedRepo(ROSTER);
+  try {
+    writeFileSync(join(root, "documentation/guide.md"), "# guide\n");
+    const { code, out } = runGate("harness-preflight", root);
+    assert.equal(code, 0, `an untracked roster must not trip the gate:\n${out}`);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

@@ -110,6 +110,15 @@ on** — losing 2FA without them means losing the account outright, and it is th
 contributor gets permanently locked out. Not in the repository, not in a chat, not in a note synced
 to the account you are protecting.
 
+**Turn on email privacy in the same sitting, BEFORE the first commit** — Settings → Emails → *Keep my
+email address private*. This is the third irreversible step and the one nobody thinks to mention.
+Every commit permanently records whatever address git is configured with, into a history that is
+public, forked, and mirrored; no revert un-publishes it, and the person it exposes is usually
+somebody who never chose to publish it. GitHub then supplies a `users.noreply.github.com` address
+instead, which works everywhere. Ordering is the whole point here: this setting protects future
+commits and cannot retract past ones, so it is worth thirty seconds now and a rewrite of history
+later.
+
 **Never paste a secret anywhere.** A secret is a long random-looking string that a machine accepts
 *as an identity*: `ghp_…`, `sk-…`, `AKIA…`, anything sitting next to the words key, token, secret or
 password, the contents of a `.env` file, and — the one everyone forgets — a screenshot with any of
@@ -363,6 +372,49 @@ Then, once something of theirs has landed:
   prescription.
 
 Then do the second one. The path is known now and the ceremony is over, which was the point.
+
+---
+
+## 10 · The serious half — how decisions get made here
+
+Do this **after** the first merge, not before. The mechanics have to be real first, or this reads as a
+lecture; once something of theirs is in `main`, it reads as an explanation of a thing they just did.
+
+Walk them through `${CLAUDE_PLUGIN_ROOT}/docs/DECIDING.md` — the north stars — in about twenty
+minutes. Do not hand it over and hope. The four things that must land, in this order:
+
+1. **This is a professional setting.** Respect and courtesy are part of the work, review is about the
+   change and never the person, and **the expectation is that you build — and that includes building
+   the community.** Answering a question, fixing the sentence that confused you, writing down what you
+   had to work out: that is contribution and it counts. It has never been easier to help someone, and
+   it has never been easier to build a solution. Both are new, and both change what is worth trying.
+
+2. **If you can explain it, you can build it** — and therefore *the explanation is the work*. This is
+   the point that makes a non-technical contributor's position obviously strong rather than obviously
+   weak, so make it explicitly: the bottleneck is no longer implementation, it is knowing precisely
+   what we mean. **Communication is hard for structural reasons** — the words that feel most precise
+   (*simple*, *fast*, *better*) carry the most unexamined disagreement. When something needs to be
+   pinned down exactly, `/harness-core:ears` is the drill for it.
+
+3. **Theory of Constraints — how to choose what to do.** One binding constraint at a time; improving
+   anything else changes nothing. Give them the tactical form (*work on what is in front of the
+   constraint*) and the strategic form (*watch the trend line, not today's number* — a constraint
+   tightening for a month is a different situation from the same number reached last week, and
+   correcting early is cheap where correcting late is a rewrite). Then say what the constraint here
+   currently is and why several rules that look odd are subordination to it.
+
+4. **The Three Ways — flow, feedback, learning** — and the asymmetry that matters most right now: **AI
+   made producing cheap and left verifying exactly as expensive as it was.** That is why most of this
+   harness lives in the second Way. It is also the honest answer to "why so many gates?".
+
+Then the part worth saying out loud, because it reframes everything above from process into
+progression: **elevating a constraint unlocks a class of action that was previously impossible, not
+merely slow.** That is a level-up, not a speed-up — and the question *what constraint emerges after
+this one?* is the most productive question anyone here can keep asking, because its answer names the
+next capability the system does not have yet.
+
+Close by asking them which part they would explain differently. They have just met all of it cold,
+which is a vantage point that lasts about a week — and `/intake` is where the answer goes.
 
 ---
 

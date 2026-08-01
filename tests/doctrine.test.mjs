@@ -143,6 +143,51 @@ test("no shipped file tells the reader to run something they do not have", () =>
   assert.deepEqual(offences, [], `shipped instructions naming paths an adopter does not have:\n  ${offences.join("\n  ")}`);
 });
 
+// Every `harness-*` command a shipped doc names must be a launcher that exists.
+//
+// Prose is the largest ungated surface in this repository and the first one a new contributor reads.
+// The STALE-path gate above catches instructions phrased the OLD way; nothing caught an instruction
+// phrased the new way that names a command nobody shipped — a plausible-looking `harness-standing`
+// in a drill resolves to "command not found" for the reader, and to nothing at all for any test.
+//
+// This is the planted-violation discipline finally pointed at documentation: a doc naming a command
+// is making a promise, and a promise nothing checks is the definition of drift. Scoped by category,
+// so a drill written next year is covered without anyone remembering to extend a list.
+//
+// HONEST LIMIT: this checks the BINARY, not its flags. `harness-standing --zonig` still passes here.
+// Flag-level checking needs each tool to describe its own interface, which none of them do yet — and
+// claiming coverage this does not have would be worse than the gap.
+test("every harness-* command named in a shipped doc is a launcher that exists", () => {
+  const launchers = new Set(
+    readdirSync(PLUGINS, { withFileTypes: true })
+      .filter((p) => p.isDirectory())
+      .flatMap((p) => {
+        try {
+          return readdirSync(join(PLUGINS, p.name, "bin"));
+        } catch {
+          return []; // a plugin need not ship launchers
+        }
+      }),
+  );
+  assert.ok(launchers.size > 0, "no launchers found at all — this test is reading the wrong tree");
+
+  const missing = [];
+  for (const { root, path } of shippedMarkdown()) {
+    for (const m of readFileSync(path, "utf8").matchAll(/\bharness-[a-z][a-z-]*\b/g)) {
+      // `harness-core` and `harness-gates` are the PLUGINS, named constantly in prose and in
+      // `/plugin:skill` invocations. They are not commands and must not be required to be.
+      if (m[0] === "harness-core" || m[0] === "harness-gates") continue;
+      if (!launchers.has(m[0])) missing.push(`${path.slice(root.length - 12)}: ${m[0]}`);
+    }
+  }
+  assert.deepEqual(
+    [...new Set(missing)],
+    [],
+    `shipped docs name commands no plugin ships:\n  ${[...new Set(missing)].join("\n  ")}\n\n` +
+      "Ship the launcher, or stop naming it. A reader who types this gets 'command not found'.",
+  );
+});
+
 // A relative link in a shipped doc must resolve inside the plugin that ships it.
 //
 // `ENGINEERING.md` shipped with links to `adr/README.md`, `../.github/pull_request_template.md`, and

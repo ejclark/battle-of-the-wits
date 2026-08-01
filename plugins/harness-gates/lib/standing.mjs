@@ -67,13 +67,23 @@ function standingTable(only) {
     return 1;
   }
 
+  // `reverted` appears ONLY in a single-principal view, and that asymmetry is deliberate.
+  //
+  // Anyone with repository access can run this command, so anyone can read the roster-wide table —
+  // including the people in it. Side by side, `reverted` is the one negative column, and a row is a
+  // person. In a one-person view the number is DIAGNOSTIC: it explains your own eligibility and you
+  // can act on it. In a table it is COMPARATIVE, and there is nothing to act on in learning that
+  // someone else has fewer. Same number, and the only difference is who else is on screen.
+  const solo = Boolean(only);
   console.log(`\n  Standing — derived from ${ref}, recomputed now. Nothing here is stored.\n`);
-  console.log(`    ${"principal".padEnd(16)}${"kind".padEnd(8)}${"tier".padEnd(13)}${"held".padEnd(7)}${"reverted".padEnd(10)}eligible for`);
+  console.log(
+    `    ${"principal".padEnd(16)}${"kind".padEnd(8)}${"tier".padEnd(13)}${"held".padEnd(7)}${solo ? "reverted".padEnd(10) : ""}eligible for`,
+  );
   for (const { p, ev, elig } of rows) {
     const held = p.tier ?? "visitor";
     const under = elig.tier && !atLeast(held, elig.tier);
     console.log(
-      `    ${p.id.padEnd(16)}${(p.kind ?? "human").padEnd(8)}${held.padEnd(13)}${String(ev.survived).padEnd(7)}${String(ev.reverted).padEnd(10)}${elig.tier ?? "—"}${under ? " ←" : ""}`,
+      `    ${p.id.padEnd(16)}${(p.kind ?? "human").padEnd(8)}${held.padEnd(13)}${String(ev.survived).padEnd(7)}${solo ? String(ev.reverted).padEnd(10) : ""}${elig.tier ?? "—"}${under ? " ←" : ""}`,
     );
   }
 

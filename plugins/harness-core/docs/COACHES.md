@@ -41,6 +41,124 @@ Work descends this ladder as its contract gets written; each rung frees the head
 
 **The rule of three applies to agents:** do it manually once; codify the skill on the second recurrence; promote to an agent on the third. Speculative roster-building is premature abstraction — the roster recruits itself from demonstrated repetition. A subagent is what a piece of work becomes when its contract is complete. What cannot yet be contracted — taste, the yay/nay on a scene, which constraint matters next — stays with the head coach. **Model tier follows contract completeness:** rung-4 work runs on cheaper/faster models; judgment-incomplete work stays on the strongest model. Every toil-killer is the same loop (measure → judge → one bounded move → ratchet); defense's move is subtraction, offense's is substitution.
 
+## The foreman — the seat between the coach and the athlete
+
+The head coach dispatches and gets out of the way; an athlete runs one drill and stops. That works
+for structural debt, where every unit of work is independent and the target is known before anything
+starts. It does not work for **a sequence whose later steps depend on what the earlier ones found.**
+
+That is the seat a **foreman** holds. The football name for it is the quarterback: the sideline calls
+the play, the field runs it, and the field is allowed to change the call because information arrives
+there first and does not have time to travel back up. The foreman owns a **drive** — an outcome
+reached over several plays — rather than a play.
+
+**The test that decides whether a foreman is justified**, and it is strict on purpose:
+
+> **Does information arrive mid-sequence that the dispatcher could not have had?**
+> If no — if the whole sequence is knowable up front — you want a **skill**, not a foreman. A
+> pre-computable sequence is a script, and wrapping a script in an orchestrator buys nothing but a
+> layer to debug through.
+
+This forbids most foreman proposals, which is the point. The roster recruits itself from demonstrated
+need; a tier invented ahead of one is the premature abstraction this ladder exists to prevent.
+
+It is also the defence against the characteristic AI-era antipattern: **agents multiplied until the
+org chart is reproduced in software.** Spawning a coordinator for every layer of a process feels like
+architecture and is mostly Conway's Law escaping into the codebase — the *communication structure*
+getting rebuilt as *runtime structure*, at full token cost, delivering the redundancy of the meeting
+it was modelled on. An agent that only relays a decision made above it is a meeting with a bill. The
+mid-sequence-information test is what an orchestrator must pay to exist, and most cannot.
+
+**What a foreman may audible on, and what it must escalate.** It may reorder plays, skip one that
+turned out to be unnecessary, repeat one, and choose which drill fits what it just learned. It may
+not widen anyone's blast radius, raise a budget, touch the irreversible class, or continue past a
+refusal. **A rail that refuses is the answer, not the obstacle** — the same rule that binds an
+athlete, and it binds harder here, because a foreman is by construction the thing most able to
+rationalise its way around one.
+
+**Where the metaphor stops, and it stops somewhere expensive.** A quarterback has an *opponent*.
+Nothing here does. `COACHES.md` already names this for the head coach — no season, no opponent, no
+roster to cut — and it is sharper for the quarterback, whose whole craft is reading an adversary.
+Reason from "read the defence" and you import competition, statistics, and benching into a system
+whose entire purpose is cooperative throughput. Take the structure — *the sideline decides what, the
+field decides how* — and leave the adversary in the source domain.
+
+**Current roster:** the **onboarding foreman** (`/harness-core:onboard` is its playbook). It qualifies
+under the test above about as cleanly as anything can: you cannot know at dispatch time whether
+someone has an account, whether their 2FA will work, or where they will get stuck — and *where they
+get stuck is the deliverable*, not an obstacle to the deliverable. The information that arrives
+mid-drive is the product.
+
+### The captain is a different KIND of seat — and it already exists
+
+A team captain looks like a third orchestrator and is not one. Coach and quarterback hold **delegated
+authority**: it comes from above, and it can be handed to someone on their first day because the
+contract is what makes it safe. A captain's authority is **conferred by standing among peers**. It
+cannot be assigned, it does not come from the sideline, and appointing someone to it who has not
+earned it produces exactly nothing.
+
+Which means the captain is not a role to build here — **it is what the `steward` tier already is**,
+seen from the social side instead of the permissions side. `harness-standing` computes the evidence;
+the tier is the write radius; *captain* is the name for what that person does that no permission
+describes:
+
+- **Speaks for the contributor experience upward.** The most recently onboarded person knows what
+  onboarding is actually like, and that knowledge decays within about a week as they acclimatise.
+- **Is the reference implementation.** Their merged work is what "how we do it here" points at,
+  which is a thing prose cannot accomplish and an example does for free.
+- **Absorbs the socially expensive "no".** `CONTRIBUTORS.md`'s worst-case catalog names this as the
+  one entry with no mechanism: rejecting a spouse's or close friend's change costs something a
+  stranger's does not, and each avoided *no* makes the next harder. A peer saying *"that's not how we
+  do it here"* costs a fraction of what the owner saying it costs. This is the captain's real job and
+  the only one worth the word.
+
+**Do not appoint one yet.** With two contributors, one of whom is the owner's spouse, a captaincy is
+ceremony — and the third item above only works when there is a peer group for the authority to come
+from. The honest trigger is roughly **four or more active contributors, at least one at steward by
+evidence**. Until then the owner holds it, which is the accurate description of the current state
+rather than a gap in the design.
+
+## Experience is the north star — CX, UX and DX are one thing
+
+**Customer experience, user experience and developer experience are the same discipline pointed at
+different people.** A confusing error message and a confusing checkout flow fail in the same way, for
+the same reason, and are fixed by the same move. The standard is not "usable". It is **lovable**:
+the posture toward anyone meeting this system is *concierge* — full attention, carry the whole
+request, never hand someone a form and call it help.
+
+That has to be reconciled with a rule this project already holds, because they are in genuine
+tension: *product and visual work always waits — that is taste, and taste is not a thing to be
+inferred.* The resolution is a line between two kinds of surface:
+
+- **Internal surfaces — act.** Gate output, refusal messages, CLI ergonomics, onboarding, the
+  adoption sequence, documentation. These have a *correct* answer that evidence settles: did the
+  reader know what to do next? Nobody's taste is being overridden, so waiting for a decision buys
+  nothing and costs the reader.
+- **Outward-facing identity — still waits.** Brand, palette, voice, product surface, anything a
+  stranger judges the project by. That is taste, it is the owner's, and elevating experience to a
+  north star does not transfer it.
+
+The distinction is not "visual vs textual". It is **is there a fact that settles this?** Confusion is
+a fact. Beauty is not.
+
+**Fitness functions, because prose audits drift and evals do not.** Experience is measurable in at
+least these ways, and the first two are already gates in this repository:
+
+1. **No shipped instruction may name a command the reader does not have.** *(enforced —
+   `tests/doctrine.test.mjs`)*
+2. **No shipped link may point at a file an install does not contain.** *(enforced — same suite)*
+3. **Every refusal must name the next action, not only the finding.** A gate that says what is wrong
+   and stops has handed its reader a problem and kept the solution. This is why the preflight's
+   refusal now lists what to do about it.
+4. **Every dimension a tool cannot measure must be reported as unmeasured**, never as a pass. A false
+   green is the worst experience a quality system can deliver, because it is indistinguishable from
+   success right up until it isn't.
+
+**Two registers, one posture.** The owner is an expert who wants terseness and will be slowed by
+orientation he does not need. A new contributor needs the orientation and will be lost without it.
+Same concierge, reading the room — and when unsure which is in front of you, the cost is asymmetric:
+an unnecessary sentence costs a moment, a missing one costs the person.
+
 ## Resource cost is a fitness dimension
 
 The constraint isn't only Eric's attention — it's every **finite resource** a run consumes: tokens,
@@ -136,7 +254,7 @@ supply-chain decision: read them fully before adopting.
 | **Duplication** (pasted helpers) | `harness-dupe-scan` + `dupe-budget.json` + `tests/arch/dupe.spec.ts` | `/dedupe` | `ui-librarian` | ✅ live |
 | **Clones** (pasted blocks, renamed identifiers) | `harness-clone-scan` (jscpd, adopted) + `.jscpd.json` + `clone-budget.json` + `tests/arch/clone.spec.ts` | `/dedupe` judgment | `ui-librarian` could extend later | ✅ live |
 | **Dead code** (unused files/exports/types) | `harness-dead-scan` (knip, adopted) + `dead-budget.json` + `tests/arch/dead.spec.ts` | judge: un-export / delete / justify-ignore | `mortician` (recruited on recurrence #3, per the rule of three) | ✅ live |
-| **Dep-graph** (cycles/orphans/layering) | `harness-dep-graph-scan` (dependency-cruiser, adopted) + `.dependency-cruiser.cjs` + `dep-graph-budget.json` + `tests/arch/dep-graph.spec.ts` | judge: break cycle / wire-or-delete orphan / restore layer direction (`/decompose` when a cycle wants a split) | none yet (recruit on recurrence #3) | ✅ live |
+| **Dep-graph** (cycles/orphans/layering) | dependency-cruiser + a budget + a gate spec — *not built; this row described a scanner no plugin ships, and said "live", until a prose gate caught it* | judge: break cycle / wire-or-delete orphan / restore layer direction | none yet (recruit on recurrence #3) | ⬜ queued |
 | **Spec gap** (src files no spec imports) | `harness-spec-gap-scan` + `spec-gap-budget.json` + `tests/arch/spec-gap.spec.ts` (rstest has no line coverage yet — eye upgrades when it ships) | write BDD specs per ENGINEERING.md | `test-backfiller` | ✅ live |
 | **Unlearned incidents** (detection lag) | `harness-incident-scan` + `incident-budget.json` + `tests/arch/lessons.spec.ts` (offline half: ledger integrity; remote half: failed `main` runs with no lesson) | `/retro` | none yet (recruit on recurrence #3) | ✅ live |
 | **Inline-JS defects** (`<script>` syntax) | extract + `node --check` per page — *not built* | — | — | ⬜ queued |

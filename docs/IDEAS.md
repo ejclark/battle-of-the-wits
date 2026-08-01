@@ -1,0 +1,118 @@
+# Ideas & Backlog
+
+The durable home for ideas, so they leave the working context without getting lost. Eric injects
+thoughts; Claude routes each one here. The in-session task list is the working subset — this file is
+the permanent record.
+
+This repository shipped an idea-log *reader* (`plugins/harness-core/lib/ideas.mjs`, which ranks open
+ideas by how many other ideas point at them) before it had an idea log. Until this file existed, the
+drawing-board campaign returned `null` here — the harness could read a backlog in every repository
+except its own.
+
+**Attribution:** every entry records source and proximity — `_(src: Eric | Claude · while: …)_`.
+Eric-sourced entries are **intent**; Claude-sourced ones are **proposals to prune**.
+
+**Ranking:** entries reference each other as `#N`. In-degree — how many other ideas point at one — is
+a **proxy** for load-bearing, not a verdict, and nothing computes a priority on its own.
+
+---
+
+## Inbox (captured, not yet started)
+
+**1. Map and visualise Conway's Law — with physical evidence from the code.**
+The claim that a system's structure mirrors its organisation's communication structure is usually
+asserted and rarely *shown*. This harness already derives a structural model of a repository
+(`model.mjs`: districts, buildings, budgets) and now derives a model of its principals
+(`principals.mjs`: who writes what, measured from git). Those two together are the raw material for
+actual evidence: **which districts does each principal touch, and do the seams in the code fall where
+the seams between people are?** A district only one person ever touches is a bus factor; a district
+everyone touches is a coordination cost that the architecture is paying for on the org's behalf.
+Neither is visible today from either model alone.
+The sharp version aims at the AI-era failure this repo already guards against in `COACHES.md`:
+**agent proliferation reproducing an org chart in software** — coordinators spawned per layer,
+delivering the redundancy of the meeting they were modelled on, at full token cost. If Conway drift
+can be *measured* rather than argued, it becomes a gate rather than an opinion. Pairs with #2, which
+would give the fault lines a name. _(src: Eric · while: designing the foreman tier and the
+contributor model)_
+
+**2. Harness-to-harness interfaces — abstract the boundary, not just the repository.**
+Today a harness integrates *into* a repository. If harnesses could present an interface to each
+other, the boundary between two subsystems would become a **declared fault line** rather than an
+implicit one, which is what makes granular, autonomous integration possible as collaborators
+multiply. The honest tension, and the reason this is banked rather than built: **it could equally
+produce indirection** — a layer whose only job is to forward, which is the same antipattern #1 names
+in the agent dimension. The thing to resolve before building is what the interface would *carry* that
+a descriptor plus a set of gates does not already carry. If the answer is "nothing yet", this waits
+until a second harness exists to talk to. _(src: Eric · while: thinking about scaling to more
+collaborators)_
+
+**6. The team captain — a peer role that only exists at scale.**
+Named as a candidate orchestrator; it is not one. Coach and foreman hold *delegated* authority and can
+be handed to someone on day one because a contract makes it safe. A captain's authority is *conferred
+by standing among peers*, cannot be assigned, and produces nothing if granted to someone who has not
+earned it. It is what the `steward` tier already is, seen from the social side — and its one real job
+is the failure `CONTRIBUTORS.md` admits it cannot mechanise: absorbing the socially expensive "no", at
+a fraction of what the owner saying it costs. Trigger: roughly four or more active contributors with
+at least one at steward by evidence. Until then the owner holds it. _(src: Eric · while: mapping
+orchestrator roles onto the coaching staff)_
+
+**7. `runnerUp` is emitted by every scanner and consumed by nothing.**
+`arch-scan`, `dupe-scan`, `spec-gap-scan` and `clone-scan` each emit a `runnerUp` alongside
+`candidate`, and no caller reads it. That is a second read sitting in the data, unspent, because
+nothing was permitted to take it — the governor dispatches the #1 candidate sight-unseen, on a score
+computed from line and export counts that has never opened the file. This is the concrete work behind
+the foreman tier in `COACHES.md`: the first entity allowed to say "the gate's top pick has no seam;
+take #2". Pairs with #8. _(src: Claude · while: designing the foreman tier)_
+
+**8. A dead athlete and a refusing athlete are the same event.**
+Fleet slots and territory claims both carry a TTL and are pruned silently on read
+(`registry.mjs`). An athlete that crashed and an athlete that correctly found nothing safe to do
+produce identical evidence: an expired entry and no report. Standing down is a legitimate outcome and
+should be *recorded* as one — the learning coach's whole metric is detection lag, and this is a class
+of failure the system currently cannot see at all. _(src: Claude · while: designing the foreman tier)_
+
+**9. Nobody non-technical has read `/onboard`.**
+It is a long shipped procedure whose entire claim is that a non-technical person can follow it, and
+that claim has no evidence behind it. By this repository's own standard that is a scanner aimed at a
+directory that does not exist: it finds no problems and exits 0. The substitute for a planted
+violation is the first contributor reading it cold and marking every place they stopped, **before** it
+is relied on — which is also exactly the contribution `/intake` says they are uniquely able to make.
+Make it their first one. _(src: Claude · while: an adversarial review of the onboarding work)_
+
+**10. Route a new contributor's first changes through Claude as reviewer of record.**
+The cheapest available relief for worst-case #6 (rejecting a spouse's or close friend's change), which
+`CONTRIBUTORS.md` marks as having no mechanism. If the first "no" a contributor receives is
+impersonal, it costs what a red gate costs rather than what a person costs — the same reason the gates
+say no first. Requires no new mechanism, which is most of its appeal. _(src: Claude · while: an
+adversarial review found this was the only unmechanised entry nobody had reached for)_
+
+### Side quests (surfaced by Claude while working — proposals to prune)
+
+**3. Humans do not claim territory; athletes do.**
+`harness-claim` models territory so two athletes never edit the same files. Human contributors have
+no equivalent, so a human and an athlete can collide silently and the loser is whoever pushes second.
+Today this is masked by a coincidence of the roster — athletes work on structural debt, new
+contributors work on docs and specs — and it stops being masked the moment a human is working in
+`sourceDir`. Named in `CONTRIBUTORS.md`'s worst-case catalog as a known asymmetric rail.
+_(src: Claude · while: writing the human/agent collision entry)_
+
+**4. `city-cli.mjs` is not a knip entry point.**
+`harness-city`'s launcher target is absent from `knip.json`'s `entry` list, so knip reports it as an
+unused file. The dead-code gate does not currently fail on it, which means the gate and the raw tool
+disagree about the same repository — and a disagreement nobody has explained is a gate whose number
+cannot be trusted in either direction. _(src: Claude · while: wiring `standing.mjs` into knip)_
+
+**5. The launcher executable bit is unguarded.**
+`bin/harness-standing` was committed non-executable and every invocation failed with `Permission
+denied` — caught only because a portability case ran the launcher rather than the module. Every other
+launcher is `755` by luck of how it was created. A one-line assertion over `plugins/*/bin/*` would
+make that structural instead of lucky. _(src: Claude · while: the zoning portability case went red)_
+
+## In progress
+
+_(nothing yet)_
+
+## Shipped (recent)
+
+- The contributor model — principals, zoning, standing, `/onboard`, `/intake`, and the worst-case
+  catalog. The rope team and the mountain/ocean crossing entered the metaphor catalog with it.
