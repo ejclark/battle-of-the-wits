@@ -76,6 +76,9 @@ Detail lives in folders; this is the map. Nothing below is needed to start.
 banked observation · `/retro` failure into prevention · `/ears` wish into requirement ·
 `/governor` one dispatch cycle · `/decompose` `/dedupe` `/ship`
 
+**Hit a harness defect?** `harness-report` composes a complete issue from files already on your
+disk — zero tokens, nothing transmitted, you press the button.
+
 ---
 
 <details>

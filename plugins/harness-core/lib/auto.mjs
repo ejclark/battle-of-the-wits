@@ -16,6 +16,7 @@ import { execFileSync, execSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { GATES } from "./state.mjs";
 
 // Named for what it is rather than `HERE`: two modules each resolving their own directory is a
 // coincidental name match, not a shared abstraction waiting to be extracted.
@@ -32,7 +33,6 @@ function resolveTool(name) {
   }
 }
 
-const GATES = ["arch", "dupe", "dead", "spec-gap", "clone", "incident"];
 const ADOPT_BRANCH = "chore/adopt-the-harness";
 
 /** Run a step, capturing rather than inheriting output — the log is the report, not a scrollback. */
