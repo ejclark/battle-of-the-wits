@@ -3,20 +3,38 @@
 **Writing code got cheap. Checking it did not.** That gap is the whole problem this solves.
 
 When a machine can produce a thousand lines in a minute, the only thing between you and a codebase
-you no longer trust is how much of the checking happens without you. This is that checking: gates
-that freeze today's debt and only ever ratchet it down, drills that turn a failure into a permanent
-prevention, and background agents that burn structural debt while you do something else.
-
-**And it refuses to lie to you** — a gate that cannot measure something says so rather than passing,
-because a false green is worse than a red.
+you no longer trust is how much of the checking happens without you. This is that checking — and it
+**refuses to lie to you**: a gate that cannot measure something says so rather than passing, because
+a false green is worse than a red.
 
 Any repository, any language. Adoption is an install, not a port.
+
+```
+  ⛬  THE DUNGEON — your-project
+     depth 2 of 5   ·   The Frozen Vault
+
+  ▸ CURRENT CHAMBER — The Frozen Vault
+      → Confirm the full gate passes locally
+        npm run verify
+
+  ▸ BOSSES                                    ← your largest files, from committed budgets
+      ☠ src/checkout/session.ts   (298 lines)
+      ☠ src/billing/invoice.ts    (240 lines)
+
+  ▸ LOOT — capability, earned by clearing
+      ✦ Ratcheting gates              ✦ The full local gate (pre-push)
+      · Merge-on-green   — locked, clear The Warden's Gate
+      · Autonomous athletes   — locked, clear The Throne
+```
+
+Nothing there is flavour. Bosses are real files over budget, loot is capability you actually unlock,
+and the depth is measured from your repo rather than claimed.
 
 ---
 
 ## Get started
 
-Paste into a Claude Code session opened on **your own repo**:
+**Paste this into a Claude Code session opened on your repo. It does the rest.**
 
 ```shell
 /plugin marketplace add ejclark/dungeon-crawler
@@ -26,7 +44,14 @@ Paste into a Claude Code session opened on **your own repo**:
 harness-bootstrap --auto
 ```
 
-Or on **this repo**, to be walked from nothing to a merged change — no terminal, no git:
+That is all of day one — pipeline, hooks, formatter, gate wiring, budgets frozen at today's debt.
+It never clobbers a file you already have, and it names every opinion it imposes.
+
+**Want to see it first, or do it by hand?** `harness-bootstrap --dry-run` shows the plan and touches
+nothing; `--plan` says where you are and what is next. The details are in
+[the drawers below](#plugins).
+
+**Joining this project instead** — walked from nothing to a merged change, no terminal, no git:
 
 ```shell
 /plugin marketplace add ejclark/dungeon-crawler
@@ -35,8 +60,7 @@ Or on **this repo**, to be walked from nothing to a merged change — no termina
 /harness-core:onboard
 ```
 
-Either one pulls in everything below, so **none of it is required reading.** Prefer to read?
-[`CONTRIBUTING.md`](CONTRIBUTING.md) does the same in the browser.
+Prefer to read? [`CONTRIBUTING.md`](CONTRIBUTING.md) does the same in the browser.
 
 **In the drawers:** [the map](#map) · [the name](#name) · [the two plugins](#plugins) ·
 [staying current](#updates) · [working on it](#developing)

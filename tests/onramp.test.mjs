@@ -137,7 +137,12 @@ test("the README says why you would care and how to start, and defers the rest",
   // reads 171 lines as the open section is not stricter, it is broken.
   const open = readme.split(/<details\b/)[0];
   const lines = open.split("\n").length;
-  assert.ok(lines <= 55, `${lines} lines before the first drawer — the pitch and the paste, nothing else. Move it behind <details>.`);
+  // 70 rather than 55, raised once and deliberately: a sample of real output earns lines that a
+  // table does not. It does the "why would I care" job faster than any paragraph, and it is the one
+  // thing on the page that shows the product rather than describing it. The ceiling exists to stop
+  // REFERENCE creeping above the fold — so it moves for a visual and not for another index.
+  assert.ok(lines <= 70, `${lines} lines before the first drawer — the pitch, the picture, and the paste. Reference goes behind <details>.`);
+  assert.match(open, /☠|⛬/, "the sample output is what buys the extra lines — if it is gone, the ceiling comes back down");
 
   // Both jobs must actually still be done up front. A ceiling met by deleting the reason to care
   // would pass the line count and fail the reader.
