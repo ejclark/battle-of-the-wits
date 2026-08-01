@@ -478,6 +478,61 @@ breaking-point requirement. Leave the gap visible. _(src: Eric · while: "dungeo
 concept… there are also many tasks lower than a dungeon, I'm not sure how to weave that into the
 dungeon theme at this time.. a problem for another time")_
 
+**36. The one-shot should end at a running page in a browser, not at a green verify.**
+A green `verify` is legible to someone who already knows what a verify is. For a beginner the
+tangible outcome is *a thing on screen that changed because they typed something* — and the gap
+between those two is most of what makes early engagement stick. A local dev server that opens the
+browser itself (rspack/vite, `--open`) turns every prompt into an observable result, and observable
+results generate the next idea, which is the loop `/spark` is trying to start by conversation alone.
+This is the same argument `spark` already makes from Deci & Ryan: the missing leg when someone stalls
+is nearly always **competence**, and nothing supplies competence like seeing your own change render.
+Scoped narrowly it is small: `harness-bootstrap --auto --demo` writes a minimal page, a dev script,
+and opens it. Scoped wide it is a framework opinion the harness has no business holding — so the
+line is that the demo must be **deletable in one command** and must never be a dependency of the
+gates. _(src: Eric · while: "instant gratification demos are often times the most impressive for
+beginners")_
+
+**37. A dashboard front end — and `harness-map` is already half of it.**
+`cartography.mjs` renders a repository to a standalone HTML document today; what does not exist is
+**progress and state over time**, and **more than one repository at once**. Those are different
+gaps: the first is a read over the run ledger and the budget history (both already committed,
+append-only, and queryable), the second needs a notion of a fleet of adopted repos that the harness
+does not have at all.
+The honest sequencing is that the first is nearly free and the second is a real design. Pairs with
+#38, which is the same missing concept approached from the other side, and with #31 — a dashboard
+that cannot show what a run cost is missing the number everyone actually wants.
+_(src: Eric · while: "this could help measure progress and state as well as a dashboard of projects
+users have imported")_
+
+**38. Importing an existing repository into the fleet — map first, then maintain.**
+Today adoption assumes you are starting the harness fresh in a repo. The bigger case is a repository
+that already has years of structure, where the valuable first act is not to impose the process but to
+**map what is already there** — districts, budgets, seams, principals — and hand back that map. The
+adopter then sees their own codebase described before being asked to change anything, which is a
+completely different proposition from a tool that greets them with a list of violations.
+Every piece of the mapping exists (`model.mjs`, `principals.mjs`, `cartography.mjs`); the missing
+part is the **fleet** — a notion of many mapped repositories that `harness-map` and any dashboard
+could range over. That concept is the shared prerequisite with #37, and it is the thing to design
+once rather than twice. _(src: Eric · while: "including a repository in the dungeons fleet — needs to
+integrate existing code to build out the mapping of the existing dungeons")_
+
+**39. PR size is a moving target, so stop targeting a size and target a BOUNDARY.**
+The usual advice — small, frequent PRs — is right about the failure it prevents and wrong about the
+mechanism. A two-week PR is not bad because it is *large*; it is bad because `main` moved underneath
+it, so the cost is **divergence over time**, not lines changed. That reframing matters because the
+two come apart: a 900-line change written and merged inside an hour carries almost no divergence
+risk, while a 40-line change open for nine days carries a lot.
+So the measurable thing is not diff size, it is **age against the rate main is moving** — both of
+which this repo can already read from git. And the natural cut point is not a line count either: it
+is the **fault line**, the same boundary the retro doctrine already uses, and the same one the commit
+discipline here follows. Where a change reaches a state that is coherent, green, and reviewable on
+its own terms, that is the PR — whether that is 40 lines or 900.
+Cheap version: a preflight warning when a branch's age × main's commit rate crosses a threshold,
+which says *"main has moved 14 commits since you branched"* rather than *"your PR is too big."* The
+first is a fact the author can act on; the second is a rule they will argue with. Pairs with #33.
+_(src: Eric · while: "2 week open PRs is still bad, because the ideas/changes on the main branch
+could have significantly evolved during that span")_
+
 ### Side quests (surfaced by Claude while working — proposals to prune)
 
 **3. Humans do not claim territory; athletes do.**
