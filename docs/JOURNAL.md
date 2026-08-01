@@ -700,3 +700,56 @@ anything — and eventually is. This stops applying the moment the code stops be
 
 Debt 25 → 10, and the ten that remain are real: `descriptor`, `release`, `render`, `violations`,
 `cap`, `debt`, `files`. Those are worth looking at on their merits.
+
+---
+
+## 2026-08-01 (night, eleventh) · The Untrodden
+
+The audit question, applied mechanically this time: *which shipped launcher does no test reference at
+all?* Fourteen commands, one answer — **`harness-map`**, zero.
+
+It ran. It produced a file. The file opened in a browser. And it had **no doctype**, so every browser
+opened it in quirks mode, where box-sizing and several inherited properties behave differently from
+the standards mode its CSS was written against. It rendered. It just did not render as designed, and
+"it opens" was never the claim being made.
+
+The cause is the same family as everything else this week: the renderer returns page *content* —
+`<title>`, `<style>`, then markup — which is exactly right for an embedding host that supplies its
+own skeleton. **A file on disk has no host.** An artifact correct where it was authored, moved
+somewhere that needs more, with nothing in between to notice.
+
+Two smaller things fell out of running it once:
+
+- The title said **`botw-cartographer`** — the name of the worktree directory, not the repository.
+  A file people share should not be titled after somebody's scratch checkout.
+- It wrote `dungeon-map.html` into the repo root, **untracked**. A read-only tool that dirties the
+  tree is a tool an athlete's preflight will then count as part of its change. Now gitignored here
+  and in the shipped template.
+
+Six cases: the doctype and every required tag, standalone-ness (no external stylesheet, script,
+font, or image — the promise the file makes), HTML-escaping of ADR titles, a repository with no ADRs
+at all, and the `-o` path.
+
+### The fixture that transcribed what it was testing
+
+Adding one line to the shipped `.gitignore` template turned a bootstrap case red. The case had
+hand-written a `.gitignore` matching the template's contents, so it was asserting on **the
+transcription**, not on the behaviour it named ("a repo that already covers the harness's needs is
+left alone").
+
+A copied fixture is a second source of truth, and it goes stale in the direction that matters: it
+would equally have kept passing while covering the wrong set. It now reads the shipped template.
+
+The enumeration-versus-category lesson, which has been the spine of the last four dungeons, turns out
+to apply to fixtures too.
+
+### Two budgets raised, deliberately
+
+`cartography.mjs` 172 → 190 and `map.mjs` 24 → 33. Both are new behaviour — a document skeleton, and
+resolving the repository's real name — not accumulated sludge, and the prose in both files was cut
+first. Recorded in `arch-budget.json` with the reasoning, including the instruction not to recover
+the lines by dropping the skeleton: a fragment written to disk is a quirks-mode document.
+
+As in The Foundry, `harness-preflight` refuses this change, correctly, because an athlete may never
+raise a budget. It is a lead-level change and it lands as a reviewed PR. That distinction is now
+appearing often enough to be a real feature of the system rather than an edge case.
