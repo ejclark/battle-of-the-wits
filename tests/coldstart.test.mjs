@@ -406,7 +406,21 @@ test("no test resolves a launcher by a path Windows cannot execute", () => {
   //
   // helpers.bin() is the single place that knows about the suffix, because ten call sites
   // remembering a platform rule is ten chances to forget it.
-  for (const f of readdirSync(join(REPO, "tests")).filter((f) => f.endsWith(".mjs") && f !== "helpers.mjs")) {
+  // RECURSES. The first version listed tests/ only, so tests/arch/gates.test.mjs — the file that
+  // runs every scanner, and the one that produced 131 failures on the first Windows machine — was
+  // never scanned. A check with a hole in it reads green for the wrong reason, which is the thing
+  // this whole suite is against.
+  const specs = [];
+  const walk = (dir, prefix = "") => {
+    for (const e of readdirSync(dir, { withFileTypes: true })) {
+      if (e.isDirectory()) walk(join(dir, e.name), `${prefix}${e.name}/`);
+      else if (e.name.endsWith(".mjs") && e.name !== "helpers.mjs") specs.push(`${prefix}${e.name}`);
+    }
+  };
+  walk(join(REPO, "tests"));
+  assert.ok(specs.some((f) => f.startsWith("arch/")), "the walk is not reaching tests/arch/ — that is where the scanners are invoked");
+
+  for (const f of specs) {
     const body = readFileSync(join(REPO, "tests", f), "utf8")
       .split("\n")
       .filter((l) => !l.trim().startsWith("//") && !l.trim().startsWith("*"))

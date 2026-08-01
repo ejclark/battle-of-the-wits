@@ -14,10 +14,24 @@ import { fileURLToPath } from "node:url";
 // directory is resolved locally rather than assumed.
 const BIN = join(dirname(fileURLToPath(import.meta.url)), "../../plugins/harness-gates/bin");
 
+// TWO THINGS THIS FILE GOT WRONG THAT THE SHIPPED TEMPLATE GOT RIGHT — the repo's own gate was worse
+// than the one it hands adopters, which is the wrong way round.
+//
+// 1. WINDOWS. The launchers are extensionless `#!/bin/sh`; Windows cannot execute them, and
+//    execFileSync does not consult PATHEXT. The .cmd twin is the runnable form there.
+// 2. CANNOT MEASURE IS NOT A VERDICT. Without this, a scanner that could not RUN was reported as
+//    "reported debt over budget" — and on the first Windows machine to try it, 131 tests failed with
+//    a message accusing the repository of debt it does not have. The finding was real; the words
+//    were a lie, and a confident wrong diagnosis costs more than a blank one.
+const runnable = (name) => join(BIN, process.platform === "win32" ? `${name}.cmd` : name);
+
 const gate = (name) => {
   try {
-    execFileSync(join(BIN, name), { cwd: join(BIN, "../../.."), stdio: "pipe" });
+    execFileSync(runnable(name), { cwd: join(BIN, "../../.."), stdio: "pipe" });
   } catch (err) {
+    if (err.code === "ENOENT") {
+      assert.fail(`${name} could not be executed at all — NOTHING WAS MEASURED. This is not a debt finding.`);
+    }
     assert.fail(`${name} reported debt over budget:\n\n${err.stdout ?? ""}${err.stderr ?? ""}`);
   }
 };

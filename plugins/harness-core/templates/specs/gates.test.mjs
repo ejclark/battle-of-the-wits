@@ -33,7 +33,10 @@ import { test } from "node:test";
 
 const gate = (bin, t) => {
   try {
-    execFileSync(bin, { cwd: process.cwd(), stdio: "pipe" });
+    // `.cmd` on Windows: execFileSync does not consult PATHEXT, so the bare name fails with
+    // ENOENT even when the command is on PATH — and the branch below would then SKIP a gate that is
+    // perfectly installed. Every adopter on Windows would silently measure nothing.
+    execFileSync(process.platform === "win32" ? `${bin}.cmd` : bin, { cwd: process.cwd(), stdio: "pipe" });
   } catch (err) {
     if (err.code === "ENOENT") {
       // Not installed here. Skipped rather than passed, so it never reads as a gate that measured.
