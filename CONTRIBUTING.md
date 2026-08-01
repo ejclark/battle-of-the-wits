@@ -42,6 +42,42 @@ to sign in to GitHub is probably fake.** Navigate to github.com yourself rather 
 
 ---
 
+## You are the first person through here, and it is not finished
+
+Said plainly and up front, because it changes what everything else means.
+
+**This on-ramp is new. You will hit things that are broken, wrong, or missing** — a step that does not
+match your screen, a link that goes nowhere, an error nobody anticipated. That is not you going wrong,
+and it is not a rough edge we are hoping you will politely ignore. **It is the thing you are here to
+find.** Nobody who already knows how this works can find it, and the list above got written by exactly
+those people.
+
+The difference between a bug that costs you an afternoon and a bug that costs you nothing is entirely
+whether you knew to expect it. Now you do.
+
+### Nothing here is a dead end
+
+The one rule that makes the rest safe: **you should never be stuck with nowhere to go.** If you are,
+that is the most serious defect on this page and it outranks whatever you were originally doing.
+
+The ladder, in order, and any rung is a fine place to stop:
+
+1. **Try the obvious thing once.** Reload, re-read, click the other button. Costs a minute.
+2. **After about fifteen minutes, stop.** In a project with this much written down, being stuck for
+   an hour is a defect in the writing — pushing through it destroys the evidence and teaches you the
+   wrong lesson about your own competence.
+3. **Open an issue.** *"Something confused me"* — three questions, two minutes, no git, nothing that
+   can go red. Say what you saw and what you expected. **You do not need to know what went wrong**,
+   and guessing is not required or especially helpful.
+4. **Then go do something else here.** Another file, another snag, the next thing that looks
+   interesting. A blocked task is not a blocked session, and moving on is the correct response, not
+   giving up.
+5. **If steps 1–4 somehow do not apply, message Eric.** There is no situation where you are expected
+   to sit and work it out alone.
+
+**Getting stuck and stopping is a completed contribution.** The report is the deliverable — the fix
+was never your job.
+
 ## The three words you will meet in the first five minutes
 
 Short *and* accurate. A simplified version would only have to be un-learned later.

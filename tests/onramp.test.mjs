@@ -162,6 +162,37 @@ test("every copy/paste one-shot in the README names things that exist", () => {
   }
 });
 
+test("the escape ladder is present, and every rung it names is real", () => {
+  // The on-ramp is new and the first people through it WILL hit defects. That is expected and fine.
+  // What is not survivable is a defect with nowhere to go from — so the ladder is load-bearing in a
+  // way the rest of this page is not, and it must not quietly rot when someone edits around it.
+  //
+  // It also has to be read BEFORE the first failure rather than after. An unexpected bug feels like
+  // your own fault; an expected one feels like the job. Same event, opposite meaning, and the only
+  // difference is whether anyone said so in advance — which is why placement is asserted too.
+  assert.match(ONRAMP, /Nothing here is a dead end/, "the escape ladder was removed or renamed");
+  assert.ok(
+    ONRAMP.indexOf("Nothing here is a dead end") < ONRAMP.indexOf("Making a change, in the browser"),
+    "the ladder must come BEFORE the mechanics — after the first failure is too late to be told failures are expected",
+  );
+
+  // Rung 3 sends them at an issue form. A ladder whose rung is a 404 is worse than no ladder.
+  const forms = readdirSync(join(REPO, ".github/ISSUE_TEMPLATE")).filter((f) => f.endsWith(".yml") && f !== "config.yml");
+  assert.ok(forms.length > 0, "the ladder points at an issue form and none is shipped");
+  const bodies = forms.map((f) => read(`.github/ISSUE_TEMPLATE/${f}`)).join("\n");
+  for (const m of ONRAMP.matchAll(/\*"([^"]+)"\*/g)) {
+    if (!/confused/i.test(m[1])) continue;
+    assert.ok(bodies.includes(m[1]), `the page sends people to a form called "${m[1]}", which no template declares`);
+  }
+
+  // Every label a form applies must be one the ladder can actually reach — a form referencing a
+  // label the repo has not created fails on submit, which turns rung 3 into the dead end it exists
+  // to prevent, at the exact moment someone is already stuck.
+  const labels = [...bodies.matchAll(/^labels:\s*\[([^\]]*)\]/gm)].flatMap((m) => m[1].split(",").map((s) => s.trim().replace(/^["']|["']$/g, "")));
+  assert.ok(labels.length > 0, "no form declares a label — nothing will be triageable");
+  assert.deepEqual([...new Set(labels)].sort(), ["idea", "snag"], "the label set changed; create the new ones on GitHub before shipping this");
+});
+
 test("no path CONTRIBUTING.md names is one a newcomer cannot find", () => {
   // A first-week reader follows every path on the page literally. One that does not resolve reads as
   // "I have already broken something", which is the opposite of what this page is for.
