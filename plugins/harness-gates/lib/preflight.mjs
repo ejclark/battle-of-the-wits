@@ -5,27 +5,24 @@
 //   harness-preflight --agent <id>     # also require the diff to stay inside claimed territory
 //   harness-preflight --base <ref>     # compare against something other than the default branch
 //
-// Until now "PRs only, never touch workflow files or credentials" was PROSE IN A DOCUMENT, and prose
-// does not stop an agent. It stops a careful reader. An autonomous athlete is neither careful nor a
-// reader — it is a process that will do whatever its diff contains, so the rule has to be a gate.
+// "PRs only, never touch workflow files or credentials" as prose stops a careful reader. An
+// autonomous athlete is a process that does whatever its diff contains, so the rule has to be a gate.
 //
 // The four things it refuses, and why each is the irreversible class rather than a style preference:
 //
-//   1. WORKFLOW FILES. `.github/workflows/**` decides what runs with the repository's credentials.
-//      An agent that can edit CI can grant itself anything else, so this is the one that makes every
-//      other rail moot if it leaks.
+//   1. WORKFLOW FILES. `.github/workflows/**` decides what runs with the repo's credentials. An
+//      agent that can edit CI can grant itself anything else — this one makes every other rail moot.
 //   2. CREDENTIAL-SHAPED FILES. Keys, certs, .env. A committed secret cannot be un-leaked by a
-//      revert — rotation is the only remedy, and it is somebody's afternoon.
-//   3. RAISING A BUDGET. Athletes exist to ratchet debt DOWN. An athlete that can raise its own
-//      budget can mark its own homework, which quietly converts every gate into decoration.
-//   4. WORKING ON THE DEFAULT BRANCH. Committing straight to main skips review entirely, which is
-//      the whole mechanism.
+//      revert — rotation is the only remedy.
+//   3. RAISING A BUDGET. Athletes ratchet debt DOWN. One that can raise its own budget marks its
+//      own homework, which quietly converts every gate into decoration.
+//   4. WORKING ON THE DEFAULT BRANCH. Committing straight to main skips review, the whole mechanism.
 //
-// With --agent it also enforces territory: the diff must stay inside what that athlete claimed. That
-// is what turns claims from advisory into binding — a claim nobody checks is a comment.
+// With --agent it also enforces territory: a claim nobody checks is a comment.
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { changedFiles, currentBranch, defaultBranch } from "./gitscope.mjs";
 
 const REPO = process.cwd();
 
@@ -39,44 +36,6 @@ const FORBIDDEN = [
 ];
 
 const git = (args) => execFileSync("git", args, { cwd: REPO, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
-
-function defaultBranch() {
-  for (const guess of ["origin/HEAD", "origin/main", "main", "master"]) {
-    try {
-      return git(["rev-parse", "--abbrev-ref", guess]).replace(/^origin\//, "");
-    } catch {
-      /* try the next */
-    }
-  }
-  return "main";
-}
-
-/**
- * Every file this change touches — committed, staged, modified, AND UNTRACKED.
- *
- * The untracked source is not an afterthought: `git diff` does not report a file that has never been
- * added, so a preflight built on diff alone waves through exactly the dangerous case — an athlete
- * CREATING .github/workflows/evil.yml rather than editing one. Found by testing the refusal instead
- * of trusting it.
- */
-function changedFiles(base) {
-  const out = new Set();
-  for (const args of [
-    ["diff", "--name-only", `${base}...HEAD`],
-    ["diff", "--name-only"],
-    ["diff", "--name-only", "--cached"],
-    ["ls-files", "--others", "--exclude-standard"],
-  ]) {
-    try {
-      for (const f of git(args).split("\n")) if (f) out.add(f);
-    } catch {
-      /* no such ref yet — the other sources still apply */
-    }
-  }
-  // .harness/ is runtime coordination state — the claims registry itself. It is never part of a
-  // change, and counting it would have every athlete fail its own territory check.
-  return [...out].filter((f) => !f.startsWith(".harness/"));
-}
 
 /** A budget may only ever move DOWN. Raising one is an athlete marking its own homework. */
 function raisedBudgets(base, touched) {
@@ -109,24 +68,21 @@ function claimedPaths(agent) {
 
 const argv = process.argv.slice(2);
 const agent = argv.includes("--agent") ? argv[argv.indexOf("--agent") + 1] : null;
-const base = argv.includes("--base") ? argv[argv.indexOf("--base") + 1] : defaultBranch();
+const fallback = defaultBranch(REPO);
+const base = argv.includes("--base") ? argv[argv.indexOf("--base") + 1] : fallback.ref;
+const defaultName = argv.includes("--base") ? base.replace(/^origin\//, "") : fallback.name;
 
 const violations = [];
 
 // 4 — never on the default branch.
-let branch = "";
-try {
-  branch = git(["rev-parse", "--abbrev-ref", "HEAD"]);
-} catch {
-  /* unborn repo */
-}
-if (branch && branch === base) {
-  violations.push(`working directly on ${base} — every change must arrive as a pull request`);
+const branch = currentBranch(REPO);
+if (branch && branch === defaultName) {
+  violations.push(`working directly on ${defaultName} — every change must arrive as a pull request`);
 }
 
 // Named `touched` rather than `files`: the duplication gate flagged a third module with a local
 // `files`. Three variables that happen to share a generic name are a coincidence, not an abstraction.
-const touched = changedFiles(base);
+const touched = changedFiles(REPO, base);
 
 // 1 & 2 — forbidden paths.
 for (const f of touched) {
@@ -161,4 +117,4 @@ if (violations.length) {
   process.exit(1);
 }
 
-console.log(`✓ preflight clear — ${touched.length} file(s), nothing outside the safe radius`);
+console.log(`✓ preflight clear vs ${base} — ${touched.length} file(s), nothing outside the safe radius`);

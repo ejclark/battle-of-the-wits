@@ -558,3 +558,50 @@ The real fix is sequencing: cut each dungeon's branch from `main` *after* the pr
 That has been the pattern all night and it worked six times; the one departure produced the one
 conflict. Worth stating plainly because the temptation to parallelise is strongest exactly when
 things are going well.
+
+---
+
+## 2026-08-01 (night, eighth) · The Stale Map
+
+Found by being refused. `harness-preflight` rejected a change for raising two budgets that had
+already been raised — in a reviewed PR, merged to `main`, hours earlier. The gate was comparing
+against a **local `main`** that had not been fetched since before that merge.
+
+`defaultBranch()` resolved `origin/HEAD`, stripped the `origin/` prefix, and used the result for two
+different jobs. But they are two different questions:
+
+- **the name** answers *am I working on the default branch?*
+- **the ref** answers *what is this diff taken against?*
+
+Answering the second with the first means every comparison runs against whatever the local branch
+happens to be — and an athlete's worktree, which fetches once and then works, is exactly where that
+goes stale.
+
+### The asymmetry is the point
+
+A stale base **invents** violations that are not there: noisy, and self-correcting, because someone
+investigates. A stale base also **hides** violations that are: silent, and a false clear from the
+gate that guards workflow files, credentials, and budget raises.
+
+Tonight's recurring lesson has been *a surface nothing exercises reports the confidence of one that
+is exercised.* This is its sharper cousin: **a check against the wrong reference reports the
+confidence of a check against the right one.** Same shape — the number looks fine, and nothing about
+it advertises which question it answered.
+
+### What landed
+
+The two values are now separate, the ref prefers `origin/<name>` when it resolves, and both git
+helpers moved into `gitscope.mjs` — a **new** file, deliberately, because the extraction that grows
+an existing module is the one an athlete structurally cannot perform (the finding from The Foundry).
+Doing it the way the rails allow keeps this move inside what a decomposer could have done.
+
+That extraction also paid for itself immediately: `preflight.mjs` fell 165 → 118, and both helpers
+are now testable **by import** rather than only through the executable that uses them. Seven new
+cases, including the untracked-file case that had been provable only end to end.
+
+Verified by **negative control** — the new case fails against the old implementation, then passes.
+Second time tonight that has been worth doing, and both times the gate was one I had just written.
+
+The extraction also collided a helper named `run` with `auto.mjs`'s, which the duplication gate
+caught in the same run. Renamed to `gitOut`, which is the better name anyway — the rename is
+descriptive, not a concession to the counter.
