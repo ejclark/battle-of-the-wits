@@ -42,8 +42,23 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Commit lint
-        run: npx commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose
+      # THE PULL REQUEST TITLE, because that is the text that actually lands.
+      #
+      # This linted the branch's individual commits, which a squash-merge THROWS AWAY — so it was
+      # checking the discarded text and not checking the surviving text. Backwards on its own terms,
+      # and the cost landed entirely on one group: GitHub's web editor pre-fills a commit message of
+      # "Update FILENAME", which fails config-conventional. A contributor working in the browser got
+      # a red check on their first pull request, for a field the page never mentioned, that they
+      # cannot easily edit from where they are standing. Every rail here was built for processes;
+      # this is what that assumption cost the first human through.
+      #
+      # The title is passed through the ENVIRONMENT rather than interpolated into the shell: a title
+      # is attacker-controlled text on a public repository, and `run: echo "${{ ... }}"` is a script
+      # injection with a friendly name.
+      - name: Lint the pull request title
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: echo "$PR_TITLE" | npx commitlint --verbose
 
       # Structural check that runs on bare Node — catches a marketplace entry pointing at a
       # directory that doesn't exist, a name mismatch, or a plugin nobody can install.

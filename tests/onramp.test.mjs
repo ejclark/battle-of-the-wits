@@ -191,6 +191,58 @@ test("every copy/paste one-shot in the README names things that exist", () => {
   }
 });
 
+test("CI checks the text the on-ramp tells a newcomer to get right", () => {
+  // The defect this prevents was live and it blocked exactly one group. CI linted the BRANCH's
+  // commit messages — which a squash-merge discards — while the pull request title, the text that
+  // actually becomes the permanent commit, went unchecked. Backwards on its own terms.
+  //
+  // The cost fell entirely on someone working in the browser: GitHub's web editor pre-fills a commit
+  // message of "Update FILENAME", which fails config-conventional. First pull request, red check, a
+  // field CONTRIBUTING.md never mentioned, no obvious way to fix it from where they were standing.
+  // Every rail here was built for processes; this is what that assumption cost the first human.
+  //
+  // So the invariant is a relationship, not a value: whatever CI lints must be the same thing the
+  // page tells a newcomer to get right. Either alone can be correct while the pair is broken.
+  const ci = read(".github/workflows/pipeline.yml");
+  assert.match(ci, /pull_request\.title/, "CI must lint the PR title — a squash-merge throws the branch commits away");
+  assert.doesNotMatch(
+    ci,
+    /commitlint --from/,
+    "CI is linting the branch commit range again. A browser contributor cannot control those, and a squash-merge discards them.",
+  );
+  // Attacker-controlled text on a public repo must not reach a shell through interpolation.
+  assert.doesNotMatch(ci, /run:.*\$\{\{\s*github\.event\.pull_request\.title/, "the PR title must pass through env, never straight into `run:` — that is a script injection");
+
+  // And the page must say the same thing, in both directions: title checked, commit message not.
+  assert.match(ONRAMP, /pull\s+request title/i, "CONTRIBUTING.md must name the title as the checked text");
+  assert.match(ONRAMP, /commit message/i, "and must say the pre-filled commit message is fine as-is — otherwise they will hunt for a problem that is not there");
+});
+
+test("every drill the README lists is one the reader was told how to install", () => {
+  // Reproduced against a real fresh install: the newcomer block installs harness-core only, and the
+  // drill list offered /decompose, /dedupe and /ship — which ship in harness-gates. "Unknown
+  // command" on the first thing a curious newcomer tries is a small failure with an outsized
+  // message: it says the instructions are approximate.
+  const readme = read("README.md");
+  const newcomerBlock = [...readme.matchAll(/```shell\n([\s\S]*?)```/g)].map((m) => m[1]).find((b) => b.includes("onboard"));
+  assert.ok(newcomerBlock, "the newcomer paste block is gone");
+  const installed = new Set([...newcomerBlock.matchAll(/\/plugin install ([\w-]+)@/g)].map((m) => m[1]));
+
+  // Where does each named drill actually live?
+  const home = {};
+  for (const plugin of ["harness-core", "harness-gates"]) {
+    const dir = join(REPO, "plugins", plugin, "skills");
+    if (existsSync(dir)) for (const s of readdirSync(dir)) home[s] = plugin;
+  }
+  // Only drills offered WITHOUT a caveat count — the list may name others as long as it says so.
+  const unqualified = readme.split("**Drills**")[1]?.split("And from `harness-gates`")[0] ?? "";
+  for (const m of unqualified.matchAll(/`\/([\w-]+)`/g)) {
+    const drill = m[1];
+    if (!home[drill]) continue; // not a skill; the list also names shell commands
+    assert.ok(installed.has(home[drill]), `the README offers /${drill}, which ships in ${home[drill]} — a plugin the newcomer block never installs`);
+  }
+});
+
 test("the escape ladder is present, and every rung it names is real", () => {
   // The on-ramp is new and the first people through it WILL hit defects. That is expected and fine.
   // What is not survivable is a defect with nowhere to go from — so the ladder is load-bearing in a
