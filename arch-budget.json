@@ -17,6 +17,7 @@
   "plugins/harness-gates/lib/claims.mjs": 112,
   "plugins/harness-gates/lib/clone-scan.mjs": 100,
   "plugins/harness-gates/lib/dead-scan.mjs": 107,
+  "plugins/harness-gates/lib/definitions.mjs": 91,
   "plugins/harness-gates/lib/descriptor.mjs": 99,
   "plugins/harness-gates/lib/dispatch.mjs": 69,
   "plugins/harness-gates/lib/dupe-scan.mjs": 96,

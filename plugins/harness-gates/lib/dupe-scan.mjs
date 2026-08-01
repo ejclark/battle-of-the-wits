@@ -14,6 +14,7 @@
 // Enforced in CI via tests/arch/dupe.spec.ts — runs on every PR, no extra workflow.
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { definedNames } from "./definitions.mjs";
 import { descriptor, isExcluded, isSourceName, readBudget, relTo, walkFiles, writeBudget } from "./descriptor.mjs";
 
 const ROOT = process.cwd();
@@ -33,18 +34,17 @@ const rel = (f) => relTo(ROOT, f);
 // scaffolding, not shared code. Renaming those one at a time was the gate distorting the codebase.
 //
 // This list USED to carry a second justification — that the executables "must not import across the
-// PATH boundary" — which was false, and was defending the six copies of the descriptor preamble that
+// PATH boundary" — which was false, and defended the six copies of the descriptor preamble that
 // descriptor.mjs now replaces. A duplication gate can be argued out of a finding as easily as into
-// one, and the argument that wins is the one that sounds like architecture. Keep this narrow: domain
-// names stay caught, and a rationale nobody has tested is not a rationale.
+// one, and the argument that wins is the one that sounds like architecture. Keep this narrow.
+//
+// What counts as a DEFINITION rather than a local binding of an imported symbol is decided by
+// definitions.mjs — a claim about structure, checkable from source, not a second list of excused names.
 const IGNORE = new Set(["main", "argv", "args", "ROOT"]);
-const defRe = /^(?:export\s+)?(?:async\s+)?(?:function|const|class)\s+([A-Za-z_$][\w$]*)/gm;
 const defs = new Map(); // name → Set(file)
 for (const f of walkFiles(SRC, isSource)) {
   if (isExcluded(DESC, rel(f))) continue;
-  const src = readFileSync(f, "utf8");
-  for (const m of src.matchAll(defRe)) {
-    const name = m[1];
+  for (const name of definedNames(readFileSync(f, "utf8"))) {
     if (IGNORE.has(name)) continue;
     if (!defs.has(name)) defs.set(name, new Set());
     defs.get(name).add(rel(f));

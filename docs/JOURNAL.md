@@ -653,3 +653,50 @@ identical to a repository with nothing wrong.
 Each was invisible on its own. The general form, now stated in the ledger as many times as it has
 been earned: **a surface nothing exercises reports the confidence of one that is exercised.** The
 question that finds them is not "does this look right" — it is *what has actually run this?*
+
+---
+
+## 2026-08-01 (night, tenth) · The Mirror Halls, Second Pass
+
+The duplication gate had been carrying 25 for a while, and 15 of it was **the consolidation itself**.
+
+After six scanners stopped each owning a copy of the descriptor preamble, what they each write now is
+a binding:
+
+```js
+const DESC = descriptor(ROOT);
+const budget = readBudget(ROOT, "arch", {});
+const rel = (f) => relTo(ROOT, f);
+```
+
+The gate's signal is *the same top-level name declared in N files*, a proxy for *the same
+implementation pasted N times*. A binding satisfies the proxy while being the exact opposite of what
+the proxy is for — the implementation lives in one place, which is the thing DRY was asking for.
+
+Left alone, the gate **punishes the fix and rewards leaving the copies**. That is worse than a noisy
+number; it is a number pointing the wrong way.
+
+### The tempting fix was the banked mistake
+
+Rename the twenty symbols. It works, it is fast, and this repository already banked the lesson at
+*four* renames: the gate distorting the codebase. At twenty it is not a judgment call.
+
+So the counter got fixed instead — but with a constraint that matters more than the change. **A rule
+that stops counting things can be talked into stopping counting the things that matter.** The
+discipline is that the new rule is a claim about *structure*, checkable from source:
+
+> a `const` whose initializer's only call is to a symbol imported into that same file is a binding
+
+Paste a function body and its initializer is not an imported call — it is the body. `function` and
+`class` are always definitions, no exceptions, because that is where pasted code actually lives. An
+arrow that composes two calls is doing work of its own and stays counted.
+
+Twelve cases, and most of them are the adversarial half: a pasted body with imports in the file, an
+arrow composing two imported calls, a const calling a *local* function, a class extending an imported
+base. The rule has to fail those, and it does.
+
+**Not a suppression list.** A list is a claim about names, and a list can be extended to excuse
+anything — and eventually is. This stops applying the moment the code stops being a binding.
+
+Debt 25 → 10, and the ten that remain are real: `descriptor`, `release`, `render`, `violations`,
+`cap`, `debt`, `files`. Those are worth looking at on their merits.
