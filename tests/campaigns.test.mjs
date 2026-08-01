@@ -11,9 +11,9 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { makeRepo } from "./helpers.mjs";
+import { makeRepo, bin } from "./helpers.mjs";
 
-const BIN = join(dirname(fileURLToPath(import.meta.url)), "../plugins/harness-core/bin/harness-dungeon");
+const BIN = bin("harness-core", "harness-dungeon");
 const today = (cwd) => execFileSync(BIN, ["--today"], { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
 
 

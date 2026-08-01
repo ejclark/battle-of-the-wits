@@ -5,6 +5,7 @@
 // throttle. A suite that only checked "returns a gear" would pass against a function that returns
 // "standard" unconditionally, which is precisely the behaviour this module exists to prevent.
 import { test } from "node:test";
+import { bin } from "./helpers.mjs";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { mkdtempSync, writeFileSync } from "node:fs";
@@ -14,7 +15,7 @@ import { fileURLToPath } from "node:url";
 import { GEARS, FLOORS, ceilingFor, floorFor, gear, gearLabel, headroom } from "../plugins/harness-core/lib/gear.mjs";
 
 const REPO = join(dirname(fileURLToPath(import.meta.url)), "..");
-const LAUNCHER = join(REPO, "plugins/harness-core/bin/harness-gear");
+const LAUNCHER = bin("harness-core", "harness-gear");
 
 test("the ladder is ordered, and every floor names a rung on it", () => {
   assert.deepEqual(GEARS, ["mechanical", "standard", "careful", "deep"]);

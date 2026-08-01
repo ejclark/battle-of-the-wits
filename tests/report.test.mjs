@@ -22,9 +22,10 @@ import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { fieldReport, issueBody, issueUrl } from "../plugins/harness-core/lib/report.mjs";
+import { bin } from "./helpers.mjs";
 
 const REPO = join(dirname(fileURLToPath(import.meta.url)), "..");
-const LAUNCHER = join(REPO, "plugins/harness-core/bin/harness-report");
+const LAUNCHER = bin("harness-core", "harness-report");
 
 // Every one of these is planted somewhere the report reads from. None may survive.
 const SECRETS = [
