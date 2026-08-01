@@ -57,7 +57,7 @@ compounding it further.
 Worked example (the one that motivated this): landing a PR via the GitHub **MCP** spends **GraphQL**
 by the thousands (one create+auto-merge+read cycle measured ~6,000 points; status-*polling* is worse),
 while the same outcome over `git` + repo-scoped **REST** runs on your machine and the plentiful 15k/hr
-**core** bucket. The fix was codified as `scripts/ship.sh` + the `/ship` skill: verify locally → push →
+**core** bucket. The fix was codified as `harness-ship` + the `/ship` skill: verify locally → push →
 open over REST → one auto-merge call → **stop, trust the webhook, never poll**. Reach for the script;
 grow the roster of scripts as recurring costs surface. When a finite resource starts binding, that's a
 *measured* constraint the offensive coordinator elevates — never optimize a resource speculatively.
@@ -89,7 +89,7 @@ A convention that taxes the wrong audience is slop wearing a suit.
 ## Detection lag is the metric that finds the gaps in the system itself
 
 Every coach above watches the *code*. One watches **us**: the learning Coach
-(`scripts/incident-scan.mjs` → `/retro` → `docs/LESSONS.md`). Its dimension is **detection lag** —
+(`harness-incident-scan` → `/retro` → `docs/LESSONS.md`). Its dimension is **detection lag** —
 the time between the earliest moment a failure *could* have been noticed and the moment it actually
 was. Lag of seconds (a spec goes red) means the nets are working. Lag of days means an entire class
 of failure is currently invisible, and *that* is the finding — always bigger than the bug that
@@ -109,7 +109,7 @@ Two rules fall out, both paid for the hard way (see the ledger):
 
 **Put the watcher on a path you already walk — never add a poller.** The tempting way to watch a red
 `main` is a scheduled workflow: a cron that wakes up and *asks*. That spends GHA minutes and API
-budget on a question, which is exactly the pattern `scripts/ship.sh` exists to delete — a monitor
+budget on a question, which is exactly the pattern `harness-ship` exists to delete — a monitor
 built that way is the resource-cost smell wearing a safety vest. Instead, hang the check on traffic
 that already flows. Every change here ships through `ship.sh open`, so the incident eye runs there:
 one REST call on the core bucket, at the one moment the answer changes a decision (don't stack a
@@ -132,13 +132,13 @@ supply-chain decision: read them fully before adopting.
 
 | Coach | Eye (eval + budget) | Drill (skill) | Athlete (agent) | Status |
 |---|---|---|---|---|
-| **Size/cohesion** (god files) | `scripts/arch-scan.mjs` + `arch-budget.json` + `tests/arch/budget.spec.ts` | `/decompose` | `decomposer` | ✅ live |
-| **Duplication** (pasted helpers) | `scripts/dupe-scan.mjs` + `dupe-budget.json` + `tests/arch/dupe.spec.ts` | `/dedupe` | `ui-librarian` | ✅ live |
-| **Clones** (pasted blocks, renamed identifiers) | `scripts/clone-scan.mjs` (jscpd, adopted) + `.jscpd.json` + `clone-budget.json` + `tests/arch/clone.spec.ts` | `/dedupe` judgment | `ui-librarian` could extend later | ✅ live |
-| **Dead code** (unused files/exports/types) | `scripts/dead-scan.mjs` (knip, adopted) + `dead-budget.json` + `tests/arch/dead.spec.ts` | judge: un-export / delete / justify-ignore | `mortician` (recruited on recurrence #3, per the rule of three) | ✅ live |
-| **Dep-graph** (cycles/orphans/layering) | `scripts/dep-graph-scan.mjs` (dependency-cruiser, adopted) + `.dependency-cruiser.cjs` + `dep-graph-budget.json` + `tests/arch/dep-graph.spec.ts` | judge: break cycle / wire-or-delete orphan / restore layer direction (`/decompose` when a cycle wants a split) | none yet (recruit on recurrence #3) | ✅ live |
-| **Spec gap** (src files no spec imports) | `scripts/spec-gap-scan.mjs` + `spec-gap-budget.json` + `tests/arch/spec-gap.spec.ts` (rstest has no line coverage yet — eye upgrades when it ships) | write BDD specs per ENGINEERING.md | `test-backfiller` | ✅ live |
-| **Unlearned incidents** (detection lag) | `scripts/incident-scan.mjs` + `incident-budget.json` + `tests/arch/lessons.spec.ts` (offline half: ledger integrity; remote half: failed `main` runs with no lesson) | `/retro` | none yet (recruit on recurrence #3) | ✅ live |
+| **Size/cohesion** (god files) | `harness-arch-scan` + `arch-budget.json` + `tests/arch/budget.spec.ts` | `/decompose` | `decomposer` | ✅ live |
+| **Duplication** (pasted helpers) | `harness-dupe-scan` + `dupe-budget.json` + `tests/arch/dupe.spec.ts` | `/dedupe` | `ui-librarian` | ✅ live |
+| **Clones** (pasted blocks, renamed identifiers) | `harness-clone-scan` (jscpd, adopted) + `.jscpd.json` + `clone-budget.json` + `tests/arch/clone.spec.ts` | `/dedupe` judgment | `ui-librarian` could extend later | ✅ live |
+| **Dead code** (unused files/exports/types) | `harness-dead-scan` (knip, adopted) + `dead-budget.json` + `tests/arch/dead.spec.ts` | judge: un-export / delete / justify-ignore | `mortician` (recruited on recurrence #3, per the rule of three) | ✅ live |
+| **Dep-graph** (cycles/orphans/layering) | `harness-dep-graph-scan` (dependency-cruiser, adopted) + `.dependency-cruiser.cjs` + `dep-graph-budget.json` + `tests/arch/dep-graph.spec.ts` | judge: break cycle / wire-or-delete orphan / restore layer direction (`/decompose` when a cycle wants a split) | none yet (recruit on recurrence #3) | ✅ live |
+| **Spec gap** (src files no spec imports) | `harness-spec-gap-scan` + `spec-gap-budget.json` + `tests/arch/spec-gap.spec.ts` (rstest has no line coverage yet — eye upgrades when it ships) | write BDD specs per ENGINEERING.md | `test-backfiller` | ✅ live |
+| **Unlearned incidents** (detection lag) | `harness-incident-scan` + `incident-budget.json` + `tests/arch/lessons.spec.ts` (offline half: ledger integrity; remote half: failed `main` runs with no lesson) | `/retro` | none yet (recruit on recurrence #3) | ✅ live |
 | **Inline-JS defects** (`<script>` syntax) | extract + `node --check` per page — *not built* | — | — | ⬜ queued |
 | Code review | *(adopted)* | `/code-review` | — | ✅ bundled |
 | Security review | *(adopted)* | `/security-review` | — | ✅ bundled |

@@ -20,7 +20,7 @@ earned after the policy proves out over reps.
 2. **ROSTER.** For each coach with an athlete (`decomposer` ← arch-scan, `ui-librarian` ← dupe-scan):
    - **WIP limit 1:** if this coach already has an open PR (`refactor/decompose-*` / `refactor/dedupe-*`
      branch with an open PR), skip it this cycle. Inventory is waste.
-   - **TARGET:** `node scripts/<gate>.mjs --candidate`. The gate picks; never hand-pick.
+   - **TARGET:** `harness-<gate>-scan --candidate`. The gate picks; never hand-pick.
    - **COLLISION:** if the target file is modified by ANY open PR (`gh`/MCP: list open PR files), skip
      this coach this cycle — structural work never races feature work on the same file.
 3. **DISPATCH.** Launch the athlete: cheap model tier (sonnet), isolated worktree, its standard contract

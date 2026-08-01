@@ -4,14 +4,14 @@ description: >-
   Turn a failure, a caught slip, or a surprise into a banked lesson: reconstruct the timeline, find
   the root cause, measure how long detection took, install the cheapest prevention that makes the
   drift impossible, and record it in docs/LESSONS.md. Use when a net catches drift (a red gate, a
-  failed deploy, a bug that escaped), when `scripts/incident-scan.mjs` names an unlearned incident,
+  failed deploy, a bug that escaped), when `harness-incident-scan` names an unlearned incident,
   when something took far longer to notice than it should have, or when asked to "run a retro",
   "what did we learn", or "why did this slip through". Invokable as /retro.
 ---
 
 # Retro — the learning drill
 
-The *correction* half of the learning Coach. Its eye (`scripts/incident-scan.mjs` +
+The *correction* half of the learning Coach. Its eye (`harness-incident-scan` +
 `incident-budget.json`, enforced by `tests/arch/lessons.spec.ts`) watches one dimension no other
 coach watches: **how long a process gap goes unrecognized.** Every other gate looks at the code.
 This one looks at us.
@@ -22,8 +22,8 @@ missing it the likely outcome."
 ## 1. Take the incident (don't hunt for one)
 
 ```bash
-node scripts/incident-scan.mjs --candidate     # oldest failed run on main with no lesson
-node scripts/incident-scan.mjs                 # the full unlearned list
+harness-incident-scan --candidate     # oldest failed run on main with no lesson
+harness-incident-scan                 # the full unlearned list
 ```
 
 Or take the one in front of you: a red gate, a reverted commit, a bug Eric found, a surprise in
@@ -91,7 +91,7 @@ them exact, and never leave `STATUS: open` — an open entry fails the build by 
 
 ```bash
 npm run verify                      # typecheck · lint · test (the ledger gate runs here)
-node scripts/incident-scan.mjs      # every incident on main now has a lesson
+harness-incident-scan      # every incident on main now has a lesson
 ```
 
 Land it with `/ship` (verify → REST open → one auto-merge call → stop). If the prevention was a new

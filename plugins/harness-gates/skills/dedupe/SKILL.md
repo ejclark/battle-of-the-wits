@@ -3,21 +3,21 @@ name: dedupe
 description: >-
   Consolidate a duplicated helper/design-system symbol into one shared module and import it everywhere —
   one symbol per PR, behavior-preserving, verified green and ratcheted. Use when the duplication gate
-  (scripts/dupe-scan.mjs) flags a symbol defined in multiple files, when the same helper or token block
+  (harness-dupe-scan) flags a symbol defined in multiple files, when the same helper or token block
   appears pasted across files, or when asked to "dedupe", "consolidate", or "promote to src/ui". The
   corrective drill the ui-librarian agent runs; also invokable as /dedupe.
 ---
 
 # Dedupe — the consolidation drill
 
-The *correction* half of the duplication Coach: the gate (`scripts/dupe-scan.mjs` + `dupe-budget.json`,
+The *correction* half of the duplication Coach: the gate (`harness-dupe-scan` + `dupe-budget.json`,
 enforced by `tests/arch/dupe.spec.ts`) is the eye that says the same symbol lives in N files; this drill
 collapses it to one. Every copy left pasted is a future drift bug — copies evolve apart silently.
 
 ## 1. Take the gate's target (don't guess)
 
 ```bash
-node scripts/dupe-scan.mjs --candidate
+harness-dupe-scan --candidate
 ```
 
 Emits the most-copied symbol and every file defining it. Take `candidate`. One symbol per PR.
@@ -34,7 +34,7 @@ Open every listed definition and compare. Three cases:
   behavior; if call sites genuinely need both behaviors, they're different functions — **rename** one to
   say what it does. Never silently pick a winner where behavior differs; note the divergence in the PR.
 - **Same name, unrelated things** (a false positive) → add the name to `IGNORE` in
-  `scripts/dupe-scan.mjs` with a one-line justification comment. That's a legitimate outcome.
+  `harness-dupe-scan` with a one-line justification comment. That's a legitimate outcome.
 
 ## 3. Consolidate
 
@@ -48,7 +48,7 @@ Open every listed definition and compare. Three cases:
 ## 4. Verify green, by exit status
 
 ```bash
-npm run typecheck && npm run lint && npm test && node scripts/dupe-scan.mjs
+npm run typecheck && npm run lint && npm test && harness-dupe-scan
 ```
 
 Never pipe a check to `tail` — it masks the exit status.
@@ -56,7 +56,7 @@ Never pipe a check to `tail` — it masks the exit status.
 ## 5. Ratchet the win in
 
 ```bash
-node scripts/dupe-scan.mjs --update    # budget only ever lowers
+harness-dupe-scan --update    # budget only ever lowers
 ```
 
 Commit `dupe-budget.json` in the same PR so the consolidation is locked in.
