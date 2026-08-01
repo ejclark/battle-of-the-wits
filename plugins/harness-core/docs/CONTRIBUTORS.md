@@ -310,6 +310,70 @@ add process.
 
 ---
 
+## Oversight for a contributor who is entirely green
+
+Assume the baseline: no prior experience, prompts that are underspecified, and no way to tell whether
+what came back is what they meant. Two review points are needed, and **the one people reach for is the
+less important of the two.**
+
+### The upstream failure, which is the dangerous one
+
+The obvious risk is that a new contributor writes bad code. That is not the real risk — the gates
+catch it, and it is cheap.
+
+**The real risk is a vague prompt producing a confident, plausible, wrong change.** They ask for
+something underspecified, Claude builds a reasonable interpretation, every gate passes, and a clean
+green pull request appears that correctly implements a misunderstanding. **Nothing downstream catches
+this**, because there is nothing defective about it — it is well-made and off-target.
+
+And it is specific to being green in a way that is easy to miss. An experienced person notices
+immediately when a model misread them, because they can see the gap between what they asked and what
+they got. **Someone new assumes the output is what they asked for**, because they have no calibration
+for what a correct interpretation would have looked like.
+
+So the five rules for working *with* a green contributor, and they are about Claude's behaviour rather
+than theirs:
+
+1. **Restate the request in one line before building anything.** *"You want the setup steps to say
+   what to do when the check goes red — right?"* Catches the misunderstanding while it still costs a
+   sentence. With an expert this is friction; here it is the whole mechanism.
+2. **Never guess through ambiguity.** With someone experienced, guessing and being corrected is
+   efficient. With someone green **the wrong guess becomes their pull request**, because they cannot
+   tell it was a guess. Ask instead — and ask one question, not five.
+3. **Show the smallest version first**, not the finished thing. A large diff from an unclear request
+   is expensive to unpick and demoralising to reject.
+4. **Say what you did NOT do.** Scope is invisible to someone who cannot read the diff yet, and an
+   unstated omission reads as a promise.
+5. **Never let them ship something they cannot explain in their own words.** This is the load-bearing
+   one. If they cannot say what the change does, that is not a gap in them — it is a **specification
+   failure upstream**, and shipping it means neither of you knows what just landed. `/harness-core:ears`
+   is the drill for turning the wish into something checkable.
+
+That last rule is the inversion of this project's own north star. *If you can explain it, you can build
+it* — so **if they cannot explain it, it should not ship.** The explanation is not documentation of the
+work; it is the specification, and its absence is the finding.
+
+### The downstream point, and its honest status
+
+`pr-coach` reviews the value claim before the mechanics, and exists to make the first *no* impersonal
+so most corrections never become a person correcting a person.
+
+**It has no trigger.** It is a written contract that nothing invokes, which by the codification ladder
+makes it a drill rather than an agent — rung 2, not rung 4. Three ways to give it one, in increasing
+cost:
+
+- **Invoke it by hand** when a pull request appears. Works today, costs nothing, and is the right
+  answer while there is one contributor.
+- **Subscribe a session to the pull request** so review arrives without anyone remembering. Available
+  now; session-scoped rather than durable.
+- **A workflow that runs it on every PR.** The durable answer, and it is **the owner's one-click by
+  design**: `.github/workflows/` decides what runs with the repository's credentials, and
+  `harness-preflight` refuses it to every principal including the owner. An agent that could wire its
+  own trigger into CI is an agent that can grant itself anything.
+
+Do not build the third to avoid doing the first. One contributor, reviewed by hand, is not a process
+gap — it is the rule of three not yet satisfied.
+
 ## How this scales — team topology, and where the phase changes are
 
 The claim under test: **teams of 2–3 are great, and clusters of 2–3 teams is where you hit critical
