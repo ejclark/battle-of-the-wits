@@ -1,0 +1,19 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hello</title>
+<link rel="stylesheet" href="./style.css">
+
+<!-- ── CHANGE THIS. That is the whole exercise. ──────────────────────────────────
+     Every line below is yours. Rewrite the heading, rewrite the paragraph, delete
+     the button, add three more. Nothing here is load-bearing and nothing can break. -->
+
+<h1>Hello, world</h1>
+<p>Somebody made this in about four minutes. It was me. I made it.</p>
+<button onclick="document.body.classList.toggle('night')">flip it</button>
+
+<canvas id="art" width="600" height="360" aria-label="a generated picture"></canvas>
+<p class="hint">That picture is drawn by code, from five words. Open <code>art.mjs</code> and change
+  the words at the top — it will be a different picture.</p>
+
+<script type="module" src="./art.mjs"></script>

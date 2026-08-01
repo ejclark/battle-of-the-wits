@@ -17,7 +17,7 @@ const REPO = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 test("the starter's own suite passes from a cold copy, and is not vacuous", () => {
   const dir = mkdtempSync(join(tmpdir(), "starter-"));
-  writeStarter(dir);
+  writeStarter(dir, { kind: "todo" });
   writeFileSync(join(dir, "package.json"), JSON.stringify({ name: "s", type: "module" }));
 
   const bare = { ...process.env };
@@ -73,4 +73,49 @@ test("the starter needs no build step and says so", () => {
   for (const dom of [/document\./, /window\./, /localStorage/]) {
     assert.ok(!dom.test(logic), `todo.mjs touches the DOM (${dom}) — that is what makes its tests need setup`);
   }
+});
+
+// ── the lower rung ─────────────────────────────────────────────────────────────
+
+test("hello is the default, and it is genuinely smaller than todo", () => {
+  // The order is the design. Somebody who has watched their own five words become a picture opens
+  // the to-do app looking for what to change; somebody handed the to-do app first is reading a
+  // codebase. If hello ever stops being the smaller, default rung, the ladder has inverted.
+  const hello = mkdtempSync(join(tmpdir(), "hello-"));
+  const todo = mkdtempSync(join(tmpdir(), "todo-"));
+  const h = writeStarter(hello, {});
+  const t = writeStarter(todo, { kind: "todo" });
+  assert.ok(h.wrote.includes("index.html"), "hello must be what you get with no arguments");
+  assert.ok(h.wrote.length <= t.wrote.length, "the first rung cannot be the bigger one");
+  assert.ok(h.wrote.includes("STUCK.md"), "the blank-page answer ships with the lower rung, not the higher one");
+});
+
+test("the picture is a rule, not a novelty — same words in, same picture out", () => {
+  // A generated image looks like magic and magic is untestable. These assert it is not magic, which
+  // is the entire pedagogical point: they can work out WHY by reading fifteen lines.
+  const dir = mkdtempSync(join(tmpdir(), "hello-"));
+  writeStarter(dir, {});
+  writeFileSync(join(dir, "package.json"), JSON.stringify({ name: "h", type: "module" }));
+  const bare = { ...process.env };
+  delete bare.NODE_TEST_CONTEXT;
+  delete bare.NODE_OPTIONS;
+  const out = execFileSync(process.execPath, ["--test", "--test-reporter=tap", "tests/scene.test.mjs"], { cwd: dir, encoding: "utf8", env: bare });
+  assert.match(out, /# fail 0/);
+  assert.match(out, /# pass [1-9]/);
+
+  // The rules file must stay DOM-free, same as todo.mjs — it is why "does seven mean seven" is
+  // checkable without a browser, and it is the habit both rungs exist to transmit.
+  const rules = readFileSync(join(dir, "scene.mjs"), "utf8");
+  for (const dom of [/document\./, /window\./, /canvas/i]) {
+    assert.ok(!dom.test(rules), `scene.mjs touches the browser (${dom}) — that is what makes its tests need setup`);
+  }
+});
+
+test("the stuck path hands over material rather than suggestions", () => {
+  // /spark's rule, made concrete: revealing a gap beats handing over an idea. Five questions produce
+  // raw material in thirty seconds, and material is much easier to argue with than a blank page.
+  const stuck = readFileSync(join(REPO, "plugins/harness-core/templates/starter/hello/STUCK.md"), "utf8");
+  assert.ok([...stuck.matchAll(/^\d\. \*\*/gm)].length >= 5, "fewer than five questions — the word list needs five");
+  assert.match(stuck, /answers are the input|answers ARE the input/i, "it has to say the answers are used, or it reads as a warm-up");
+  assert.match(stuck, /WORDS = \[/, "it must show exactly where the answers go");
 });

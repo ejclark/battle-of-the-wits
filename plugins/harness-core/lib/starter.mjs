@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 // THE STARTER — a real first app on disk, in one command.
 //
-//   harness-starter          # write the to-do starter into this directory
-//   harness-starter --force  # overwrite existing files
+//   harness-starter            # hello — one page, a picture from five words you pick
+//   harness-starter --todo     # the fuller app: create, delete, edit, with tests and requirements
+//   harness-starter --force    # overwrite existing files
 //
 // WHY A SCAFFOLD RATHER THAN INSTRUCTIONS. `FIRST-APP.md` teaches the arc and is the right artifact
 // for someone learning what the steps ARE. But somebody who has never built anything cannot type a
@@ -26,7 +27,16 @@ import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const SRC = join(HERE, "../templates/starter/todo");
+// TWO RUNGS, and the lower one is the important one. The to-do app is a good FIRST PROJECT and a bad
+// first five minutes: eight tests and nine requirements is a lot to meet before anything has worked.
+// `hello` is one page, four files, and a picture drawn from five words the person chose — so the
+// first thing they change is something they invented rather than something off a list.
+//
+// The order matters more than either template. Somebody who has seen their own words become a
+// picture will open the to-do app looking for what to change; somebody handed the to-do app first is
+// reading a codebase.
+const KINDS = { hello: "../templates/starter/hello", todo: "../templates/starter/todo" };
+const SRC = join(HERE, KINDS.hello); //  the DEFAULT rung, and it is the lower one on purpose
 
 /** Every file in the starter, as paths relative to its root. */
 export function starterFiles(root = SRC) {
@@ -52,10 +62,11 @@ export const STARTER_SCRIPTS = {
  * Write the starter. NEVER clobbers without `--force` — the same rule the bootstrap follows, and for
  * the same reason: an existing file is a decision somebody made.
  */
-export function writeStarter(dest, { force = false, dryRun = false } = {}) {
+export function writeStarter(dest, { force = false, dryRun = false, kind = "hello" } = {}) {
+  const from = join(HERE, KINDS[kind] ?? KINDS.hello);
   const wrote = [];
   const skipped = [];
-  for (const rel of starterFiles()) {
+  for (const rel of starterFiles(from)) {
     const to = join(dest, rel);
     if (existsSync(to) && !force) {
       skipped.push(rel);
@@ -64,7 +75,7 @@ export function writeStarter(dest, { force = false, dryRun = false } = {}) {
     wrote.push(rel);
     if (dryRun) continue;
     mkdirSync(dirname(to), { recursive: true });
-    copyFileSync(join(SRC, rel), to);
+    copyFileSync(join(from, rel), to);
   }
   return { wrote, skipped };
 }
@@ -72,11 +83,30 @@ export function writeStarter(dest, { force = false, dryRun = false } = {}) {
 // ── CLI ────────────────────────────────────────────────────────────────────────
 if (process.argv[1]?.endsWith("starter.mjs")) {
   const dryRun = process.argv.includes("--dry-run");
-  const { wrote, skipped } = writeStarter(process.cwd(), { force: process.argv.includes("--force"), dryRun });
+  const kind = process.argv.includes("--todo") ? "todo" : "hello";
+  const { wrote, skipped } = writeStarter(process.cwd(), { force: process.argv.includes("--force"), dryRun, kind });
 
-  console.log(`\n  ✦ To-do starter${dryRun ? " — DRY RUN, nothing written" : ""}\n`);
+  console.log(`\n  ✦ ${kind === "hello" ? "Hello" : "To-do"} starter${dryRun ? " — DRY RUN, nothing written" : ""}\n`);
   for (const f of wrote) console.log(`      + ${f}`);
   for (const f of skipped) console.log(`      · ${f}  (already there — yours wins)`);
+
+  if (kind === "hello") {
+    console.log(`
+      "dev": "${STARTER_SCRIPTS.dev}"   →  then open the address it prints
+
+  Change the heading. Change a colour in style.css. Reload. That loop — change, reload, look — is the
+  whole job, and it never gets more complicated than it is right now.
+
+  The picture is drawn from the five words at the top of art.mjs. Change one and reload; it will be a
+  different picture, and you can work out WHY by reading fifteen lines.
+
+  Cannot think of five words? STUCK.md asks you five questions instead, and the answers ARE the input.
+  Nobody else's page will look like yours.
+
+  Ready for something that does more? \`harness-starter --todo\`.
+`);
+    process.exit(0);
+  }
 
   console.log(`
   Add these to package.json scripts:

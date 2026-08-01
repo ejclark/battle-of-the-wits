@@ -24,6 +24,13 @@ more on day one than any amount of correct architecture.
 
 ## Step 1 · One file, on screen
 
+**Shortcut:** `harness-starter` writes this whole step for you — a page, some styles, and a picture
+drawn from five words you choose. If you have it, run it and skip to step 2. If you cannot think of
+five words, the `STUCK.md` it writes asks you five questions instead, and **your answers are the
+input** — nobody else's page will look like yours.
+
+Doing it by hand is also fine, and it is three lines:
+
 Make a folder. Put one file in it called `index.html`:
 
 ```html
@@ -159,9 +166,12 @@ slightly not trusting their own pipeline.
 You now have what most projects never get around to: **a machine that catches your mistakes before
 anyone else sees them, and that you have personally watched do it.**
 
-## Step 9 · Build the three real features
+## Step 9 · Make it actually do something
 
-**Shortcut, if you have the plugins:** `harness-starter` writes this app for you — logic, tests,
+Up to here it is a page that reacts. Now make it hold state — a to-do list, which is the smallest
+thing that is genuinely an *application* rather than a document.
+
+**Shortcut, if you have the plugins:** `harness-starter --todo` writes this app for you — logic, tests,
 requirements, styles — so you can spend step 9 changing it rather than typing it. Run `npm test`
 straight away: eight passing tests before you have written a line. That green is not a formality, it
 means the thing you are about to change is known-good *right now*, so anything that breaks next is
