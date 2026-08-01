@@ -1,4 +1,5 @@
 {
+  "persona": "dungeon",
   "sourceDir": "src",
   "testDir": "tests",
   "sourceExt": ".ts",
