@@ -70,3 +70,34 @@ export function renderJscpd(desc = {}) {
     2,
   )}\n`;
 }
+
+/**
+ * The scripts table the bootstrap merges into `package.json`.
+ *
+ * `typecheck` is CONDITIONAL, and finding that out cost the first adoption into a repository shaped
+ * differently from this one. A JavaScript project got `tsc -p tsconfig.json --noEmit` and a `verify`
+ * that ran it, so the adopter's very first `npm run verify` failed — on a file they do not have, for
+ * a language they do not use, in a script the harness had just written for them.
+ *
+ * That is the same failure the grandfather step exists to prevent, one layer up: go red immediately
+ * for something nobody caused, and the whole process gets switched off before it has proved anything.
+ * The descriptor already says `sourceExt`; there was no excuse for guessing.
+ */
+export function scriptsFor(desc = {}) {
+  const typescript = (desc.sourceExt ?? ".ts") === ".ts";
+  const checks = [typescript ? "npm run typecheck" : null, "npm run lint", "npm test"].filter(Boolean);
+  return {
+    ...(typescript ? { typecheck: "tsc -p tsconfig.json --noEmit" } : {}),
+    lint: "biome check .",
+    "lint:fix": "biome check --write .",
+    format: "biome format --write .",
+    verify: checks.join(" && "),
+    prepare: "husky",
+    "arch:scan": "harness-arch-scan",
+    "dupe:scan": "harness-dupe-scan",
+    "dead:scan": "harness-dead-scan",
+    "spec:gap": "harness-spec-gap-scan",
+    "clone:scan": "harness-clone-scan",
+    "incident:scan": "harness-incident-scan",
+  };
+}

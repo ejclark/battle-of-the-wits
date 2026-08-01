@@ -1,6 +1,5 @@
-import { test } from "node:test";
-import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
+import { test } from "node:test";
 
 // Architecture fitness gates — the EXECUTABLE version of a code-quality audit.
 //
@@ -13,12 +12,16 @@ import { execFileSync } from "node:child_process";
 //
 // The scanners arrive on PATH from the harness-gates plugin. If a gate is red, fix the finding —
 // never the gate.
+//
+// It THROWS rather than calling assert.fail: an assertion outside a test callback is flagged by the
+// linter this harness installs (noMisplacedAssertion), and a bootstrap must not write a file its own
+// verify then rejects. A thrown Error fails the case identically and carries the same message.
 const gate = (bin) => {
   try {
     execFileSync(bin, { cwd: process.cwd(), stdio: "pipe" });
   } catch (err) {
     const out = `${err.stdout ?? ""}${err.stderr ?? ""}`;
-    assert.fail(`${bin} reported debt over budget:\n\n${out}`);
+    throw new Error(`${bin} reported debt over budget:\n\n${out}`);
   }
 };
 

@@ -52,7 +52,7 @@ function step(label, fn) {
 const run = (cmd, args, cwd) =>
   execFileSync(cmd, args, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
 
-export function autoAdopt(root, { ship = false } = {}) {
+export function autoAdopt(root, { ship = false, wrote = [] } = {}) {
   console.log("\n⚙  Automated adoption run\n");
 
   // 1 — dependencies. Everything below needs the tools to exist, and husky's `prepare` builds the
@@ -87,6 +87,18 @@ export function autoAdopt(root, { ship = false } = {}) {
   }
   if (unavailable.length) {
     console.log(`  · gates not on PATH: ${unavailable.join(", ")} — install harness-gates to measure them`);
+  }
+
+  // 2b — format WHAT THIS RUN WROTE, and nothing else. The first adoption into a differently-shaped
+  // repo went red on `verify` because three files the bootstrap had written sixty seconds earlier
+  // failed the formatter it had just installed. Scoped to this run's own output on purpose:
+  // reformatting the adopter's code uninvited would break the one promise the bootstrap makes.
+  const formattable = wrote.filter((f) => /\.(m?js|ts|json)$/.test(f));
+  if (hasPkg && formattable.length) {
+    step("format what was written", () => {
+      run("npx", ["biome", "format", "--write", "--no-errors-on-unmatched", ...formattable], root);
+      return `${formattable.length} file(s)`;
+    });
   }
 
   // 3 — verify. CI is confirmation; a red gate here is cheaper than a red gate on a runner.

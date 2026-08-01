@@ -11,31 +11,24 @@ import { execFileSync } from "node:child_process";
 //
 // The scanners arrive on PATH from the harness-gates plugin. If a gate is red, fix the finding —
 // never the gate.
-const gate = (bin: string) =>
-  expect(() => execFileSync(bin, { cwd: process.cwd(), stdio: "pipe" })).not.toThrow();
+//
+// It THROWS rather than asserting outside the case: an assertion outside a test callback is flagged
+// by the linter this harness installs (noMisplacedAssertion), and a bootstrap must not write a file
+// its own verify then rejects.
+const gate = (bin: string) => {
+  try {
+    execFileSync(bin, { cwd: process.cwd(), stdio: "pipe" });
+  } catch (err) {
+    const e = err as { stdout?: string; stderr?: string };
+    throw new Error(`${bin} reported debt over budget:\n\n${e.stdout ?? ""}${e.stderr ?? ""}`);
+  }
+};
 
 describe("architecture fitness", () => {
-  it("no source file exceeds its committed line budget", () => {
-    gate("harness-arch-scan");
-  });
-
-  it("duplication has not grown past its budget", () => {
-    gate("harness-dupe-scan");
-  });
-
-  it("dead code has not grown past its budget", () => {
-    gate("harness-dead-scan");
-  });
-
-  it("the spec gap has not grown past its budget", () => {
-    gate("harness-spec-gap-scan");
-  });
-
-  it("copy-pasted blocks have not grown past their budget", () => {
-    gate("harness-clone-scan");
-  });
-
-  it("every incident has a banked lesson", () => {
-    gate("harness-incident-scan");
-  });
+  it("no source file exceeds its committed line budget", () => gate("harness-arch-scan"));
+  it("duplication has not grown past its budget", () => gate("harness-dupe-scan"));
+  it("dead code has not grown past its budget", () => gate("harness-dead-scan"));
+  it("the spec gap has not grown past its budget", () => gate("harness-spec-gap-scan"));
+  it("copy-pasted blocks have not grown past their budget", () => gate("harness-clone-scan"));
+  it("every incident has a banked lesson", () => gate("harness-incident-scan"));
 });

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { renderJscpd, renderKnip } from "../plugins/harness-core/lib/configs.mjs";
+import { renderJscpd, renderKnip, scriptsFor } from "../plugins/harness-core/lib/configs.mjs";
 
 // knip and jscpd are the only two gates whose SCOPE lives in a config file rather than in the
 // scanner's own code. A copied template pointed both at `src/`, so a repository declaring any other
@@ -45,5 +45,37 @@ test("both render valid, newline-terminated JSON", () => {
   for (const out of [renderKnip(DESC), renderJscpd(DESC)]) {
     assert.ok(out.endsWith("\n"));
     assert.doesNotThrow(() => JSON.parse(out));
+  }
+});
+
+// The scripts table is descriptor-aware for the same reason the detector configs are, and it cost
+// the first adoption into a differently-shaped repository to find out: a JavaScript project was
+// handed `tsc -p tsconfig.json --noEmit` and a `verify` that ran it, so the adopter's very first
+// verify failed — on a file they do not have, for a language they do not use, in a script the
+// harness had just written for them. That is the failure the grandfather step exists to prevent,
+// one layer up.
+test("a TypeScript repo gets a typecheck step", () => {
+  const s = scriptsFor({ sourceExt: ".ts" });
+  assert.equal(s.typecheck, "tsc -p tsconfig.json --noEmit");
+  assert.match(s.verify, /npm run typecheck/);
+});
+
+test("a JavaScript repo gets neither the step nor a verify that runs it", () => {
+  const s = scriptsFor({ sourceExt: ".js" });
+  assert.equal(s.typecheck, undefined);
+  assert.doesNotMatch(s.verify, /typecheck/);
+  assert.equal(s.verify, "npm run lint && npm test");
+});
+
+test("an empty descriptor still assumes the documented default", () => {
+  assert.match(scriptsFor({}).verify, /npm run typecheck/);
+});
+
+test("every gate gets a script whatever the language", () => {
+  for (const desc of [{ sourceExt: ".ts" }, { sourceExt: ".js" }]) {
+    const s = scriptsFor(desc);
+    for (const k of ["arch:scan", "dupe:scan", "dead:scan", "spec:gap", "clone:scan", "incident:scan"]) {
+      assert.ok(s[k], `${k} missing for ${desc.sourceExt}`);
+    }
   }
 });

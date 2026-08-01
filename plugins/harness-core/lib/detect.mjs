@@ -58,22 +58,48 @@ export function detect(root) {
 }
 
 /**
- * Which gate spec to write, and under which filename — decided by the repo's own test runner.
- *
- * Getting this wrong is the worst failure the bootstrap can have: a gate file the runner never
- * discovers reports nothing, the suite stays green, and the repo believes it is guarded when it is
- * not. `node --test` provides `test()` but NOT `expect`, and globs *.test.mjs; Vitest/Rstest/Jest
- * provide describe/it/expect and glob *.spec.ts.
+ * Which gate spec to write, and under which filename. `node --test` provides `test()` but NOT
+ * `expect`; Vitest/Rstest/Jest provide describe/it/expect. Getting it wrong is the worst failure
+ * this bootstrap can have — a gate file the runner never discovers reports nothing, silently.
  */
-export function gateSpecFor(root) {
-  const testScript = (() => {
+export function gateSpecFor(root, descriptor = null) {
+  const pkg = (() => {
     try {
-      return JSON.parse(readFileSync(join(root, "package.json"), "utf8")).scripts?.test ?? "";
+      return JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
     } catch {
-      return "";
+      return {};
     }
   })();
-  return /\bnode\s+--test\b/.test(testScript)
-    ? { template: "specs/gates.test.mjs", name: "gates.test.mjs" }
-    : { template: "specs/gates.spec.ts", name: "gates.spec.ts" };
+  const nodeTest = /\bnode\s+--test\b/.test(pkg.scripts?.test ?? "");
+  const template = nodeTest ? "specs/gates.test.mjs" : "specs/gates.spec.ts";
+
+  // The FILENAME comes from the repo's own spec suffix, not the template's: the runner decides which
+  // globals exist, the suffix decides whether the file is collected at all. A repo globbing
+  // `spec/**/*.test.js` was handed `gates.test.mjs` and never saw it — gates reporting nothing while
+  // the suite stayed green, which is the worst failure this bootstrap has.
+  const suffix = specSuffixFor(root, descriptor, nodeTest);
+  return { template, name: `gates${suffix}` };
+}
+
+/**
+ * The suffix a spec must carry in THIS repo for its own test command to collect it. The descriptor is
+ * passed IN rather than read from disk: the bootstrap writes a default `harness.json` before wiring
+ * the gates, so re-reading would pick up the template's `.spec.ts` — an opinion the repo never had.
+ */
+function specSuffixFor(root, descriptor, nodeTest) {
+  const declared = descriptor?.specSuffix ?? null;
+  if (!declared) return nodeTest ? ".test.mjs" : ".spec.ts";
+
+  // `.js` in a CommonJS package cannot hold the ESM the template is written in, so `.mjs` is the only
+  // correct extension even though it will not be collected: a file that throws on import is loud.
+  const esm = /\.mjs$/.test(declared) || readPkgType(root) === "module";
+  return esm ? declared : declared.replace(/\.js$/, ".mjs");
+}
+
+function readPkgType(root) {
+  try {
+    return JSON.parse(readFileSync(join(root, "package.json"), "utf8")).type;
+  } catch {
+    return undefined;
+  }
 }

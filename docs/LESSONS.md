@@ -436,3 +436,28 @@ Prevention ranks, best first:
 - **SIDE QUESTS:** the same shape as the earlier "shipped template targeted a runner the repo does
   not have" — a fork in the adoption path is a place where two things must stay equal, and equality
   that nothing asserts is a coincidence with a shelf life.
+
+### The first adoption into a second repository failed four ways
+- **SHA:** `n/a`   **DATE:** 2026-08-01   **STATUS:** closed
+- **SIGNAL:** the README has said all along that "portable" was a claim rather than a fact, proven in
+  exactly one codebase. Adopting into a throwaway JavaScript project — `lib/`, `spec/`, `.js`, no
+  TypeScript — produced four defects in under a minute, none of which any existing test could see.
+- **ROOT CAUSE:** four separate assumptions, each invisible while there was only one adopter.
+  (1) The scripts table hardcoded `typecheck: tsc -p tsconfig.json --noEmit` and a `verify` that ran
+  it, so a JavaScript repo's first verify failed on a file it does not have, for a language it does
+  not use, in a script the harness had just written. (2) The gate spec template used `assert.fail`
+  outside a test callback and unsorted imports — flagged by the linter the harness itself installs,
+  so the bootstrap wrote a file its own verify rejected. (3) Three written files failed that
+  formatter. (4) Worst: the gate file was named `gates.test.mjs` in a repo whose suite globs
+  `spec/**/*.test.js`, so it was never collected — the gates reported nothing while the suite stayed
+  green. The runner decides which globals exist; the SUFFIX decides whether the file is seen, and one
+  check was answering both questions.
+- **PREVENTION:** script + gate — the scripts table is descriptor-aware (`scriptsFor`); both gate
+  templates throw instead of asserting outside a case; `--auto` formats what it wrote and nothing
+  else; and the gate file carries the repo's own `specSuffix`, with `.mjs` forced in a CommonJS
+  package because a file that throws on import is at least loud. Cases for each, including the
+  CommonJS conflict.
+- **SIDE QUESTS:** the fix for one ordering trap walked straight into another — `gateSpecFor` re-read
+  `harness.json` from disk, which by then was the DEFAULT the bootstrap had just written, so it named
+  the file after an opinion the repo never expressed. Passing the descriptor in fixed it. Whenever a
+  tool both writes a file and reads it, name which copy is authoritative.

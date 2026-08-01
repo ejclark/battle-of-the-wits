@@ -164,8 +164,10 @@ test("gate wiring follows the descriptor's testDir", () => {
   });
   try {
     run(root);
-    assert.equal(existsSync(join(root, "spec/arch/gates.spec.ts")), true, "should honor testDir: spec");
-    assert.equal(existsSync(join(root, "tests/arch/gates.spec.ts")), false, "must not use the default");
+    // Both halves come from the descriptor: `testDir` decides WHERE, and `specSuffix` decides
+    // whether the repo's own test command will ever collect the file.
+    assert.equal(existsSync(join(root, "spec/arch/gates.test.ts")), true, "should honor testDir and specSuffix");
+    assert.equal(existsSync(join(root, "tests/arch/gates.spec.ts")), false, "must not use the defaults");
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
@@ -438,6 +440,42 @@ test("the shipped pre-commit hook survives a filename with a space", () => {
     const out = execFileSync("sh", [join(root, ".husky/pre-commit")], { cwd: root, encoding: "utf8", stdio: "pipe" });
     assert.equal(typeof out, "string");
     assert.match(git("diff", "--cached", "--name-only"), /release notes\.md/, "the file must still be staged");
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+// The gate file must match the repo's OWN spec glob, not the template's.
+//
+// A repository whose suite globs `spec/**/*.test.js` was handed `gates.test.mjs` — a file its runner
+// would never collect. The gates reported nothing, the suite stayed green, and the repo believed it
+// was guarded. The runner decides which globals exist; the SUFFIX decides whether the file is seen at
+// all, and those are two different questions that were being answered by one check.
+test("the gate file carries the suffix the repo's own test command collects", () => {
+  const root = makeRepo({
+    "package.json": '{"name":"probe","type":"module","scripts":{"test":"node --test \\"spec/**/*.test.js\\""}}\n',
+    "harness.json": '{"testDir":"spec","sourceExt":".js","specSuffix":".test.js"}\n',
+  });
+  try {
+    run(root);
+    assert.equal(existsSync(join(root, "spec/arch/gates.test.js")), true, "must match *.test.js");
+    assert.equal(existsSync(join(root, "spec/arch/gates.test.mjs")), false, "the default would never be collected");
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("a CommonJS package gets .mjs, because ESM cannot live in its .js", () => {
+  // The one case where the two answers genuinely conflict: `.js` in a CJS package cannot hold the
+  // ESM the template is written in. Correctness of the file wins over collectability, because a file
+  // that throws on import is at least loud.
+  const root = makeRepo({
+    "package.json": '{"name":"probe","scripts":{"test":"node --test \\"spec/**/*.test.js\\""}}\n',
+    "harness.json": '{"testDir":"spec","specSuffix":".test.js"}\n',
+  });
+  try {
+    run(root);
+    assert.equal(existsSync(join(root, "spec/arch/gates.test.mjs")), true);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

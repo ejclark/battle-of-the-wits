@@ -939,3 +939,53 @@ They now have to agree, with a self-check that the parse found at least six gate
 fails loudly rather than cheerfully agreeing that both templates are empty. That trick is becoming a
 habit worth naming: **every gate that counts things should assert it counted something.** The parity
 gate two dungeons ago passed by parsing nothing, and this one could have passed the same way.
+
+---
+
+## 2026-08-01 (night, sixteenth) · The Second Home
+
+The README has said it from the start, and it was the most honest line in the repository:
+
+> this has been proven in exactly one codebase … treat "portable" as a claim rather than a fact.
+
+So: a throwaway JavaScript project — `lib/`, `spec/`, `.js`, no TypeScript, a suite that globs
+`spec/**/*.test.js`. Adopt into it and watch.
+
+**Four defects in under a minute**, none of which any existing test could see.
+
+1. The scripts table hardcoded `typecheck: tsc -p tsconfig.json --noEmit`, and a `verify` that ran
+   it. The adopter's very first verify failed **on a file they do not have, for a language they do
+   not use, in a script the harness had written for them sixty seconds earlier.** That is the
+   grandfather-step failure one layer up: go red immediately for something nobody caused, and the
+   whole process is switched off before it has proved anything.
+2. The gate spec template called `assert.fail` outside a test callback and had unsorted imports —
+   both flagged by **the linter the harness itself installs**. A bootstrap that writes a file its own
+   verify then rejects has a very short window of credibility.
+3. Three more written files failed that same formatter.
+4. And the worst one. The gate file was named `gates.test.mjs` in a repo whose suite globs
+   `spec/**/*.test.js`. **It was never collected.** Seven gates reporting nothing, a green suite, and
+   a repository that believes it is guarded.
+
+That fourth one is the exact lesson banked on the first day of this repository's life — *a gate file
+the runner never discovers is worse than a gate that fails* — recurring in a new costume, because the
+detection answered **which runner** and treated that as also answering **which glob**. They are two
+questions. One check was answering both.
+
+### The fix for one trap walked into another
+
+`gateSpecFor` read `harness.json` from disk. By the time it runs, the bootstrap has already written
+the **default** `harness.json` from its own template — so it named the gate file after an opinion the
+repo never expressed. The descriptor had been read into memory earlier for exactly this reason, in a
+previous dungeon, and I re-read it from disk anyway.
+
+Whenever a tool both writes a file and reads it, say which copy is authoritative. It is now passed in.
+
+### What the harness got right
+
+Worth recording, because a list of four defects reads worse than the run actually was. Everything
+else worked, in a repo shaped nothing like this one: budgets frozen against `lib/` with `.js`, the
+duplication gate finding a genuinely copy-pasted `subtotal` across two modules, dead code finding an
+unused export, the spec gap counting the two untested files correctly, and the adoption landing on
+its own branch. After the four fixes, the JavaScript repo's suite runs **seven gates, all green**.
+
+The claim in the README is now one repository closer to being a fact. It is still a claim.
