@@ -848,3 +848,48 @@ frequently executed file in the whole distribution was fine.
 
 Worth a sweep of anything else excluded on principle — fixtures, generated output — for the same
 silent promotion from *out of scope* to *assumed good*.
+
+---
+
+## 2026-08-01 (night, fourteenth) · The Gatehouse
+
+The previous retro said to sweep whatever else was excluded on principle. The first stop was the
+`husky/` templates — the git hooks the harness installs into an adopter's repository, which then run
+**on every commit and every push they ever make**.
+
+Nothing had ever checked them. CI shellchecks `plugins/*/bin/*`: every launcher, and no hook.
+
+Running shellcheck on them for the first time found a real one, in `pre-commit`:
+
+```sh
+files=$(git diff --cached --name-only --diff-filter=ACMR)
+./node_modules/.bin/biome format --write $files
+git add $files
+```
+
+`$files` is a newline-joined list, and unquoted expansion splits on **spaces** too. Stage a file
+called `release notes.md` and it becomes two arguments: formatting silently skips it, and `git add`
+is handed two paths that do not exist.
+
+It is the kind of defect that only appears the first time somebody has a space in a filename, which
+is precisely the day nobody is looking for it. Now NUL-delimited through `xargs -0`, with an
+end-to-end case that stages exactly that filename — and verified by a negative control against the
+old implementation, because a case that has never been seen to fail proves nothing.
+
+None of the three hooks carried a shebang either, so shellcheck could not reason about them even if
+someone had pointed it at them.
+
+### A glob is an enumeration wearing a wildcard
+
+That is the sentence worth keeping. `plugins/*/bin/*` looks like a rule and behaves like a list: it
+covers exactly what its author had in mind at the moment they typed it, and everything added later in
+a different directory is silently out of scope while looking covered.
+
+Second enumeration to fail this week — the first was the athletes' command paths, repointed by a
+sweep that fixed everything it looked at and taught nothing. When the intent is "everything of kind
+X", **derive** the list and then assert the derivation actually found the kinds you expect. The
+shellcheck case now asserts the hooks are in scope, so the coverage cannot narrow again without
+failing.
+
+CI's own glob is untouched — workflow files stay the human carve-out — but it no longer matters:
+`npm run verify` covers strictly more than the workflow does, which is what The Rehearsal was for.

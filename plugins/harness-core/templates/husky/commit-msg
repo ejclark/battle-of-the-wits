@@ -1,1 +1,3 @@
+#!/usr/bin/env sh
+# Conventional Commits, enforced at the moment of writing rather than in review.
 npx --no-install commitlint --edit "$1"

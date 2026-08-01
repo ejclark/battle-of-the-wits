@@ -1,4 +1,5 @@
+#!/usr/bin/env sh
 # The full local gate — every check CI runs, before anything leaves the machine.
-# Exists because "verify with a subset" (typecheck+test but not lint) shipped red CI twice.
-# CI is confirmation, not the first line of defense. Bypass only knowingly: git push --no-verify.
+# Exists because "verify with a subset" (typecheck + test but not lint) shipped red CI twice.
+# CI is confirmation, not the first line of defence. Bypass only knowingly: git push --no-verify.
 npm run verify
