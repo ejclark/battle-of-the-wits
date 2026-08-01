@@ -70,12 +70,12 @@ flag-day cleanup, and improvement is permanent because the budget can only move 
 
 This is what makes autonomy safe rather than reckless: *automerge everything but breaking changes* is
 a terrible idea unguarded, and a very good one once the verification underneath it is real. The gates
-are that verification. See [`docs/COACHES.md`](docs/COACHES.md).
+are that verification. See [`COACHES.md`](plugins/harness-core/docs/COACHES.md).
 
 ## Configuration
 
 Most repositories need none. If yours doesn't use `src/` and `tests/`, add a `harness.json` at its
-root — see [`docs/DESCRIPTOR.md`](docs/DESCRIPTOR.md).
+root — see [`DESCRIPTOR.md`](plugins/harness-core/docs/DESCRIPTOR.md).
 
 Budgets (`arch-budget.json` and friends) live in the **target** repo, because they are that repo's
 state, not the harness's. The harness carries the procedure; the repo carries its own history.
@@ -84,10 +84,14 @@ state, not the harness's. The harness carries the procedure; the repo carries it
 
 | | |
 |---|---|
-| [`docs/COACHES.md`](docs/COACHES.md) | The detect-and-correct doctrine — the coaching staff, the codification ladder, detection lag, the smell catalog |
-| [`docs/ENGINEERING.md`](docs/ENGINEERING.md) | Engineering standards, change communication, the BDD loop |
-| [`docs/OPERATING-MODEL.md`](docs/OPERATING-MODEL.md) | The portable operating model — how a human and Claude divide work |
-| [`docs/DESCRIPTOR.md`](docs/DESCRIPTOR.md) | `harness.json` — the interface that makes all of the above portable |
+| [`COACHES.md`](plugins/harness-core/docs/COACHES.md) | The detect-and-correct doctrine — the coaching staff, the codification ladder, detection lag, the smell catalog |
+| [`ENGINEERING.md`](plugins/harness-core/docs/ENGINEERING.md) | Engineering standards, change communication, the BDD loop |
+| [`OPERATING-MODEL.md`](plugins/harness-core/docs/OPERATING-MODEL.md) | The portable operating model — how a human and Claude divide work |
+| [`DESCRIPTOR.md`](plugins/harness-core/docs/DESCRIPTOR.md) | `harness.json` — the interface that makes all of the above portable |
+
+**The doctrine ships inside `harness-core`**, not just in this repository — an adopter installs
+plugins, they don't clone this repo, so doctrine that lived only at the root is doctrine they would
+never receive. A gate asserts it stays that way, and that no second copy appears.
 
 ## Working on the harness itself
 

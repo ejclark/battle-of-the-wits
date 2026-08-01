@@ -19,7 +19,7 @@ The mechanics live in `scripts/ship.sh` (a one-time build cost, ~free per run). 
 `git` and repo-scoped **REST** run on your machine / the **core** bucket (15k/hr, barely touched).
 The GitHub **MCP** spends **GraphQL** (5k/hr) — one MCP PR-create+auto-merge+read cycle measured
 **~6,000 points**, enough to exhaust the bucket by itself; repeated status-polling is what actually
-drained it. See `docs/COACHES.md` → *Resource cost is a fitness dimension*.
+drained it. See `https://github.com/ejclark/battle-of-the-wits/blob/main/plugins/harness-core/docs/COACHES.md` → *Resource cost is a fitness dimension*.
 
 ## The flow
 

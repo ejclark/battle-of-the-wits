@@ -4,7 +4,7 @@ description: >-
   Turn a raw feature request, idea, bug, or acceptance criterion into EARS-format requirements
   (Easy Approach to Requirements Syntax) and scaffold the matching BDD specs. Use when writing
   acceptance criteria for a plan/issue/PR, when a requirement reads vague ("should support…"),
-  or before writing a spec — EARS is the upstream half of our BDD loop (docs/ENGINEERING.md).
+  or before writing a spec — EARS is the upstream half of our BDD loop (${CLAUDE_PLUGIN_ROOT}/docs/ENGINEERING.md).
 ---
 
 # /ears — write requirements the way we test them
@@ -39,7 +39,7 @@ shape a BDD spec needs. Reach for the simplest pattern that fits.
    the unwanted-behavior (IF/THEN) paths — the error cases are where EARS earns its keep.
 3. **Map to specs (mechanical).** Each EARS line → one spec: the `WHEN/WHILE/IF/WHERE` clause →
    `describe("when …")`, the `shall <response>` → `it("<response>")`. Scaffold them per
-   docs/ENGINEERING.md (observable behavior only; `tests/support/builders.ts` for data).
+   ${CLAUDE_PLUGIN_ROOT}/docs/ENGINEERING.md (observable behavior only; `tests/support/builders.ts` for data).
 4. **Hand off.** The EARS lines are the acceptance criteria (drop them in the plan/issue/PR); the
    scaffolded specs are the failing tests TDD then makes pass. The spec-gap coach ensures they land.
 
