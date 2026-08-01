@@ -7,9 +7,9 @@
 // committed BUDGET so new duplication can't land, while `--update` ratchets the budget DOWN as copies
 // are consolidated into src/ui. Grandfathers today's duplication (frozen, not blocked) like arch-scan.
 //
-//   node scripts/dupe-scan.mjs            # report + enforce (exit 1 if duplication grew past budget)
-//   node scripts/dupe-scan.mjs --update   # rewrite dupe-budget.json (ratchet: only lower)
-//   node scripts/dupe-scan.mjs --candidate# emit the highest-leverage consolidation target as JSON
+//   harness-dupe-scan            # report + enforce (exit 1 if duplication grew past budget)
+//   harness-dupe-scan --update   # rewrite dupe-budget.json (ratchet: only lower)
+//   harness-dupe-scan --candidate# emit the highest-leverage consolidation target as JSON
 //
 // Enforced in CI via tests/arch/dupe.spec.ts — runs on every PR, no extra workflow.
 import { readFileSync } from "node:fs";
@@ -88,7 +88,7 @@ if (debt > cap) {
   console.error(`\n✗ duplication grew: ${debt} > budget ${cap}.`);
   console.error(
     "Fix: promote the shared symbol into src/ui (or its natural home) and import it everywhere —\n" +
-      "run /dedupe. Then `node scripts/dupe-scan.mjs --update` to ratchet the budget down.",
+      "run /dedupe. Then `harness-dupe-scan --update` to ratchet the budget down.",
   );
   process.exit(1);
 }

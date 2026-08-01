@@ -55,7 +55,7 @@ becomes the `it("<response>")`. So one EARS line ⇒ one spec.
 > **Spec:** `describe("when the position hits its take-profit target") → it("closes the position")`.
 
 Write EARS acceptance criteria in plans, issues, and PRs; the `/ears` drill
-(`.claude/skills/ears/SKILL.md`) classifies a raw request into these patterns and scaffolds the
+(`/harness-core:ears`) classifies a raw request into these patterns and scaffolds the
 matching specs. Anti-patterns EARS kills: vague "should/support/handle", compound requirements
 (one `shall` per line), and unverifiable responses (if a spec can't assert it, rewrite it).
 

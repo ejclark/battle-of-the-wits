@@ -9,14 +9,14 @@ set -euo pipefail
 # status loop. A script is a one-time build cost, then ~free per run forever; that is the
 # self-healing flywheel (docs/COACHES.md → "Resource cost is a fitness dimension").
 #
-#   scripts/ship.sh open "<pr title>" [--body-file F] [--base B] [--no-verify]
+#   harness-ship open "<pr title>" [--body-file F] [--base B] [--no-verify]
 #       verify locally (fail fast) → incident preflight → push → open a PR over REST (core
 #       bucket). Prints the
-#       PR number + URL. THEN, per .claude/skills/ship/SKILL.md: make ONE
+#       PR number + URL. THEN, per `/harness-gates:ship`: make ONE
 #       `enable_pr_auto_merge` MCP call (the only GraphQL-only step — 1 call/PR, trivial)
 #       for walk-away merge-on-green, and STOP. Do not poll.
 #
-#   scripts/ship.sh merge <pr-number> [--method squash|merge|rebase]
+#   harness-ship merge <pr-number> [--method squash|merge|rebase]
 #       squash-merge over REST (core bucket) — ONLY for an UNPROTECTED base branch. Merging into
 #       a protected branch (i.e. `main` here) is refused for this session type (403), so on `main`
 #       use native auto-merge (the enable_pr_auto_merge call) instead; when GraphQL is exhausted,
@@ -45,7 +45,7 @@ api() {
     -H "Authorization: Bearer $TOKEN" \
     -H "Accept: application/vnd.github+json" \
     -H "X-GitHub-Api-Version: 2022-11-28" \
-    -H "User-Agent: skynet-ship" \
+    -H "User-Agent: battle-of-the-wits-harness" \
     ${3:+-d "$3"} "$API/repos/$(repo)$2"
 }
 http_of() { printf '%s' "${1##*__SHIP_HTTP__}"; }              # code from an api() result
@@ -84,7 +84,7 @@ cmd_open() {
   # scheduled workflow, or a single polled request. One REST call on the core bucket, at the exact
   # moment it matters: never stack a change on a broken `main`. Advisory, not a hard stop; the point
   # is that the gap becomes IMPOSSIBLE to not see, not that shipping gets blocked.
-  node scripts/incident-scan.mjs || {
+  harness-incident-scan || {
     echo "ship: ^^ an unlearned incident on $base is above. Run /retro before stacking more on it."
   }
 
@@ -103,7 +103,7 @@ cmd_open() {
     local num url; num="$(printf '%s' "$body" | json_field number)"; url="$(printf '%s' "$body" | json_field html_url)"
     echo "ship: opened PR #$num  $url"
     echo "$num"
-    echo "ship: NEXT (per .claude/skills/ship) — one enable_pr_auto_merge MCP call, then STOP. No polling."
+    echo "ship: NEXT (per the /harness-gates:ship skill) — one enable_pr_auto_merge MCP call, then STOP. No polling."
   else
     echo "ship: REST open returned HTTP $http (proxy may block writes). Body:" >&2
     printf '%s\n' "$body" | head -5 >&2
@@ -133,5 +133,5 @@ cmd_merge() {
 case "${1:-}" in
   open) shift; cmd_open "$@" ;;
   merge) shift; cmd_merge "$@" ;;
-  *) echo "usage: scripts/ship.sh {open \"<title>\" [--body-file F] [--base B] [--no-verify] | merge <n> [--method squash]}" >&2; exit 1 ;;
+  *) echo "usage: harness-ship {open \"<title>\" [--body-file F] [--base B] [--no-verify] | merge <n> [--method squash]}" >&2; exit 1 ;;
 esac

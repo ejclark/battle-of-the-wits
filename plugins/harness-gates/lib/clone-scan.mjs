@@ -8,9 +8,9 @@
 // and a committed ratchet-down-only budget, same shape as arch-scan/dupe-scan/dead-scan. It
 // COMPLEMENTS dupe-scan — different eye, different smell, same detect-and-correct loop (drill: /dedupe).
 //
-//   node scripts/clone-scan.mjs             # report + enforce (exit 1 if clones grew past budget)
-//   node scripts/clone-scan.mjs --update    # rewrite clone-budget.json (ratchet: only lower)
-//   node scripts/clone-scan.mjs --candidate # emit the biggest clone pair as JSON (two file:line locs)
+//   harness-clone-scan             # report + enforce (exit 1 if clones grew past budget)
+//   harness-clone-scan --update    # rewrite clone-budget.json (ratchet: only lower)
+//   harness-clone-scan --candidate # emit the biggest clone pair as JSON (two file:line locs)
 //
 // Enforced in CI via tests/arch/clone.spec.ts — runs on every PR, no extra workflow.
 import { execFileSync } from "node:child_process";
@@ -92,7 +92,7 @@ if (debt > cap) {
   console.error(
     "Fix: extract the pasted block into one shared function/module and call it from both sites —\n" +
       "run /dedupe (judgment: renamed-identifier clones may be coincidental). Then\n" +
-      "`node scripts/clone-scan.mjs --update` to ratchet the budget down.",
+      "`harness-clone-scan --update` to ratchet the budget down.",
   );
   process.exit(1);
 }

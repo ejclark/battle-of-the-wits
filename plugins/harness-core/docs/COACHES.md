@@ -5,7 +5,7 @@ seats with distinct jobs:
 
 - **Head coach (orchestrator).** Decides what runs when: WIP limits, dispatch, merge tempo, and the
   don't-collide-with-feature-work rule. The policy is codified as the **`/governor`** drill
-  (`.claude/skills/governor/SKILL.md`): one dispatch cycle — WIP check → gate-named target → collision
+  (`/harness-core:governor`): one dispatch cycle — WIP check → gate-named target → collision
   check → cheap-tier athlete → PR with auto-merge per the merge-policy table. Judgment calls (what may
   auto-merge, recruiting new athletes) remain Eric + Claude in-session; scheduling the cycle is earned
   by reps, not assumed.
