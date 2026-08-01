@@ -1,7 +1,7 @@
 {
   "name": "harness-core",
   "description": "Toolchain-agnostic engineering drills: EARS requirements, blameless retros, and the governor dispatch cycle. Works in any repository, any language.",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "author": {
     "name": "Eric Clark"
   },
