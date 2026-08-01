@@ -15,10 +15,10 @@
 //   1. Never clobber. An existing file is a decision someone made; it is reported as skipped.
 //   2. Say what it imposes. These are opinions (Conventional Commits, semantic-release, ratcheting
 //      gates), not laws — named in the summary so you disagree deliberately, not three weeks later.
-import { existsSync, mkdirSync, readFileSync, writeFileSync, chmodSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync, chmodSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { renderJscpd, renderKnip, scriptsFor } from "./configs.mjs";
+import { renderDescriptor, renderJscpd, renderKnip, scriptsFor } from "./configs.mjs";
 import { detect, gateSpecFor } from "./detect.mjs";
 import { plan, render } from "./phases.mjs";
 import { mergeClaudeSettings, mergeGitignore, mergePackageJson } from "./merge.mjs";
@@ -69,17 +69,28 @@ const descriptor = (() => {
   }
 })();
 
+// EVERY CONFIG BELOW READS THE DESCRIPTOR THIS RUN WILL LEAVE BEHIND, not the one that existed when
+// it started. `descriptor` above is `{}` on a fresh repo and falls back to `.ts` — which is right for
+// a repo with nothing to detect, and catastrophic for a JavaScript one: knip.json and .jscpd.json
+// define the SCOPE two gates measure, so a `.ts` glob points them at files that are not there. They
+// scan nothing, report zero, and go green forever on a repository with real debt.
+//
+// An existing harness.json still wins. That is a decision someone made.
+const RENDERED = renderDescriptor(ROOT, { readdirSync, existsSync, readFileSync });
+const DESC = Object.keys(descriptor).length ? descriptor : JSON.parse(RENDERED);
+
 // ── config files ───────────────────────────────────────────────────────────────
 put("biome.json", tpl("node/biome.json"));
 put("commitlint.config.js", tpl("node/commitlint.config.js"));
 put(".releaserc.json", tpl("node/releaserc.json"));
-put("knip.json", renderKnip(descriptor));
-put(".jscpd.json", renderJscpd(descriptor));
+put("knip.json", renderKnip(DESC));
+put(".jscpd.json", renderJscpd(DESC));
 put(".npmrc", tpl("node/npmrc"));
 put(".nvmrc", tpl("node/nvmrc"));
 
 // ── the capability descriptor ──────────────────────────────────────────────────
-put("harness.json", tpl("common/harness.json"));
+// DETECTED above, never templated — see the note there for what a wrong one costs.
+put("harness.json", RENDERED);
 
 // ── .gitignore ─────────────────────────────────────────────────────────────────
 const gi = mergeGitignore(ROOT, tpl("common/gitignore"), { dryRun });
@@ -96,8 +107,8 @@ put(".github/workflows/pipeline.yml", tpl("github/workflows/harness.yml"));
 put(".github/pull_request_template.md", tpl("github/pull_request_template.md"));
 
 // ── gate wiring: the gates run inside the test suite, not as extra CI steps ─────
-const gateSpec = gateSpecFor(ROOT, descriptor);
-put(`${descriptor.testDir ?? "tests"}/arch/${gateSpec.name}`, tpl(gateSpec.template));
+const gateSpec = gateSpecFor(ROOT, DESC);
+put(`${DESC.testDir ?? "tests"}/arch/${gateSpec.name}`, tpl(gateSpec.template));
 
 // ── the lessons ledger ─────────────────────────────────────────────────────────
 put("docs/LESSONS.md", tpl("common/docs/LESSONS.md"));
@@ -119,7 +130,7 @@ if (cs.skipped) skipped.push(cs.skipped);
 // Repo STATE, not just the descriptor: a `.ts` project with no tsconfig.json must not be handed a
 // verify that runs tsc against a file it does not have.
 const HAS_TSCONFIG = existsSync(join(ROOT, "tsconfig.json"));
-const SCRIPTS = scriptsFor(descriptor, { hasTsconfig: HAS_TSCONFIG });
+const SCRIPTS = scriptsFor(DESC, { hasTsconfig: HAS_TSCONFIG });
 
 const DEV_DEPS = {
   "@biomejs/biome": "^2.5.6",
@@ -172,7 +183,7 @@ console.log(`
 
 // Silently dropping the typecheck would be the other failure — a verify that passes because it
 // stopped checking. Say it, and say what turns it back on.
-if ((descriptor.sourceExt ?? ".ts") === ".ts" && !HAS_TSCONFIG) {
+if ((DESC.sourceExt ?? ".ts") === ".ts" && !HAS_TSCONFIG) {
   console.log(`  ⚠ TypeScript sources but no tsconfig.json — \`verify\` was written WITHOUT a typecheck
       step, because a script that runs \`tsc -p tsconfig.json\` against a file you do not have fails
       on your very first run, for something you did not do. Add a tsconfig.json and re-run with
@@ -191,7 +202,7 @@ console.log(`
       the release job with GH013.)
     · Biome for lint + format, with a pre-commit hook that formats staged files
     · pre-push runs the FULL local gate — CI is confirmation, not the first line of defense
-    · Quality gates run INSIDE the test suite (${descriptor.testDir ?? "tests"}/arch/${gateSpec.name}),
+    · Quality gates run INSIDE the test suite (${DESC.testDir ?? "tests"}/arch/${gateSpec.name}),
       so they cost no extra CI minutes and cannot be skipped on their own
     · Gates ratchet: they freeze today's debt and only ever lower the budget. A red gate is fixed
       at the finding, never by raising the number

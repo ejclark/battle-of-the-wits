@@ -103,11 +103,29 @@ export function autoAdopt(root, { ship = false, wrote = [] } = {}) {
 
   // 3 — verify. CI is confirmation; a red gate here is cheaper than a red gate on a runner.
   let verified = false;
+  let formatOnly = false;
   if (hasPkg) {
     verified = step("verify", () => {
       run("npm", ["run", "verify"], root);
       return "typecheck + lint + test green";
     });
+    // WHOSE FAULT IS THE RED? A first verify that fails ONLY on formatting is failing on the
+    // adopter's pre-existing source, against a formatter this run just installed — not on anything
+    // they did and not on a defect. Reported as itself, because "verify did not pass" over
+    // whitespace reads as a broken tool on the first minute of contact, and that is how a quality
+    // system gets switched off before it has proved anything.
+    //
+    // It is NOT auto-fixed. Reformatting someone's entire codebase uninvited breaks the one promise
+    // this bootstrap makes, and the grandfather rule says freeze today's debt rather than demand a
+    // flag day. So: name it, hand over the single command, and let them decide.
+    if (!verified) {
+      try {
+        run("npx", ["biome", "check", "--formatter-enabled=false", "."], root);
+        formatOnly = true;
+      } catch {
+        formatOnly = false;
+      }
+    }
   }
 
   // 4 — branch, THEN commit. This used to commit straight to the default branch, walking the adopter
@@ -130,7 +148,20 @@ export function autoAdopt(root, { ship = false, wrote = [] } = {}) {
 
   console.log("");
   if (frozen.length) console.log(`  Frozen: ${frozen.join(", ")} — these budgets now block growth and only ratchet down.`);
-  if (!verified && hasPkg) console.log("  ⚠ verify did not pass — fix the finding before shipping, never the gate.");
+  if (!verified && hasPkg) {
+    console.log(
+      formatOnly
+        ? `  ⚠ verify is red on FORMATTING ONLY — on your EXISTING sources, against a formatter this
+      run just installed. Nothing you wrote is wrong and nothing here is broken; the two have
+      simply never met. One command settles it, and it is yours to run or not:
+
+          npm run lint:fix
+
+      Not done for you on purpose: reformatting a codebase uninvited is the one thing a bootstrap
+      must never do, and the grandfather rule says freeze today's debt rather than demand a flag day.`
+        : "  ⚠ verify did not pass — fix the finding before shipping, never the gate.",
+    );
+  }
 
   // 5 — the handover. Naming the exact settings is the difference between a handover and a shrug.
   console.log(`

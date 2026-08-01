@@ -148,3 +148,58 @@ test("no CI step invokes a script scriptsFor omits for a JavaScript repo", () =>
     assert.match(rest, /--if-present/, `CI runs \`npm run ${script}\`, which a JavaScript adoption does not have`);
   }
 });
+
+// ── 5 · the descriptor is detected, never assumed ──────────────────────────────
+
+test("a JavaScript repo is not handed a descriptor claiming TypeScript", async () => {
+  // The worst defect this bootstrap could ship, and it did. Every scanner reads the descriptor to
+  // decide what to look at, so a `.ts` claim in a `.js` repo made every gate glob for files that do
+  // not exist, find nothing, and report GREEN — permanently, on a repository with real debt.
+  //
+  // A gate scanning zero files does not look broken. It looks clean. That is the false green this
+  // project exists to prevent, installed by its own one-shot as the default state.
+  const fs = await import("node:fs");
+  const { renderDescriptor } = await import("../plugins/harness-core/lib/configs.mjs");
+
+  const js = scratch({ "src/index.js": "export const a = 1;\n", "src/b.js": "export const b = 2;\n", "tests/a.test.mjs": "" });
+  const d = JSON.parse(renderDescriptor(js, fs));
+  assert.equal(d.sourceExt, ".js", "every gate would scan zero files and report green");
+  assert.equal(d.specSuffix, ".test.mjs", "a .spec.ts suffix in a JS repo is a gate file nothing collects");
+
+  // Negative control: a TypeScript repo must still be read as TypeScript, or the fix just moved the
+  // failure to the other language.
+  const ts = scratch({ "src/index.ts": "export const a = 1;\n", "src/b.ts": "export const b = 2;\n" });
+  assert.equal(JSON.parse(renderDescriptor(ts, fs)).sourceExt, ".ts");
+
+  // Mixed: the majority wins, and it is counted rather than guessed from the first file seen.
+  const mixed = scratch({ "src/one.ts": "", "src/two.js": "", "src/three.js": "", "src/four.js": "" });
+  assert.equal(JSON.parse(renderDescriptor(mixed, fs)).sourceExt, ".js");
+
+  // A non-default layout is DETECTED too — that is the whole portability claim.
+  const lib = scratch({ "lib/index.js": "", "spec/x.test.mjs": "" });
+  const l = JSON.parse(renderDescriptor(lib, fs));
+  assert.equal(l.sourceDir, "lib");
+  assert.equal(l.testDir, "spec");
+
+  // Nothing to detect means the DOCUMENTED default, never a guess dressed as a measurement.
+  assert.equal(JSON.parse(renderDescriptor(scratch({ "package.json": "{}" }), fs)).sourceExt, ".ts");
+});
+
+test("the generated gate spec survives the linter and the runner the same run installs", () => {
+  // Two defects, one file, both self-inflicted by this bootstrap on its own output.
+  const biome = JSON.parse(readFileSync(join(TEMPLATES, "node/biome.json"), "utf8"));
+  const spec = readFileSync(join(TEMPLATES, "specs/gates.spec.ts"), "utf8");
+  const mjs = readFileSync(join(TEMPLATES, "specs/gates.test.mjs"), "utf8");
+
+  // The ENOENT branch needs to say NOTHING WAS MEASURED out loud, and biome.json ships
+  // `noConsole: "error"` — so the file the bootstrap wrote failed the linter it also wrote.
+  assert.match(spec, /console\.warn/);
+  const off = biome.overrides.find((o) => o.linter?.rules?.suspicious?.noConsole === "off");
+  assert.ok(off?.includes?.some((g) => /arch\/gates/.test(g)), "the gate spec must be exempt from noConsole, or it is red on the first verify");
+
+  // Vitest does not inject describe/it unless `globals: true`, which most projects do not set — so
+  // this referenced two identifiers that did not exist. Importing is correct in every case rather
+  // than in most of them.
+  assert.match(spec, /^import \{ describe, it \} from "vitest";$/m, "describe/it must be imported, not assumed global");
+  assert.match(mjs, /from "node:test"/, "and the node flavour must import its own");
+});

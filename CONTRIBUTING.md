@@ -108,6 +108,9 @@ And the sentence that removes most of the worry in the room:
    `docs:` for prose, `fix:` for a defect, `feat:` for something new. So:
    `docs: explain what the second step needs`.
    If the title check goes red, it is telling you about the *format*, never about the content.
+   **The box above it — the commit message, which GitHub pre-fills with something like
+   "Update README.md" — is not checked and you can leave it exactly as it is.** Only the pull
+   request title has to follow the convention, because that is the text that becomes permanent.
 5. **Create pull request**, then fill in the template. If your change is prose only, tick the
    prose-only box and stop — the rest of that checklist is for changes that touch code, and CI runs
    the full suite either way.
