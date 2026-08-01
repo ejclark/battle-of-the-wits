@@ -348,3 +348,52 @@ test("no pure-logic test asserts a POSIX-shaped path", () => {
     assert.doesNotMatch(body, /startsWith\("\/"\)/, `${f} assumes a POSIX absolute path — use isAbsolute()`);
   }
 });
+
+test("every launcher has a Windows twin that runs the same module", () => {
+  // Windows ignores a shebang, so `bin/harness-*` — extensionless `#!/bin/sh` — are unrunnable
+  // there. That is not a cosmetic gap: it is every command in the product, and it stayed invisible
+  // until somebody on Windows tried one.
+  //
+  // The twins are GENERATED, and this is what makes that worth doing: adding a launcher and
+  // forgetting its twin is invisible until somebody on Windows runs exactly that command, which
+  // could be months. Here it is one failing test in the same commit.
+  const gen = execFileSync(process.execPath, ["scripts/sync-launchers.mjs", "--check"], { cwd: REPO, encoding: "utf8" });
+  assert.match(gen, /all \d+ launchers have a current \.cmd twin/);
+
+  for (const plugin of ["harness-core", "harness-gates"]) {
+    const bin = join(REPO, "plugins", plugin, "bin");
+    const shells = readdirSync(bin).filter((f) => !f.endsWith(".cmd"));
+    assert.ok(shells.length > 0, `${plugin} ships no launchers — this check would pass vacuously`);
+    for (const name of shells) {
+      const twin = join(bin, `${name}.cmd`);
+      assert.ok(existsSync(twin), `${plugin}/bin/${name} has no .cmd twin — that command does not exist on Windows`);
+
+      // The two must agree on WHAT THEY RUN. A twin pointing at the wrong module is worse than a
+      // missing one: it runs, and it runs something else.
+      const mod = readFileSync(join(bin, name), "utf8").match(/lib\/([\w.-]+\.mjs)/)?.[1];
+      const twinBody = readFileSync(twin, "utf8");
+      if (mod) {
+        assert.ok(twinBody.includes(mod), `${name}.cmd runs a different module than ${name}`);
+      } else {
+        // A real shell program — `harness-ship` orchestrates git and gh in bash and has nothing to
+        // hand to node. Its twin must EXPLAIN rather than silently not exist, and must not exit 0:
+        // a command that appears to succeed while doing nothing is the worst of the three options.
+        assert.match(twinBody, /cannot run on Windows/, `${name} has no module, so its twin must say why it cannot run`);
+        assert.match(twinBody, /WSL|macOS|Linux/, "and must name where it does work");
+        assert.match(twinBody, /exit \/b 1/, "it must fail, not pretend to succeed");
+      }
+    }
+  }
+});
+
+test("git stores the twins so Windows checks them out as CRLF", () => {
+  // A .cmd with bare LF misparses in some Windows shells, and it fails the confusing way — a line
+  // silently ignored rather than an error. The repo-wide `eol=lf` would have done exactly that, so
+  // the override has to exist and has to sit BELOW it to win.
+  const attrs = readFileSync(join(REPO, ".gitattributes"), "utf8");
+  assert.match(attrs, /^\*\.cmd text eol=crlf$/m, "without this, git normalises the twins to LF and Windows gets a subtly broken script");
+  assert.ok(attrs.indexOf("*.cmd text eol=crlf") > attrs.indexOf("bin/*"), "later rules win — the .cmd override must come after the bin/ rule");
+
+  // And the shell launchers must still be LF everywhere: a CRLF shebang fails with "bad interpreter".
+  assert.match(attrs, /^plugins\/\*\/bin\/\* text eol=lf$/m, "both plugins — this once named only harness-gates while claiming to cover all launchers");
+});
