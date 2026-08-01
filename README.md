@@ -40,8 +40,10 @@ Set up the dungeon-crawler engineering harness in this repository.
 
 Assume I am new to this and check things rather than assuming them:
 
-1. This needs Node and git. If either is missing, tell me what it is for and help me
-   install it before going further.
+1. This needs node, npm and git. Check each one actually runs, not just that it is
+   installed somewhere — a fresh install is often invisible to the shell that is
+   already open, and that looks exactly like the install failing. If one is missing,
+   tell me what it is for, help me install it, and re-check in a way that works.
 2. If this folder is not a git repository yet, say so and set one up — the pipeline
    and the hooks cannot do anything without one.
 3. Get a copy of https://github.com/ejclark/dungeon-crawler (clone it, or download it
@@ -52,10 +54,10 @@ Then tell me plainly: what it wrote, what opinions it imposes, anything that fai
 and whether that failure was mine or its, and what is left that only I can do.
 ```
 
-**It needs Node and git**, and the paste checks for both rather than assuming — because a missing
-tool fails with an error that reads like your mistake. Neither is a dungeon-crawler thing: Node runs
-the harness, git is what a pipeline is built on. If you have neither, you are five minutes from
-having both.
+**It needs node, npm and git**, and the paste checks each one *runs* rather than assuming — because a
+missing tool fails with an error that reads like your mistake, and a freshly installed one is often
+invisible to the shell you already have open, which looks identical to the install failing. None of
+them is a dungeon-crawler thing: node and npm run the harness, git is what a pipeline is built on.
 
 That is all of day one — pipeline, hooks, formatter, gate wiring, budgets frozen at today's debt. It
 never clobbers a file you already have, and it names every opinion it imposes. Nothing is pushed and
