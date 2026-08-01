@@ -35,17 +35,44 @@ reset their config.
 | Learning | `docs/LESSONS.md` |
 | `package.json` | **merged**, never replaced — adds scripts + devDependencies, existing keys win |
 
-## After it runs
+## The sequence
 
-1. `npm install`
-2. **Freeze today's debt as the budget** — run each gate with `--update`:
-   `harness-arch-scan --update`, and the same for `dupe`, `dead`, `spec-gap`, `clone`.
-   This is the grandfathering step. Without it the first run blocks on debt the repo already had,
-   which is exactly the flag-day cleanup the ratchet design exists to avoid.
-3. Commit, open a PR, confirm `verify` goes green.
-4. Turn on branch protection requiring `verify`, and enable auto-merge. **This is the user's step** —
-   it needs repo admin, and the pipeline is written assuming it exists (the `release` job
-   deliberately does not re-verify).
+Adoption is a **progression**, not a checklist, and the order carries real dependencies. Ask the
+drill where you are at any point:
+
+```shell
+harness-bootstrap --plan
+```
+
+It reads the repo, marks what's done, and names the single next action. The phases group steps by
+**blast radius**, and each earns the next:
+
+| Phase | What happens |
+|---|---|
+| **1 · Install** | Write the files, then `npm install`. Nothing works until this completes — husky's `prepare` builds the hook runner, so hooks written in step 1 are inert until step 2. |
+| **2 · Observe** | Run the gates with no budgets. They report and pass. This is the honest look at what you inherited. |
+| **3 · Freeze** | Grandfather today's debt with `--update`, verify locally, commit, open a PR. |
+| **4 · Enforce** | Require `verify` on main — **after** it has gone green once. |
+| **5 · Autonomy** | Enable auto-merge, then let the background athletes burn debt down. |
+
+### The two ordering traps
+
+Both are silent, and both are how an adoption fails and takes the harness's credibility with it.
+
+**Freeze the debt *before* the gates run in CI.** A ratcheting gate with no committed budget measures
+the repo's entire existing debt as new. The adopter's first PR goes red for code they didn't touch,
+they conclude the gates are noise, and they switch them off. Grandfathering is what makes the gates
+adoptable at all — it is not optional polish.
+
+**Require the check *after* it has passed once.** Turning on branch protection for a check that has
+never reported leaves every PR wedged on "waiting for status" with no error to read.
+
+### Phases 4 and 5 are the user's
+
+Both need repo admin, and both are the irreversible class — never self-authorize them. Hand over the
+exact settings to change and why. Note also that autonomy comes **last on purpose**: it is earned by
+verification, never assumed, which is the same bet as automerging dependency updates only once the
+tests underneath are real.
 
 ## Rules this drill follows
 

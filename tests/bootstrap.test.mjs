@@ -168,3 +168,53 @@ test("gate wiring follows the descriptor's testDir", () => {
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+test("--plan works before anything exists and points at the first step", () => {
+  const root = makeRepo();
+  try {
+    const out = run(root, ["--plan"]);
+    assert.match(out, /Adoption sequence/);
+    assert.match(out, /Next: Write the process files/);
+    // Nothing may be written by a plan query.
+    assert.equal(existsSync(join(root, "biome.json")), false);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("--plan advances as the repo's state changes", () => {
+  const root = makeRepo();
+  try {
+    run(root);
+    const afterWrite = run(root, ["--plan"]);
+    assert.match(afterWrite, /Next: Install dependencies/, "writing files should advance the plan");
+    assert.match(afterWrite, /✓ Write the process files/, "the completed step must be marked done");
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("the plan states both ordering traps, since skipping them is how adoption fails", () => {
+  const root = makeRepo();
+  try {
+    const out = run(root, ["--plan"]);
+    // Freeze-before-CI: a ratcheting gate with no budget reports the whole repo as new debt.
+    assert.match(out, /Grandfather today's debt/);
+    assert.match(out, /BEFORE the gates run in CI/);
+    // Require-after-green: a never-reported required check wedges every PR silently.
+    assert.match(out, /after it has passed once/);
+    assert.match(out, /waiting for status/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("steps needing repo admin are flagged as the user's call", () => {
+  const root = makeRepo();
+  try {
+    const out = run(root, ["--plan"]);
+    assert.match(out, /needs repo admin/, "credentialed steps must be marked, never silently assumed");
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});

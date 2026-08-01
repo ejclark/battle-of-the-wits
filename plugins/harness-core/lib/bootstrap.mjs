@@ -17,9 +17,10 @@
 //   2. Say what it imposes. These are opinions (Conventional Commits, semantic-release, ratcheting
 //      gates), not laws — the summary names them so you can disagree deliberately rather than
 //      discover it three weeks later.
-import { existsSync, mkdirSync, readFileSync, writeFileSync, chmodSync, readdirSync, statSync } from "node:fs";
-import { dirname, join, relative } from "node:path";
+import { existsSync, mkdirSync, readFileSync, writeFileSync, chmodSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { detect, plan, render } from "./phases.mjs";
 
 const ROOT = process.cwd();
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -28,6 +29,14 @@ const TPL = join(HERE, "../templates");
 const args = process.argv.slice(2);
 const dryRun = args.includes("--dry-run");
 const force = args.includes("--force");
+const planOnly = args.includes("--plan");
+
+// `--plan` answers "where am I and what's next?" by looking at the repo rather than asking. Safe to
+// run at any point in the adoption, including before anything has been written.
+if (planOnly) {
+  console.log(render(plan(detect(ROOT))));
+  process.exit(0);
+}
 
 const wrote = [];
 const skipped = [];
@@ -174,12 +183,12 @@ console.log(`
     · Gates ratchet: they freeze today's debt and only ever lower the budget. A red gate is fixed
       at the finding, never by raising the number
 
-  Next:
-
-    1. npm install
-    2. npx harness-arch-scan --update   (and the other gates) to freeze today's debt as the budget
-    3. commit, open a PR, and confirm \`verify\` goes green
 `);
+
+// The sequence, not a checklist: each step knows why it sits where it does, and the renderer points
+// at the single next action rather than handing over a wall of tasks.
+console.log(render(plan(detect(ROOT))));
+console.log("  Re-run `harness-bootstrap --plan` at any time to see where you are.\n");
 
 if (!dryRun && wrote.length) {
   console.log("  Review every file before committing — especially .github/workflows/, which changes");
