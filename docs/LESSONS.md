@@ -215,3 +215,24 @@ Prevention ranks, best first:
   exercises reports the confidence of one that is exercised.** Gates never wired, a config never
   scoped, a command never run, and now an interface never called. Worth asking of anything before
   its first real use: what has actually run this?
+
+### Every instruction the harness shipped named a path the reader does not have
+- **SHA:** `n/a`   **DATE:** 2026-08-01   **STATUS:** closed
+- **SIGNAL:** found by reading `harness-ship` — the athlete's LAST command — while auditing surfaces
+  nothing had exercised. It invoked `node scripts/incident-scan.mjs` at runtime, told the caller to
+  read `.claude/skills/ship/SKILL.md`, and printed a usage line for a file called `scripts/ship.sh`.
+  None of the three exist in an install. Every scanner's fix-it message had the same defect, as did
+  two athlete instruction files.
+- **ROOT CAUSE:** the harness grew inside one repository and was lifted out; what it carried were
+  that repo's paths, stated as if universal. The athletes had been repointed at `harness-*` commands
+  weeks earlier — by an ENUMERATED sweep, so everything not on the list survived, and survived
+  looking authoritative. An instruction that names a command the reader does not have is worse than
+  no instruction: it reads as knowledge.
+- **PREVENTION:** gate — a doctrine test scoped by CATEGORY rather than enumeration: no shipped file
+  may contain `node scripts/*.mjs`, `scripts/ship.sh`, or a `.claude/skills/*` path. Verified by
+  reintroducing an offence and watching it fail, because a gate nobody has seen refuse is a gate
+  nobody knows works.
+- **SIDE QUESTS:** the enumerated sweep is the interesting failure. It fixed everything it looked at
+  and taught nothing, so the same bug regrew in the files it had not listed. Prefer a rule that names
+  the *category* — the doctrine gate and this one both do, and both caught things their authors had
+  not thought of.

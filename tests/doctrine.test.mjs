@@ -17,6 +17,25 @@ import { fileURLToPath } from "node:url";
 const REPO = join(dirname(fileURLToPath(import.meta.url)), "..");
 const PLUGINS = join(REPO, "plugins");
 
+/** Every shipped file — markdown, module, or launcher — paired with the plugin root it belongs to. */
+function shippedFiles() {
+  const out = [];
+  const walk = (root, dir) => {
+    for (const e of readdirSync(dir, { withFileTypes: true })) {
+      const p = join(dir, e.name);
+      if (e.isDirectory()) {
+        if (e.name !== "templates" && e.name !== "node_modules") walk(root, p);
+      } else if (/\.(md|mjs)$/.test(e.name) || dir.endsWith("/bin")) {
+        out.push({ root, file: p });
+      }
+    }
+  };
+  for (const entry of readdirSync(PLUGINS, { withFileTypes: true })) {
+    if (entry.isDirectory()) walk(join(PLUGINS, entry.name), join(PLUGINS, entry.name));
+  }
+  return out;
+}
+
 /** Every Markdown file shipped inside a plugin, paired with the plugin root it belongs to. */
 function shippedMarkdown() {
   const out = [];
@@ -94,4 +113,32 @@ test("this repository runs every gate the shipped template wires in", () => {
     `the template promises gates this repo does not run: ${missing.join(", ")}\n` +
       "Wire them into tests/arch/gates.test.mjs and freeze their budgets, or stop shipping them.",
   );
+});
+
+// Every instruction the harness ships must name a command the reader actually has.
+//
+// The harness grew inside one repository and was lifted out. What it carried with it were that
+// repo's PATHS, stated as if universal: scanners telling adopters to run `node scripts/dupe-scan.mjs
+// --update`, athletes told to follow `.claude/skills/decompose/SKILL.md`, and `harness-ship` — the
+// athlete's LAST command — invoking `node scripts/incident-scan.mjs` at runtime. None of those exist
+// in an install. Every one of them reads as authoritative.
+//
+// Scoped by CATEGORY, not enumeration, because the enumerated version is what failed: the athletes
+// were repointed at `harness-*` commands weeks ago and these survived by not being in that list.
+const STALE = [
+  { re: /node\s+scripts\/[\w-]+\.mjs/, why: "pre-plugin scanner path — use the `harness-*` command" },
+  { re: /scripts\/ship\.sh/, why: "pre-plugin ship path — use `harness-ship`" },
+  { re: /\.claude\/skills\/[\w-]+/, why: "in-repo skill path — use the `/plugin:skill` invocation" },
+];
+
+test("no shipped file tells the reader to run something they do not have", () => {
+  const offences = [];
+  for (const { root, file } of shippedFiles()) {
+    const body = readFileSync(file, "utf8");
+    for (const rule of STALE) {
+      const hit = body.match(rule.re);
+      if (hit) offences.push(`${file.slice(root.length - 12)}: "${hit[0]}" — ${rule.why}`);
+    }
+  }
+  assert.deepEqual(offences, [], `shipped instructions naming paths an adopter does not have:\n  ${offences.join("\n  ")}`);
 });

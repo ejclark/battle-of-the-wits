@@ -18,7 +18,7 @@ fix bugs, or redesign.
 
 1. **Branch off latest main:** `git fetch origin main && git checkout -B refactor/dedupe-<symbol> origin/main`.
 2. **Pick the target:** `harness-dupe-scan --candidate` → take `candidate`. Never choose your own.
-3. **Follow the `dedupe` skill exactly** (`.claude/skills/dedupe/SKILL.md`) — judge true-copy vs divergent
+3. **Follow the `dedupe` skill exactly** (`/harness-gates:dedupe`) — judge true-copy vs divergent
    vs false-positive first; consolidate into the natural home (`src/ui/` for design-system/render helpers —
    never a `utils.ts` junk drawer); import everywhere.
 4. **Prove it's safe:** `graphify affected` on touched files, then verify by exit status:

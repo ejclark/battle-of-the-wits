@@ -107,7 +107,7 @@ if (debt > cap) {
   console.error(`\n✗ spec gap grew: ${debt} > budget ${cap}.`);
   console.error(
     "Fix: add a behavioral spec for the new/changed file (BDD — observable behavior, no\n" +
-      "implementation peeking; see docs/ENGINEERING.md). Then `node scripts/spec-gap-scan.mjs --update`.",
+      "implementation peeking; see docs/ENGINEERING.md). Then `harness-spec-gap-scan --update`.",
   );
   process.exit(1);
 }

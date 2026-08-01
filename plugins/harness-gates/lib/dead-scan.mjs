@@ -7,9 +7,9 @@
 // judged false-positives like hook-invoked scripts); this wrapper is the CRAFTED part: one debt
 // number and a committed ratchet-down-only budget, same shape as arch-scan/dupe-scan.
 //
-//   node scripts/dead-scan.mjs             # report + enforce (exit 1 if dead code grew)
-//   node scripts/dead-scan.mjs --update    # rewrite dead-budget.json (ratchet: only lower)
-//   node scripts/dead-scan.mjs --candidate # highest-leverage cleanup target as JSON
+//   harness-dead-scan             # report + enforce (exit 1 if dead code grew)
+//   harness-dead-scan --update    # rewrite dead-budget.json (ratchet: only lower)
+//   harness-dead-scan --candidate # highest-leverage cleanup target as JSON
 //
 // Enforced in CI via tests/arch/dead.spec.ts.
 import { execFileSync } from "node:child_process";
@@ -99,7 +99,7 @@ if (debt > cap) {
   console.error(
     "Fix: delete the unused symbol/file (or wire it up if it's meant to be used). If knip is wrong\n" +
       "(e.g. invoked outside the module graph, like a hook script), add it to knip.json ignore with a\n" +
-      "justification. Then `node scripts/dead-scan.mjs --update` to ratchet the budget down.",
+      "justification. Then `harness-dead-scan --update` to ratchet the budget down.",
   );
   process.exit(1);
 }

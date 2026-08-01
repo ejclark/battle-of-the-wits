@@ -18,7 +18,7 @@ or redesign — you extract a cohesive seam into its own module and lock the win
 1. **Branch off latest main** before editing: `git fetch origin main && git checkout -B refactor/decompose-<slug> origin/main`.
 2. **Pick the target:** `harness-arch-scan --candidate` → take `candidate.file`. Do not choose
    your own target; the gate's score already weighs size × cohesion.
-3. **Follow the `decompose` skill exactly** (`.claude/skills/decompose/SKILL.md`) — read for a seam,
+3. **Follow the `decompose` skill exactly** (`/harness-gates:decompose`) — read for a seam,
    extract to the natural module, import it back, keep behavior identical.
 4. **Prove it's safe:** `graphify affected <file>` for blast radius, then verify by exit status:
    `npm run typecheck && npm run lint && npm test && harness-arch-scan`. All must pass.

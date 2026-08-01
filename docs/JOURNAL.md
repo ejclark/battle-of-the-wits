@@ -388,3 +388,51 @@ covered by the suite." What has run *this path*, in *this condition*.
 An athlete has still never been dispatched. That was the right call while its first command was
 broken — and it is now, for the first time, a thing that could be tried rather than a thing that
 would have failed silently. Still Eric's call to make.
+
+---
+
+## 2026-08-01 (night, sixth) · The Last Mile
+
+`--candidate` is the athlete's first command. `harness-ship` is its last, and it had never been run
+by anything either.
+
+It was lifted verbatim out of the repository the harness grew in, and it showed. At runtime it
+invoked **`node scripts/incident-scan.mjs`** — a path that exists in no adopter's repo. It told the
+caller to read `.claude/skills/ship/SKILL.md`, which an install does not have. Its usage line named
+`scripts/ship.sh`, a file that has not existed since the harness became a plugin. Its User-Agent
+still said `skynet-ship`.
+
+Every scanner had the same defect in its fix-it message — *"Then `node scripts/dupe-scan.mjs
+--update` to ratchet the budget down"* — printed at precisely the moment an adopter is looking for
+instructions. Two athlete instruction files pointed at in-repo skill paths.
+
+### The enumerated sweep is the actual lesson
+
+The athletes were repointed at `harness-*` commands weeks ago. That fix was real and it worked. It
+was also **a list**, and everything not on the list survived — still reading as authoritative,
+because a wrong instruction and a right one look identical to someone who does not already know.
+
+Both gates that have caught real drift here are scoped by *category*, not by enumeration: the
+doctrine test (every `${CLAUDE_PLUGIN_ROOT}` reference in every shipped file must resolve inside the
+plugin that makes it) and now this one (no shipped file may name `node scripts/*.mjs`,
+`scripts/ship.sh`, or `.claude/skills/*`). Both caught things their authors had not thought of. That
+is the whole difference: an enumerated fix ends; a category gate keeps working.
+
+### Negative control
+
+The new gate was verified by **reintroducing the offence and watching it fail**, then reverting. A
+gate nobody has seen refuse is a gate nobody knows works — and the `git checkout` used to revert the
+deliberate offence also silently reverted a real fix in the same file, which is its own small lesson
+about using version control as an undo button mid-experiment. Caught immediately by re-reading.
+
+`harness-ship` also gained six cases pinning its refusals: no token, no subcommand, no title, base
+into itself, dirty tree, merge with no number. Opening a real PR cannot be tested here; every refusal
+that fires *before* anything irreversible happens can be, and those are the ones that protect an
+athlete.
+
+### Banked, not fixed
+
+`ENGINEERING.md` ships inside `harness-core` and still describes **skynet-capital**: hooks at
+`.claude/hooks/skynet-tdd-postedit.sh`, valuation math in `src/domain/portfolio.ts`, risk in
+`src/engine/guards.ts`, a directory tree that is one specific app's. An adopter reads it as doctrine
+about their own repo. That is a genuine finding and a bigger job than this dungeon — the next one.
