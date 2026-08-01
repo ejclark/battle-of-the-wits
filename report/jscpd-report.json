@@ -1,0 +1,537 @@
+{
+  "duplicates": [
+    {
+      "firstFile": {
+        "end": 73,
+        "endLoc": {
+          "column": 28,
+          "line": 73,
+          "position": 4336
+        },
+        "name": "docs/DESCRIPTOR.md:markdown",
+        "start": 1,
+        "startLoc": {
+          "column": 0,
+          "line": 1,
+          "position": 0
+        }
+      },
+      "format": "markdown",
+      "fragment": "# The capability descriptor — `harness.json`\n\nThe one interface that makes everything else portable. A target repository declares **what it is and\nhow to work on it**; the harness assumes nothing else.\n\n## Why this file exists\n\nFour separate ideas independently demanded the same artifact, which is how we knew it was the real\nwork rather than one of the four:\n\n1. **Portability** — lifting the operating model requires knowing where the model ends and the project\n   begins.\n2. **Comparability** — you cannot run the same task suite against two systems until both describe\n   themselves the same way.\n3. **Harness themes** — swapping vocabulary over an invariant core requires the core to be defined.\n4. **Replication** — a bootstrap that copies *everything* ports the accidents along with the essentials.\n\nThe failure mode this prevents has a name in these docs: **the Jurassic Park gap-filler.** Reconstruct\na system from a partial description and the destination environment quietly fills the gaps — you get\nsomething that runs, but not the thing you meant. Every gap here is therefore *explicit*: either the\nrepo declares a value, or it takes a documented default. Nothing is inferred.\n\n## Placement\n\n`harness.json`, at the root of the **target** repository (the one being worked on) — not in this repo.\n\nA conventional TypeScript project needs no file at all; the defaults below already describe it.\n\n## Schema\n\n| Key | Default | Meaning |\n|---|---|---|\n| `sourceDir` | `\"src\"` | Root of first-party source. Everything the gates measure lives under it. |\n| `testDir` | `\"tests\"` | Root of the test tree. |\n| `sourceExt` | `\".ts\"` | Extension identifying a source file. |\n| `specSuffix` | `\".spec.ts\"` | Suffix identifying a spec file, used to pair specs to sources. |\n| `specExempt` | `[]` | Paths with no honest unit assertion available (CLI mains, fixture data, GPU-bound render code). Defaults to empty on purpose — an exemption the adopter didn't ask for is a silently lowered bar. |\n| `exclude` | `[]` | Path prefixes that are **not first-party source**: fixtures, generated output, templates. Measuring a template inflates every number and reports two deliberate variants of one file as duplication. |\n| `docsDir` | `\"docs\"` | Root of the prose tree. Read by the zoning table to decide what a contributor tier may write. |\n| `ideasFile` | `\"docs/IDEAS.md\"` | The durable idea log. Read by the zoning table, and by the drawing-board campaign that ranks banked ideas. |\n| `metricsFile` | `\"docs/metrics.jsonl\"` | Append-only JSONL run ledger. Committed, because git is the store — see `harness-log`. Records what happened, never who did it. |\n| `fleet.maxConcurrent` | `3` | How many athletes may run at once. The cap exists because parallel work stops paying once *review* capacity binds — more agents past that point just produce more PRs competing for the same attention. |\n| `fleet.tokenCeiling` | `null` | Total tokens the fleet may burn before new starts are refused. `null` means no ceiling — the harness must not invent a limit the repo never asked for. |\n| `persona` | `\"dungeon\"` | The active harness persona shown in the status line: `dungeon` · `coach` · `orchestra` · `corporate` · `startup` · `senate`. |\n\n### Example\n\n```json\n{\n  \"sourceDir\": \"lib\",\n  \"testDir\": \"spec\",\n  \"sourceExt\": \".js\",\n  \"specSuffix\": \".test.js\"\n}\n```\n\n## Budgets live in the target repo, not here\n\nEach gate keeps a committed budget file at the target repo root — `arch-budget.json`,\n`dupe-budget.json`, `dead-budget.json`, `spec-gap-budget.json`, `incident-budget.json`. These are\n**repo state, not harness config**: they record that repo's current debt and ratchet **down only**, so\na repo's history of improvement stays with the repo. Run any scanner with `--update` to re-ratchet\nafter a cleanup.\n\nThis split is the whole portability story in one sentence: **the harness carries the procedure, the\nrepo carries its own state.**\n\n## What is deliberately *not* in the descriptor\n\nVerification commands (`typecheck`, `lint`, `test`) are **not** declared here yet. They are the\nobvious next field, and they are omitted on purpose: nothing in this version shells out to them, and a\ndescriptor key that nothing reads is a promise the harness does not keep. Add the key in the same\nchange that adds the reader.",
+      "lines": 73,
+      "secondFile": {
+        "end": 73,
+        "endLoc": {
+          "column": 28,
+          "line": 73,
+          "position": 4336
+        },
+        "name": "plugins/harness-core/docs/DESCRIPTOR.md:markdown",
+        "start": 1,
+        "startLoc": {
+          "column": 0,
+          "line": 1,
+          "position": 0
+        }
+      },
+      "tokens": 941
+    },
+    {
+      "firstFile": {
+        "end": 672,
+        "endLoc": {
+          "column": 10,
+          "line": 672,
+          "position": 38958
+        },
+        "name": "docs/JOURNAL.md:markdown",
+        "start": 664,
+        "startLoc": {
+          "column": 9,
+          "line": 664,
+          "position": 38823
+        }
+      },
+      "format": "markdown",
+      "fragment": "a binding:\n\n```js\nconst DESC = descriptor(ROOT);\nconst budget = readBudget(ROOT, \"arch\", {});\nconst rel = (f) => relTo(ROOT, f);\n```\n\nThe gate's signal is *the same top-level name declared in N files*, a proxy for *the same",
+      "lines": 9,
+      "secondFile": {
+        "end": 868,
+        "endLoc": {
+          "column": 3,
+          "line": 868,
+          "position": 49449
+        },
+        "name": "docs/JOURNAL.md:markdown",
+        "start": 862,
+        "startLoc": {
+          "column": 79,
+          "line": 862,
+          "position": 49316
+        }
+      },
+      "tokens": 127
+    },
+    {
+      "firstFile": {
+        "end": 1354,
+        "endLoc": {
+          "column": 6,
+          "line": 1354,
+          "position": 46976
+        },
+        "name": "package-lock.json",
+        "start": 1338,
+        "startLoc": {
+          "column": 72,
+          "line": 1338,
+          "position": 46451
+        }
+      },
+      "format": "json",
+      "fragment": "    \"node_modules/@semantic-release/github/node_modules/aggregate-error\": {\n      \"version\": \"5.0.0\",\n      \"resolved\": \"https://registry.npmjs.org/aggregate-error/-/aggregate-error-5.0.0.tgz\",\n      \"integrity\": \"sha512-gOsf2YwSlleG6IjRYG2A7k0HmBMEo6qVNk9Bp/EaLgAJT5ngH6PXbqa4ItvnEwCm/velL5jAnQgsHsWnjhGmvw==\",\n      \"dev\": true,\n      \"license\": \"MIT\",\n      \"dependencies\": {\n        \"clean-stack\": \"^5.2.0\",\n        \"indent-string\": \"^5.0.0\"\n      },\n      \"engines\": {\n        \"node\": \">=18\"\n      },\n      \"funding\": {\n        \"url\": \"https://github.com/sponsors/sindresorhus\"\n      }\n    },",
+      "lines": 17,
+      "secondFile": {
+        "end": 1440,
+        "endLoc": {
+          "column": 6,
+          "line": 1440,
+          "position": 50022
+        },
+        "name": "package-lock.json",
+        "start": 1424,
+        "startLoc": {
+          "column": 69,
+          "line": 1424,
+          "position": 49497
+        }
+      },
+      "tokens": 51
+    },
+    {
+      "firstFile": {
+        "end": 1354,
+        "endLoc": {
+          "column": 6,
+          "line": 1354,
+          "position": 46976
+        },
+        "name": "package-lock.json",
+        "start": 1338,
+        "startLoc": {
+          "column": 72,
+          "line": 1338,
+          "position": 46451
+        }
+      },
+      "format": "json",
+      "fragment": "    \"node_modules/@semantic-release/github/node_modules/aggregate-error\": {\n      \"version\": \"5.0.0\",\n      \"resolved\": \"https://registry.npmjs.org/aggregate-error/-/aggregate-error-5.0.0.tgz\",\n      \"integrity\": \"sha512-gOsf2YwSlleG6IjRYG2A7k0HmBMEo6qVNk9Bp/EaLgAJT5ngH6PXbqa4ItvnEwCm/velL5jAnQgsHsWnjhGmvw==\",\n      \"dev\": true,\n      \"license\": \"MIT\",\n      \"dependencies\": {\n        \"clean-stack\": \"^5.2.0\",\n        \"indent-string\": \"^5.0.0\"\n      },\n      \"engines\": {\n        \"node\": \">=18\"\n      },\n      \"funding\": {\n        \"url\": \"https://github.com/sponsors/sindresorhus\"\n      }\n    },",
+      "lines": 17,
+      "secondFile": {
+        "end": 6473,
+        "endLoc": {
+          "column": 6,
+          "line": 6473,
+          "position": 209304
+        },
+        "name": "package-lock.json",
+        "start": 6457,
+        "startLoc": {
+          "column": 64,
+          "line": 6457,
+          "position": 208779
+        }
+      },
+      "tokens": 51
+    },
+    {
+      "firstFile": {
+        "end": 3579,
+        "endLoc": {
+          "column": 6,
+          "line": 3579,
+          "position": 124421
+        },
+        "name": "package-lock.json",
+        "start": 3562,
+        "startLoc": {
+          "column": 41,
+          "line": 3562,
+          "position": 123930
+        }
+      },
+      "format": "json",
+      "fragment": "    \"node_modules/knip/node_modules/fdir\": {\n      \"version\": \"6.5.0\",\n      \"resolved\": \"https://registry.npmjs.org/fdir/-/fdir-6.5.0.tgz\",\n      \"integrity\": \"sha512-tIbYtZbucOs0BRGqPJkshJUYdL+SDH7dVM8gjy+ERp3WAUjLEFJE+02kanyHtwjWOnwrKYBiwAmM0p4kLJAnXg==\",\n      \"dev\": true,\n      \"license\": \"MIT\",\n      \"engines\": {\n        \"node\": \">=12.0.0\"\n      },\n      \"peerDependencies\": {\n        \"picomatch\": \"^3 || ^4\"\n      },\n      \"peerDependenciesMeta\": {\n        \"picomatch\": {\n          \"optional\": true\n        }\n      }\n    },",
+      "lines": 18,
+      "secondFile": {
+        "end": 7238,
+        "endLoc": {
+          "column": 6,
+          "line": 7238,
+          "position": 236562
+        },
+        "name": "package-lock.json",
+        "start": 7221,
+        "startLoc": {
+          "column": 47,
+          "line": 7221,
+          "position": 236071
+        }
+      },
+      "tokens": 51
+    },
+    {
+      "firstFile": {
+        "end": 6535,
+        "endLoc": {
+          "column": 6,
+          "line": 6535,
+          "position": 211485
+        },
+        "name": "package-lock.json",
+        "start": 6518,
+        "startLoc": {
+          "column": 80,
+          "line": 6518,
+          "position": 210926
+        }
+      },
+      "format": "json",
+      "fragment": "    \"node_modules/semantic-release/node_modules/cliui/node_modules/string-width\": {\n      \"version\": \"7.2.0\",\n      \"resolved\": \"https://registry.npmjs.org/string-width/-/string-width-7.2.0.tgz\",\n      \"integrity\": \"sha512-tsaTIkKW9b4N+AEj+SVA+WhJzV7/zMhcSu78mLKWSk7cXMOSHsBKFWUs0fWwq8QyK3MgJBQRX6Gbi4kYbdvGkQ==\",\n      \"dev\": true,\n      \"license\": \"MIT\",\n      \"dependencies\": {\n        \"emoji-regex\": \"^10.3.0\",\n        \"get-east-asian-width\": \"^1.0.0\",\n        \"strip-ansi\": \"^7.1.0\"\n      },\n      \"engines\": {\n        \"node\": \">=18\"\n      },\n      \"funding\": {\n        \"url\": \"https://github.com/sponsors/sindresorhus\"\n      }\n    },",
+      "lines": 18,
+      "secondFile": {
+        "end": 6650,
+        "endLoc": {
+          "column": 6,
+          "line": 6650,
+          "position": 215638
+        },
+        "name": "package-lock.json",
+        "start": 6633,
+        "startLoc": {
+          "column": 84,
+          "line": 6633,
+          "position": 215079
+        }
+      },
+      "tokens": 55
+    },
+    {
+      "firstFile": {
+        "end": 51,
+        "endLoc": {
+          "column": 61,
+          "line": 51,
+          "position": 3419
+        },
+        "name": "plugins/harness-gates/agents/decomposer.md:markdown",
+        "start": 45,
+        "startLoc": {
+          "column": 56,
+          "line": 45,
+          "position": 3138
+        }
+      },
+      "format": "markdown",
+      "fragment": "  failed and stop. A red decompose PR is worse than none.\n\n## Before you start\n\nRun the dispatch bracket — acquire, preflight, release. It is one document so four copies cannot\ndrift: **[`${CLAUDE_PLUGIN_ROOT}/docs/DISPATCH.md`](../docs/DISPATCH.md)**. If any step refuses,\nstop; a refusal is a reason, not an obstacle to route around.",
+      "lines": 7,
+      "secondFile": {
+        "end": 44,
+        "endLoc": {
+          "column": 61,
+          "line": 44,
+          "position": 2619
+        },
+        "name": "plugins/harness-gates/agents/mortician.md:markdown",
+        "start": 38,
+        "startLoc": {
+          "column": 69,
+          "line": 38,
+          "position": 2338
+        }
+      },
+      "tokens": 76
+    },
+    {
+      "firstFile": {
+        "end": 51,
+        "endLoc": {
+          "column": 61,
+          "line": 51,
+          "position": 3419
+        },
+        "name": "plugins/harness-gates/agents/decomposer.md:markdown",
+        "start": 45,
+        "startLoc": {
+          "column": 56,
+          "line": 45,
+          "position": 3138
+        }
+      },
+      "format": "markdown",
+      "fragment": "  failed and stop. A red decompose PR is worse than none.\n\n## Before you start\n\nRun the dispatch bracket — acquire, preflight, release. It is one document so four copies cannot\ndrift: **[`${CLAUDE_PLUGIN_ROOT}/docs/DISPATCH.md`](../docs/DISPATCH.md)**. If any step refuses,\nstop; a refusal is a reason, not an obstacle to route around.",
+      "lines": 7,
+      "secondFile": {
+        "end": 46,
+        "endLoc": {
+          "column": 61,
+          "line": 46,
+          "position": 2797
+        },
+        "name": "plugins/harness-gates/agents/ui-librarian.md:markdown",
+        "start": 40,
+        "startLoc": {
+          "column": 72,
+          "line": 40,
+          "position": 2516
+        }
+      },
+      "tokens": 76
+    },
+    {
+      "firstFile": {
+        "end": 7,
+        "endLoc": {
+          "column": 41,
+          "line": 7,
+          "position": 323
+        },
+        "name": "tests/arch/gates.test.mjs",
+        "start": 1,
+        "startLoc": {
+          "column": 0,
+          "line": 1,
+          "position": 0
+        }
+      },
+      "format": "javascript",
+      "fragment": "import { test } from \"node:test\";\nimport assert from \"node:assert/strict\";\nimport { execFileSync } from \"node:child_process\";\nimport { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from \"node:fs\";\nimport { tmpdir } from \"node:os\";\nimport { join, dirname } from \"node:path\";\nimport { fileURLToPath } from \"node:url\";",
+      "lines": 7,
+      "secondFile": {
+        "end": 23,
+        "endLoc": {
+          "column": 41,
+          "line": 23,
+          "position": 1469
+        },
+        "name": "tests/report.test.mjs",
+        "start": 17,
+        "startLoc": {
+          "column": 0,
+          "line": 17,
+          "position": 1146
+        }
+      },
+      "tokens": 55
+    },
+    {
+      "firstFile": {
+        "end": 31,
+        "endLoc": {
+          "column": 1,
+          "line": 31,
+          "position": 1435
+        },
+        "name": "tests/bootstrap.test.mjs",
+        "start": 25,
+        "startLoc": {
+          "column": 54,
+          "line": 25,
+          "position": 1245
+        }
+      },
+      "format": "javascript",
+      "fragment": "  const root = mkdtempSync(join(tmpdir(), \"botw-boot-\"));\n  for (const [path, content] of Object.entries(files)) {\n    mkdirSync(dirname(join(root, path)), { recursive: true });\n    writeFileSync(join(root, path), content);\n  }\n  return root;\n}",
+      "lines": 7,
+      "secondFile": {
+        "end": 35,
+        "endLoc": {
+          "column": 1,
+          "line": 35,
+          "position": 1720
+        },
+        "name": "tests/helpers.mjs",
+        "start": 29,
+        "startLoc": {
+          "column": 49,
+          "line": 29,
+          "position": 1530
+        }
+      },
+      "tokens": 56
+    },
+    {
+      "firstFile": {
+        "end": 17,
+        "endLoc": {
+          "column": 5,
+          "line": 17,
+          "position": 854
+        },
+        "name": "tests/campaigns.test.mjs",
+        "start": 7,
+        "startLoc": {
+          "column": 0,
+          "line": 7,
+          "position": 457
+        }
+      },
+      "format": "javascript",
+      "fragment": "import { test } from \"node:test\";\nimport assert from \"node:assert/strict\";\nimport { execFileSync } from \"node:child_process\";\nimport { mkdtempSync, rmSync } from \"node:fs\";\nimport { tmpdir } from \"node:os\";\nimport { join, dirname } from \"node:path\";\nimport { fileURLToPath } from \"node:url\";\nimport { makeRepo, bin } from \"./helpers.mjs\";\n\nconst BIN = bin(\"harness-core\", \"harness-dungeon\");\nconst today = (cwd) => execFileSync(BIN, [\"--today\"], { cwd, encoding: \"utf8\", stdio: [\"ignore\", \"pipe\", \"pipe\"] });",
+      "lines": 11,
+      "secondFile": {
+        "end": 18,
+        "endLoc": {
+          "column": 5,
+          "line": 18,
+          "position": 867
+        },
+        "name": "tests/dungeon.test.mjs",
+        "start": 8,
+        "startLoc": {
+          "column": 0,
+          "line": 8,
+          "position": 470
+        }
+      },
+      "tokens": 71
+    },
+    {
+      "firstFile": {
+        "end": 16,
+        "endLoc": {
+          "column": 35,
+          "line": 16,
+          "position": 909
+        },
+        "name": "tests/roadmap.test.mjs",
+        "start": 11,
+        "startLoc": {
+          "column": 21,
+          "line": 11,
+          "position": 691
+        }
+      },
+      "format": "javascript",
+      "fragment": "import { existsSync, readFileSync } from \"node:fs\";\nimport { join, dirname } from \"node:path\";\nimport { fileURLToPath } from \"node:url\";\n\nconst REPO = join(dirname(fileURLToPath(import.meta.url)), \"..\");\nconst DOC = readFileSync(join(REPO, \"docs/ROADMAP.md\"), \"utf8\");",
+      "lines": 6,
+      "secondFile": {
+        "end": 18,
+        "endLoc": {
+          "column": 35,
+          "line": 18,
+          "position": 1009
+        },
+        "name": "tests/theories.test.mjs",
+        "start": 13,
+        "startLoc": {
+          "column": 9,
+          "line": 13,
+          "position": 791
+        }
+      },
+      "tokens": 50
+    }
+  ],
+  "statistics": {
+    "detectionDate": "2026-08-01T23:00:52.846Z",
+    "formats": {
+      "bash": {
+        "clones": 0,
+        "duplicatedLines": 0,
+        "duplicatedTokens": 0,
+        "lines": 781,
+        "newClones": 0,
+        "newDuplicatedLines": 0,
+        "percentage": 0.0,
+        "percentageTokens": 0.0,
+        "sources": 10,
+        "tokens": 3135
+      },
+      "javascript": {
+        "clones": 4,
+        "duplicatedLines": 27,
+        "duplicatedTokens": 232,
+        "lines": 11640,
+        "newClones": 0,
+        "newDuplicatedLines": 0,
+        "percentage": 0.23195876288659795,
+        "percentageTokens": 0.3324306122741406,
+        "sources": 87,
+        "tokens": 69789
+      },
+      "json": {
+        "clones": 4,
+        "duplicatedLines": 66,
+        "duplicatedTokens": 208,
+        "lines": 7835,
+        "newClones": 0,
+        "newDuplicatedLines": 0,
+        "percentage": 0.8423739629865985,
+        "percentageTokens": 0.8499856973560541,
+        "sources": 5,
+        "tokens": 24471
+      },
+      "markdown": {
+        "clones": 4,
+        "duplicatedLines": 92,
+        "duplicatedTokens": 1220,
+        "lines": 8733,
+        "newClones": 0,
+        "newDuplicatedLines": 0,
+        "percentage": 1.0534753234856291,
+        "percentageTokens": 0.7897053492827922,
+        "sources": 44,
+        "tokens": 154488
+      },
+      "perl": {
+        "clones": 0,
+        "duplicatedLines": 0,
+        "duplicatedTokens": 0,
+        "lines": 174,
+        "newClones": 0,
+        "newDuplicatedLines": 0,
+        "percentage": 0.0,
+        "percentageTokens": 0.0,
+        "sources": 1,
+        "tokens": 696
+      },
+      "text": {
+        "clones": 0,
+        "duplicatedLines": 0,
+        "duplicatedTokens": 0,
+        "lines": 200,
+        "newClones": 0,
+        "newDuplicatedLines": 0,
+        "percentage": 0.0,
+        "percentageTokens": 0.0,
+        "sources": 3,
+        "tokens": 1223
+      },
+      "yaml": {
+        "clones": 0,
+        "duplicatedLines": 0,
+        "duplicatedTokens": 0,
+        "lines": 422,
+        "newClones": 0,
+        "newDuplicatedLines": 0,
+        "percentage": 0.0,
+        "percentageTokens": 0.0,
+        "sources": 26,
+        "tokens": 3466
+      }
+    },
+    "total": {
+      "clones": 12,
+      "duplicatedLines": 185,
+      "duplicatedTokens": 1660,
+      "lines": 29785,
+      "newClones": 0,
+      "newDuplicatedLines": 0,
+      "percentage": 0.6211180124223602,
+      "percentageTokens": 0.6452415380070589,
+      "sources": 176,
+      "tokens": 257268
+    }
+  }
+}

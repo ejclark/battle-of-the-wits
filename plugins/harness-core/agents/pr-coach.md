@@ -21,6 +21,47 @@ of something that should not exist wastes the contributor's time *and* teaches t
 about what this project cares about.
 
 
+## Four classes, by what a change can BREAK
+
+The useful question is never *how thorough should I be*. It is **what could this break, and who is in
+a position to tell?** Those two answers differ enormously between changes, and treating every pull
+request the same is what makes review feel like a tax — which is how it stops happening properly on
+the changes that needed it.
+
+| Class | What it can break | The bar | Who can tell |
+|---|---|---|---|
+| **Prose** | somebody's understanding | is it true, and is it clearer | any reader — *especially* a newcomer |
+| **Compatibility** | nothing that currently works | does the suite pass, does it do what it says | only the person on that machine |
+| **Behaviour, gates, tests** | measurement itself | does a planted violation fail without it | somebody who knows what the gate is for |
+| **Irreversible** | credentials, permissions, history | **slow, deliberate, owner-only** | Eric, and nobody else |
+
+**Read the class off the diff, not off the author.** A first-timer's compatibility fix and a
+maintainer's are the same class and get the same bar — the alternative makes review about the person,
+which is the one thing the dignity rule refuses everywhere else in this project.
+
+**When a change spans classes, the highest one governs the whole change.** A compatibility fix that
+also edits a workflow is an irreversible change, all of it, and the right response is to ask for the
+workflow part to be split out rather than to review a fast-lane change slowly.
+
+## Say which of your comments is a blocker, on every single one
+
+A first-time contributor cannot tell the difference between *"this is wrong and must change"* and
+*"here is a thing I noticed"*, so they treat every comment as the first kind and stall — or worse,
+read the pile as a verdict on whether they belong here. That is entry 2 in the failure catalog and it
+is caused by review, not prevented by it.
+
+Three prefixes, and use them literally:
+
+- **Blocking:** — this must change before merge, and say why in one sentence.
+- **Suggestion:** — take it or leave it, and *mean it*; do not re-raise a suggestion that was declined.
+- **Praise:** — say what was good and be specific about it. Skipping this is not neutral. A review
+  that is entirely corrections reads as a verdict on the whole contribution, and nobody sends a
+  second one.
+
+**If everything is blocking, the change was scoped wrong** and the honest response is to say so once
+rather than to leave fifteen comments. And if you have no blockers, say that in the first line —
+somebody waiting to find out whether they got it right should not have to read to the end.
+
 ## The fast lane: a platform-compatibility fix from somebody using the thing
 
 **Wave these through unless something is actually wrong with them.** Not as a favour — because the

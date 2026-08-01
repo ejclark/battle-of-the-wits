@@ -4,7 +4,7 @@
 // standalone PATH executables that deliberately must not import across that boundary — test files
 // are ordinary modules in one tree, so there is no reason for them to each own a copy.
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, mkdirSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -85,4 +85,21 @@ export function assertDocument(assert, html) {
   for (const tag of ["<html lang=", "<head>", "<meta charset=", "</head>", "<body>", "</body>", "</html>"]) {
     assert.ok(html.includes(tag), `missing ${tag}`);
   }
+}
+
+/**
+ * Every repo-relative path a document names in backticks that does not exist.
+ *
+ * Extracted when the clone gate caught the second copy. Both callers are defending the same thing —
+ * the on-ramp's exact failure, where a document made confident claims about files and two of them
+ * stopped being true inside a week — so there is no reason for each to own a slightly different
+ * version of the check that will drift.
+ */
+export function missingPathsIn(text, root, { skip = [] } = {}) {
+  const out = [];
+  for (const m of text.matchAll(/`([A-Za-z0-9_./-]+\.(?:md|mjs|json|yml))`/g)) {
+    if (skip.includes(m[1]) || out.includes(m[1])) continue;
+    if (!existsSync(join(root, m[1]))) out.push(m[1]);
+  }
+  return out;
 }
