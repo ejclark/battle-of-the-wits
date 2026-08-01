@@ -103,6 +103,55 @@ here optimises the writing of code, because writing it was never the part that w
 planted-violation rule exists for the same reason — a test that only proves code ran is worthless
 when producing code is the cheap half.
 
+### Architecture and process
+
+**Code review catches defects.** · `shifted`
+*Falsifier:* a period where writing the change, not reviewing it, was what the work waited on.
+Review was quality control on an artifact that was **expensive to produce and therefore rare**. Both
+halves moved: producing is now cheap, so review is no longer sampling a trickle — it is the
+constraint, and the only step still gated on a human reading. The advice that follows is not "review
+harder." It is that anything a machine can check must be checked by a machine, so review spends
+itself on the judgment that cannot be mechanised.
+*Evidence:* this repository's entire shape. Its gates exist to move checks out of review, and its
+one honest bottleneck all session has been verification rather than production.
+
+**DRY — extract on the third occurrence.** · `shifted`
+*Falsifier:* duplicated code that never diverged and cost nothing over its lifetime.
+The threshold was calibrated on **typing cost**: three copies meant writing it three times and
+fixing it three times. Typing is now free, which deletes half the argument and leaves the real one
+standing alone — **divergence**. So the question is no longer "how many copies" but "can these copies
+drift?" Duplication that cannot diverge is cheap; two copies of a rule that can is expensive at n=2.
+*Evidence:* `_why_dupe_scan` records six copies of a preamble defended on a rationale that turned out
+false, and the six had already drifted. The count was never the problem.
+
+**Write less documentation, because it goes stale.** · `inverted`
+*Falsifier:* a documentation set whose maintenance cost exceeded the cost of the confusion it
+prevented.
+Advice built on writing being expensive and staleness being unavoidable. Writing is now nearly free,
+so the entire remaining cost is staleness — and staleness is a **testable property**, not a law of
+nature. The recommendation flips: write more, and pin it. Minimising prose to avoid drift is
+optimising the cheap half.
+*Evidence:* `tests/onramp.test.mjs`. The on-ramp told a newcomer to do work that was already done;
+the fix was not less prose but a test that fails when a task is completed.
+
+**Test-first, for the design pressure.** · `shifted`
+*Falsifier:* a generated implementation whose weaknesses the test suite caught anyway.
+The classic mechanism is that writing the test first makes you feel the API before you commit to it —
+design pressure applied to a human. When a generator writes the implementation, that pressure lands
+somewhere else entirely: the test stops being a design instrument and becomes the **specification**,
+and a weak specification now yields weak code directly rather than merely unverified code. The stakes
+went up, not down.
+*Evidence:* the planted-violation rule exists for exactly this. A test asserting only `exit 0` passed
+against four simultaneous cold-start defects.
+
+**Bus factor — knowledge trapped in someone's head.** · `shifted`
+*Falsifier:* knowledge that survived a context boundary without having been written down.
+The risk was a person leaving, which is rare, visible, and gives notice. The sharper version now is
+knowledge living in a **session**, which ends constantly, silently, and without notice. Same remedy —
+write it down — at a completely different cadence, and against a deadline nobody announces.
+*Evidence:* this repo's `_why_` keys, `LESSONS.md` and `JOURNAL.md` all exist because the reasoning
+behind a decision does not survive the context it was made in.
+
 ### Incentives and game theory
 
 **Goodhart's law — a measure that becomes a target stops being a good measure.** · `holds`
