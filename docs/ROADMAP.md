@@ -35,7 +35,10 @@ Most of this shipped this week, driven by one contributor's logs rather than by 
 worth noticing, because it is evidence about where findings actually come from.
 
 Remaining:
-- The `snag` and `idea` labels (owner-only, thirty seconds, currently the last hard blocker)
+- ~~The `snag` and `idea` labels~~ — created, so the issue forms now apply what they declare. The
+  gap they exposed is automated: `scripts/sync-labels.mjs` derives the labels from the forms
+  themselves, because GitHub accepts a form naming a label nobody created and silently applies
+  nothing. Every adopter would have hit that, and hit it invisibly.
 - Branch protection, after `verify` has gone green once on `main`
 - Windows: `harness-ship` is still POSIX-only and says so honestly, which may be the permanent answer
 
