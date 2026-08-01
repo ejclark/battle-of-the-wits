@@ -329,3 +329,33 @@ test("the stale-copy escape does not ask a non-technical person to type git", ()
   }
   assert.match(section, /zip download is not a clone/i, "it must name the thing that makes `pull` fail, or the failure reads as their mistake");
 });
+
+test("the setup paste is self-contained for a session that knows nothing", () => {
+  // It is pasted into a FRESH session on an unknown machine: possibly Windows, possibly without Node
+  // or git, possibly a folder that is not a repository yet. Every assumption it makes that turns out
+  // false becomes an error the user reads as their own mistake — which is what happened four times
+  // in one week to the first person who tried it.
+  const readme = read("README.md");
+  const paste = [...readme.matchAll(/```\n(Set up the dungeon-crawler[\s\S]*?)```/g)][0]?.[1];
+  assert.ok(paste, "the setup paste is gone or its shape changed");
+
+  for (const [assumption, cue] of [
+    ["the toolchain exists", /Node and git/],
+    ["a missing tool gets explained, not just reported", /what it is for/],
+    ["the folder is already a repository", /not a git repository/],
+    ["git is the only way to obtain the harness", /download it/],
+    ["someone will notice what failed", /whether that failure was mine or its/],
+    ["someone will work out what is left for them", /only I can do/],
+  ]) {
+    assert.match(paste, cue, `the paste no longer covers: ${assumption}`);
+  }
+
+  // It must not name a bin/ launcher — Windows cannot execute those.
+  assert.doesNotMatch(paste, /bin\/harness-/, "a #!/bin/sh launcher in the paste is unrunnable on Windows");
+
+  // And the walkthrough must hand over the SAME paste. Two copies of the one instruction that
+  // matters, in the file read by the person least able to spot the difference, is the drift this
+  // project exists to prevent.
+  const first = read("plugins/harness-core/templates/starter/FIRST-APP.md");
+  assert.ok(first.includes(paste.trim()), "FIRST-APP.md ships a different setup paste from the README");
+});

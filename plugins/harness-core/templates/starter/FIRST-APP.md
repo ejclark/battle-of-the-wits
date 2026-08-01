@@ -115,9 +115,18 @@ Open a Claude Code session on the folder and paste:
 ```
 Set up the dungeon-crawler engineering harness in this repository.
 
-Clone https://github.com/ejclark/dungeon-crawler to a temp directory, run its
-plugins/harness-core/lib/bootstrap.mjs with node, here, then walk me through what it
-wrote, what opinions it imposes, and what is left for me to do.
+Assume I am new to this and check things rather than assuming them:
+
+1. This needs Node and git. If either is missing, tell me what it is for and help me
+   install it before going further.
+2. If this folder is not a git repository yet, say so and set one up — the pipeline
+   and the hooks cannot do anything without one.
+3. Get a copy of https://github.com/ejclark/dungeon-crawler (clone it, or download it
+   if that is easier) into a temporary folder outside this project.
+4. Run its plugins/harness-core/lib/bootstrap.mjs with node, from here.
+
+Then tell me plainly: what it wrote, what opinions it imposes, anything that failed
+and whether that failure was mine or its, and what is left that only I can do.
 ```
 
 It writes the pipeline, the git hooks, the formatter, and freezes today's debt as the budget you
