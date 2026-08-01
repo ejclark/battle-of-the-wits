@@ -107,3 +107,15 @@ test("--list reports who holds what", () => {
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+test("incident-scan grandfathers a missing budget instead of crashing", () => {
+  // It was the one gate that assumed its budget already existed, so it died with ENOENT on a repo
+  // adopting the harness — the exact moment a gate must not fail.
+  const root = makeRepo({ "docs/LESSONS.md": "# Lessons\n" });
+  try {
+    const { out } = runTool(bin("harness-gates", "harness-incident-scan"), root);
+    assert.doesNotMatch(out, /ENOENT/, "a first run must not crash on an absent budget");
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});

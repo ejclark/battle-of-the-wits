@@ -21,7 +21,7 @@
 // GraphQL. Degrades to a clean no-op (exit 0) with no token or no network, so it never becomes a
 // flaky gate; the ledger's own well-formedness is enforced offline by tests/arch/lessons.spec.ts.
 import { execFileSync } from "node:child_process";
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 const ROOT = process.cwd();
@@ -81,7 +81,12 @@ const ledger = readFileSync(LEDGER_FILE, "utf8");
 /** An incident is learned-from once the ledger names its sha on a `**SHA:**` line. */
 const isLearned = (sha) => new RegExp(`\\*\\*SHA:\\*\\*\\s*\`?${sha}`).test(ledger);
 
-const budget = JSON.parse(readFileSync(BUDGET_FILE, "utf8"));
+// Grandfather like every other gate: with no committed budget, freeze whatever exists rather than
+// blocking. This was the one scanner that assumed its budget file was already there, so it crashed
+// with ENOENT on a repo adopting the harness for the first time — the exact moment it must not.
+const budget = existsSync(BUDGET_FILE)
+  ? JSON.parse(readFileSync(BUDGET_FILE, "utf8"))
+  : { unlearnedIncidents: Number.POSITIVE_INFINITY };
 
 const FIELDS = ["SHA", "DATE", "STATUS", "SIGNAL", "ROOT CAUSE", "PREVENTION", "SIDE QUESTS"];
 

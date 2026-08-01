@@ -21,6 +21,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync, chmodSync } from "n
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { detect, plan, render } from "./phases.mjs";
+import { mergeGitignore, mergePackageJson } from "./merge.mjs";
 
 const ROOT = process.cwd();
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -30,6 +31,8 @@ const args = process.argv.slice(2);
 const dryRun = args.includes("--dry-run");
 const force = args.includes("--force");
 const planOnly = args.includes("--plan");
+const auto = args.includes("--auto");
+const ship = args.includes("--ship");
 
 // `--plan` answers "where am I and what's next?" by looking at the repo rather than asking. Safe to
 // run at any point in the adoption, including before anything has been written.
@@ -67,6 +70,11 @@ put(".nvmrc", tpl("node/nvmrc"));
 
 // ── the capability descriptor ──────────────────────────────────────────────────
 put("harness.json", tpl("common/harness.json"));
+
+// ── .gitignore ─────────────────────────────────────────────────────────────────
+const gi = mergeGitignore(ROOT, tpl("common/gitignore"), { dryRun });
+if (gi.wrote) wrote.push(gi.wrote);
+if (gi.skipped) skipped.push(gi.skipped);
 
 // ── git hooks (husky) ──────────────────────────────────────────────────────────
 for (const hook of ["pre-commit", "commit-msg", "pre-push"]) {
@@ -134,10 +142,9 @@ if (settings.statusLine === undefined || force) {
   skipped.push(".claude/settings.json → statusLine (already set)");
 }
 
-// ── package.json: MERGE, never replace ─────────────────────────────────────────
-// A repo's package.json is its own; this adds the scripts and dev dependencies the process needs and
-// leaves everything else untouched. Existing keys always win — a project that already defines `lint`
-// has made a choice.
+// ── package.json: merged, never replaced ───────────────────────────────────────
+// These two tables are the harness's OPINIONS and belong here; merge.mjs owns only the mechanism of
+// folding them in without trampling what the repo already decided.
 const SCRIPTS = {
   typecheck: "tsc -p tsconfig.json --noEmit",
   lint: "biome check .",
@@ -162,31 +169,8 @@ const DEV_DEPS = {
   "semantic-release": "^25.0.0",
 };
 
+const pkgChanges = mergePackageJson(ROOT, { scripts: SCRIPTS, devDependencies: DEV_DEPS }, { dryRun });
 const pkgPath = join(ROOT, "package.json");
-const pkgChanges = { scripts: [], devDependencies: [] };
-
-if (existsSync(pkgPath)) {
-  const pkg = JSON.parse(readFileSync(pkgPath, "utf8"));
-  pkg.scripts ??= {};
-  pkg.devDependencies ??= {};
-
-  for (const [k, v] of Object.entries(SCRIPTS)) {
-    if (pkg.scripts[k] === undefined) {
-      pkg.scripts[k] = v;
-      pkgChanges.scripts.push(k);
-    }
-  }
-  for (const [k, v] of Object.entries(DEV_DEPS)) {
-    if (pkg.devDependencies[k] === undefined && pkg.dependencies?.[k] === undefined) {
-      pkg.devDependencies[k] = v;
-      pkgChanges.devDependencies.push(k);
-    }
-  }
-
-  if (!dryRun && (pkgChanges.scripts.length || pkgChanges.devDependencies.length)) {
-    writeFileSync(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`);
-  }
-}
 
 // ── report ─────────────────────────────────────────────────────────────────────
 const label = dryRun ? "would write" : "wrote";
@@ -204,7 +188,7 @@ if (skipped.length) {
   for (const f of skipped) console.log(`      · ${f}`);
 }
 
-if (!existsSync(pkgPath)) {
+if (pkgChanges.missing) {
   console.log("\n  ⚠ no package.json found — scripts and devDependencies were not merged");
 } else if (pkgChanges.scripts.length || pkgChanges.devDependencies.length) {
   console.log(`\n  package.json (merged, existing keys untouched):`);
@@ -237,8 +221,15 @@ console.log(`
 
 // The sequence, not a checklist: each step knows why it sits where it does, and the renderer points
 // at the single next action rather than handing over a wall of tasks.
-console.log(render(plan(detect(ROOT))));
-console.log("  Re-run `harness-bootstrap --plan` at any time to see where you are.\n");
+if (auto) {
+  // --auto continues straight into the mechanical remainder of the sequence rather than handing
+  // back a checklist. Everything it does is local and reversible; pushing stays opt-in.
+  const { autoAdopt } = await import("./auto.mjs");
+  autoAdopt(ROOT, { ship });
+} else {
+  console.log(render(plan(detect(ROOT))));
+  console.log("  Re-run `harness-bootstrap --plan` to see where you are, or --auto to run the rest.\n");
+}
 
 if (!dryRun && wrote.length) {
   console.log("  Review every file before committing — especially .github/workflows/, which changes");
