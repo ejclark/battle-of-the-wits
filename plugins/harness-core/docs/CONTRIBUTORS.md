@@ -384,6 +384,63 @@ instrument this repository does not yet have.
 sound and checkable; the claim that it holds *here* has an n of 1, and saying otherwise would be the
 flattery every gate in this system exists to prevent.
 
+## When a contributor has projects of their own
+
+They will. The instinct is to treat that as leakage — attention that could have gone here going
+elsewhere — and to look for ways to keep them close. **That instinct is wrong here, and it is worth
+knowing exactly why before anyone acts on it.**
+
+This project's stated status is *proven in exactly one codebase*, and its own doctrine says the real
+test of a portable system is expressing it somewhere it did not grow. The portability suite is an
+elaborate simulation of that — a throwaway repo with a deliberately unfamiliar layout — and a
+simulation can only plant violations somebody already imagined. **Three real defects surfaced on the
+first genuine adoption, and every one was something the suite's author had not thought of.**
+
+So:
+
+> **A contributor building their own thing with this harness installed is not the consolation path.
+> It is the experiment this project has been unable to run.**
+
+That reframes the choice completely. Both paths are genuinely good, which means **there is nothing to
+steer** — and that is a far stronger position than a funnel:
+
+| They work on **our** systems | They work on **their own**, with the harness |
+|---|---|
+| Adds throughput here, linearly | Tests the product claim, which currently blocks everything |
+| Deepens their context in one codebase | Produces the only evidence "portable" has ever had |
+| Value arrives immediately | Value arrives as defects nobody could have imagined |
+
+### A word about the funnel framing
+
+Thinking of it as an upsell is fine as private strategy and corrosive as a posture. A friend who
+senses that help with *their* project is instrumental — a hook to get them working on yours — has
+learned something about the friendship, and it is not recoverable by explaining afterwards. The good
+news is that the honest position is also the stronger one: **you do not have to steer, because both
+outcomes serve the project.** Help with their thing because helping is the deal, and take the
+portability evidence as the side effect it actually is.
+
+### What comes back, and what stays theirs
+
+The line is the one that already governs everything here, applied to a new case:
+
+> **If it is true of only their project, it stays there. If it is true of any project, it belongs in
+> the harness.**
+
+Their domain, their budgets, their layout, their brand — theirs, permanently. But a gate that assumed
+a layout, a scanner that crashed on a missing tool, an instruction naming a command an adopter does
+not have: those are **procedure defects**, and every one is a case the planted-violation suite should
+have had and did not.
+
+The return route is deliberately the cheapest one available — **an issue**, using the snag form. What
+they were doing, what they expected, what happened. Somebody here turns it into a planted-violation
+case, and the harness is permanently better in a way no amount of thinking in this repository could
+have achieved. That is the same loop `docs/LESSONS.md` runs on, extended one repository outward.
+
+**And it flows the other way too.** Someone running the harness on their own project hits the
+adoption sequence, the drills and the gates as a *user* rather than as an author — which is exactly
+the vantage point this project keeps saying it cannot generate internally. Their second week is worth
+more to the harness than their first, and neither requires them to work on it directly.
+
 ## What not to build
 
 This is governance for a household. The doctrine that applies is the repo's own: *every config option

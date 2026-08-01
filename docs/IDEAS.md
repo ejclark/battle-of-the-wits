@@ -258,6 +258,21 @@ devoted to preventing exactly that in code. Revisit only for content that genuin
 in the repository and needs no verification. Meeting notes, maybe. Not procedure, and not anything a
 gate could check. _(src: Eric · while: "onboarding is associated with github issues, wikis, projects")_
 
+**23. A contributor's own project is the portability evidence this repo has never had.**
+The framing to resist is that outside projects are leakage. This harness's own status line says
+*proven in exactly one codebase*, and its doctrine says the real test is expressing it somewhere it
+did not grow. `tests/portability.test.mjs` simulates that with a deliberately unfamiliar layout — but
+a simulation can only plant violations somebody already imagined, and **the first genuine adoption
+surfaced three defects none of which the suite's author had thought of** (hardcoded `src/` prefixes,
+skynet-specific exemptions, a crash when `knip` was absent).
+So a second person running this on their own repository produces the one kind of evidence that cannot
+be manufactured here. Concrete work it unblocks: a second real `harness.json` in the wild, an
+adoption sequence walked by someone who did not write it, and every gate meeting a toolchain nobody
+anticipated. **The return route is an issue on the snag form**, which someone here turns into a
+planted-violation case — the LESSONS.md loop extended one repository outward. Pairs with #2, which
+asks what a harness boundary would carry; a second harness in use is what would answer it.
+_(src: Eric · while: weighing whether to steer a contributor toward our systems or their own)_
+
 ### Side quests (surfaced by Claude while working — proposals to prune)
 
 **3. Humans do not claim territory; athletes do.**
