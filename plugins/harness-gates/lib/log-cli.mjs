@@ -46,7 +46,27 @@ function ledgerReport() {
   }
 
   if (unreadable) console.log(`\n  ${unreadable} line(s) could not be parsed and were skipped — the history is still readable.`);
-  console.log("");
+
+  // WHAT THIS MUCH DATA CAN AND CANNOT SUPPORT, stated by the tool rather than left to the reader.
+  //
+  // Hard data outranks theory about the thing it MEASURED, and that is exactly why a thin ledger is
+  // dangerous: extrapolating from six records is theory wearing a number's clothes, and it borrows
+  // the credibility of measurement without having earned any of it. A report that printed a direction
+  // from an anecdote would be the false green this whole harness exists to prevent, in the one
+  // surface people would trust most.
+  //
+  // The threshold is a judgement, not a statistic, and is stated as one. Anything under a couple of
+  // dozen boundaries is a story about a few days.
+  const SUPPORTS_TREND = 20;
+  console.log(
+    records.length < SUPPORTS_TREND
+      ? `\n  ${records.length} record(s) is an ANECDOTE, not a trend. These are counts of what happened,
+  and they support no claim about direction — read them as "this occurred", never as "this is
+  getting better or worse". Come back after ~${SUPPORTS_TREND}.\n`
+      : `\n  ${records.length} records is enough to read direction, and only for what was actually
+  measured. An extrapolation beyond these fields is a theory — hold it to a theory's standard
+  rather than to this table's.\n`,
+  );
   return 0;
 }
 
