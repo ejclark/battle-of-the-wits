@@ -258,3 +258,38 @@ Still no athlete has ever been dispatched. Decoupling from `skynet-capital` stil
 call. And a new one: the bootstrap's `knip.json` and `.jscpd.json` templates hardcode `src` and
 `.spec.ts` — the identical assumption that made the scanners measure 1 file of 10 in this repository.
 The scanners were fixed; the configs they depend on were not. Same bug, one layer down.
+
+---
+
+## 2026-08-01 (night, later) · The Cartographer's Error
+
+Left open at the end of the previous dungeon, and picked up immediately because it is the same bug
+one layer down.
+
+Every scanner in this harness reads its paths from `harness.json`. That was the whole portability
+fix, and it was declared done. But two of the six gates — dead code and clones — don't do their own
+detection; they delegate to `knip` and `jscpd`, whose scope lives in a **config file**. Those two
+files were still copied verbatim from the repository the harness grew in, hardcoding `src` and
+`.spec.ts`.
+
+So an adopter with a `lib/` layout would have gotten scanners looking in exactly the right place and
+detectors looking in exactly the wrong one. Not an error — an **empty scope**, which produces no
+findings, which reads as a clean repository. The most expensive kind of wrong answer, again, and for
+the second time in one night.
+
+**The generalisable question**, which is now in the ledger: after any portability fix, ask *what does
+the fixed thing read, and was that fixed too?* "Made the scanners descriptor-aware" felt complete
+because the scanners were the thing that had been named. Naming is not scope.
+
+Both configs are now rendered from the descriptor rather than copied, and the two template files are
+deleted — a template that must stay in sync with a renderer is a second source of truth waiting to
+drift. The gate is an end-to-end one: run the one-shot in a `lib/`-and-`spec/` repository and assert
+that **no emitted config contains the string `src/`**. That phrasing is deliberate. Asserting the
+right paths appear would pass on a config that also carried the wrong ones.
+
+### A note on what this repo's own configs look like
+
+This repository's `knip.json` enumerates its entry points explicitly rather than matching the
+generated shape, because its launcher-backed modules are genuinely unusual. That is a legitimate
+divergence — but it does mean the harness is not eating exactly what it cooks here, and a future
+reader should not take the committed file as the reference output. `configs.mjs` is the reference.

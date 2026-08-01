@@ -377,3 +377,27 @@ test("a .gitignore that already covers it is left alone", () => {
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+// The two adopted detectors are scoped by config, not by scanner code. Every scanner was made
+// descriptor-aware; these two config files were not, so a repo declaring any layout other than
+// `src/` got scanners looking in the right place and detectors looking in the wrong one — and an
+// empty scope reports a confident zero, which is indistinguishable from a clean repository.
+test("the adopted detectors are scoped to the repo's declared layout", () => {
+  const root = makeRepo({
+    "package.json": '{"name":"probe","version":"0.0.0"}\n',
+    "harness.json": '{"sourceDir":"lib","testDir":"spec","sourceExt":".js","specSuffix":".test.js"}\n',
+  });
+  try {
+    run(root);
+    const knip = JSON.parse(readFileSync(join(root, "knip.json"), "utf8"));
+    const jscpd = JSON.parse(readFileSync(join(root, ".jscpd.json"), "utf8"));
+    assert.deepEqual(jscpd.path, ["lib"], "jscpd must scan the declared source dir");
+    assert.ok(knip.project.includes("lib/**/*.js"), "knip must walk the declared source dir");
+    assert.ok(knip.entry.includes("spec/**/*.test.js"), "knip must treat the declared specs as entries");
+    for (const blob of [JSON.stringify(knip), JSON.stringify(jscpd)]) {
+      assert.doesNotMatch(blob, /"src\//, "no config may hardcode src/");
+    }
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});

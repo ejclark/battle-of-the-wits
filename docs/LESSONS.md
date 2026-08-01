@@ -148,3 +148,20 @@ Prevention ranks, best first:
   ratchets a throwaway budget and checks the justification survives.
 - **SIDE QUESTS:** the failure shape is "a lossy rewrite of a file that carries two kinds of
   content." Worth checking wherever else a tool regenerates something a human also writes into.
+
+### The scanners were made portable; the configs they depend on were not
+- **SHA:** `n/a`   **DATE:** 2026-08-01   **STATUS:** closed
+- **SIGNAL:** found by reading, immediately after the previous change — not by any failure. The
+  scanners had been fixed weeks earlier to read every path from `harness.json`; the `knip.json` and
+  `.jscpd.json` templates they depend on still hardcoded `src` and `.spec.ts`.
+- **ROOT CAUSE:** two of the six gates delegate detection to a third-party tool, so their scope lives
+  in a config file rather than in scanner code. Fixing "the scanners" felt complete because the
+  scanners were the thing named. The dependency one layer down kept the original assumption, and an
+  adopter with any other layout would have gotten detectors pointed at a directory that may not even
+  exist — reporting a confident zero, which looks exactly like a clean repository.
+- **PREVENTION:** script + gate — both configs are now RENDERED from the descriptor (`configs.mjs`)
+  instead of copied, and a bootstrap test runs the one-shot in a `lib/`-and-`spec/` repo and asserts
+  no emitted config contains the string `src/`.
+- **SIDE QUESTS:** "fixed the thing that was named, not the thing that was wrong" is the general
+  shape. Worth asking, after any portability fix: what does the fixed thing *read*, and was that
+  fixed too?

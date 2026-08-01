@@ -1,9 +1,0 @@
-{
-  "path": ["src"],
-  "ignore": ["**/*.spec.ts", "**/*.d.ts"],
-  "minTokens": 50,
-  "reporters": ["json"],
-  "absolute": false,
-  "gitignore": true,
-  "threshold": 100
-}
