@@ -93,6 +93,7 @@ state, not the harness's. The harness carries the procedure; the repo carries it
 | [`COACHES.md`](plugins/harness-core/docs/COACHES.md) | The detect-and-correct doctrine — the coaching staff, the codification ladder, detection lag, the smell catalog |
 | [`ENGINEERING.md`](plugins/harness-core/docs/ENGINEERING.md) | Engineering standards, change communication, the BDD loop |
 | [`OPERATING-MODEL.md`](plugins/harness-core/docs/OPERATING-MODEL.md) | The portable operating model — how a human and Claude divide work |
+| [`METAPHORS.md`](plugins/harness-core/docs/METAPHORS.md) | The load-bearing metaphors catalog + rubric — skin vs. skeleton, what each one generated here, and where it breaks |
 | [`DESCRIPTOR.md`](plugins/harness-core/docs/DESCRIPTOR.md) | `harness.json` — the interface that makes all of the above portable |
 
 **The doctrine ships inside `harness-core`**, not just in this repository — an adopter installs

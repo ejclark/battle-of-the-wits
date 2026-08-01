@@ -1109,3 +1109,61 @@ oldest entries, the metric has stopped being about importance and started being 
 Real debt on the board, and The Drawing Board goes last: fix what is broken first. Everything green,
 and it leads — because then it is the only real answer. That is one line of code and it is the part
 that makes the whole thing not annoying.
+
+---
+
+## 2026-08-01 · The Skeleton Catalog — and building without asking
+
+The Drawing Board shipped, and its top entry was **#9: load-bearing metaphors — a catalog, and a
+rubric for why they hold**, with twelve inbound references. I reported the ranking. Eric's reply was
+one line:
+
+> load bearing ideas - why wait for be to pursue ideas that carry that much impact
+
+He is right, and the reasoning is his own doctrine turned back on the tool. **An idea in the log is
+intent that was already expressed.** The decision was made when he wrote it down; handing back a
+ranked list asks him to make it a second time, which spends the constraint on a choice that is not
+open. A feature built to serve Theory of Constraints had committed the exact waste it names.
+
+Worth being precise about the mistake, because it is a tempting one: ranking *felt* like the complete
+job. It is the half that does not require judgement.
+
+### The bar, so this is not just one exception
+
+`CLAUDE.md` now states when a banked idea gets built without asking — structural or internal,
+specific enough that building is execution rather than invention, and reversible. Below that it stays
+a proposal. Product and visual work always waits, because taste is not inferable from an in-degree
+count, and inferring it would be a worse failure than asking too often.
+
+#9 clears every clause, which is why it was built in the same turn rather than proposed again.
+
+### What the catalog actually found
+
+Writing it was not summarising — the rubric made claims about this repository that had to be checked.
+Each skeleton is now catalogued with what it *generated* here and, per Eric's own rule 5, **where it
+breaks**:
+
+- **The ratchet** breaks whenever a module legitimately *receives* a well-placed extraction. It
+  cannot tell that from someone piling on, which is why four recorded raises exist.
+- **The coaching staff** breaks at performance judgement. There is no season and no roster to cut;
+  pushing past that produces surveillance rather than throughput.
+- **Theory of Constraints** breaks when the constraint moves — and it has. While the athletes were
+  unproven the binding constraint was not attention but *trust in the rails*, and work aimed at
+  attention would have been the waste.
+- **Genotype → phenotype** breaks at selection pressure. Nothing here reproduces differentially, so
+  the evolutionary half is unspent surplus — the richest unexploited vein, and the likeliest to be
+  over-driven.
+
+That last category is the point of the whole document. **A bad skin is a bad joke; a bad skeleton
+still produces plausible architecture**, which is why it survives review. The named anti-pattern is
+*metaphor capture* — driving decisions past the isomorphic region because the analogy is still
+producing fluent answers — and the tell is an argument that stops referring to the system and starts
+referring to the analogy. *"A coach wouldn't do that"* is not an engineering reason.
+
+### Gated, not recommended
+
+Rule 5 is now a test: every catalogued metaphor must state its breaking point, or the suite fails.
+Same shape as the lessons ledger requiring a PREVENTION line — an entry without one is a story rather
+than a tool. Verified by removing Theory of Constraints' breaking point and watching it refuse.
+
+A skeleton nobody has bounded is the one that quietly captures a decision later.

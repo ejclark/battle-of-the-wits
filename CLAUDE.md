@@ -59,6 +59,25 @@ Assume more are hiding.
 - The pipeline is two mutually-exclusive jobs: `verify` on PRs, `release` on merge to `main`. Merged
   commits are never re-verified; branch protection already required `verify`.
 
+## Building a banked idea is not a fresh decision
+
+An idea in the log is **intent someone already expressed**. Handing back a ranked list and asking
+which one to build spends the constraint — attention — on a choice that was already made when the
+idea was written down. So don't ask; pick it up, when all three hold:
+
+1. **Structural or internal.** Not outward-facing, not a taste call, not the irreversible class.
+2. **Specific enough that building it is execution, not invention.** If you would be deciding what
+   the idea *means*, you are inventing, and inventing on someone else's behalf is how a backlog turns
+   into a game of telephone.
+3. **Reversible.** The gates, the preflight and a squash-merge make most structural work cheap to
+   undo. Work that is not cheap to undo is the irreversible class and was never eligible.
+
+Below the bar, the ranking is a **proposal** and it waits. Product and visual work always waits —
+that is taste, and taste is not a thing to be inferred from an in-degree count.
+
+The load-bearing metaphors catalog ([`docs/METAPHORS.md`](docs/METAPHORS.md)) is the worked example:
+banked, structural, specific, reversible — so it got built rather than proposed.
+
 ## What does not belong here
 
 - Anything true of only one project (its budgets, its exemptions, its deploy target, its brand).

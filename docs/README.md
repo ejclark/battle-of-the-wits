@@ -8,6 +8,7 @@ disk when they install `harness-core` — not as a link to a repository they may
 | [`COACHES.md`](../plugins/harness-core/docs/COACHES.md) | The detect-and-correct system: the coaching staff, the codification ladder, detection lag, the smell catalog |
 | [`ENGINEERING.md`](../plugins/harness-core/docs/ENGINEERING.md) | Engineering standards, change communication, the BDD loop |
 | [`OPERATING-MODEL.md`](../plugins/harness-core/docs/OPERATING-MODEL.md) | How a human and Claude divide the work |
+| [`METAPHORS.md`](../plugins/harness-core/docs/METAPHORS.md) | The load-bearing metaphors catalog and the rubric for why they hold — skin vs. skeleton, and where each one breaks |
 | [`DESCRIPTOR.md`](../plugins/harness-core/docs/DESCRIPTOR.md) | `harness.json` — the interface that makes all of the above portable |
 
 `docs/DESCRIPTOR.md` remains here as a convenience copy for readers browsing this repository on the
