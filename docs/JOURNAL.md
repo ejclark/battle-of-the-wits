@@ -806,3 +806,45 @@ The clone gate immediately caught the new `gitRepo()` fixture duplicating `gitsc
 now `makeGitRepo()` in `helpers.mjs`, which also documents the deliberate case: given `{}` it leaves
 the repository **unborn**, because that is a real state a tool meets and several cases exist to prove
 nothing crashes there.
+
+---
+
+## 2026-08-01 (night, thirteenth) · The Watchtower
+
+Continuing the audit, and this one is the sharpest version of it: **the status line runs on every
+single render in an adopter's editor**, and nothing had ever executed it.
+
+It sits in `templates/`, which every gate deliberately excludes — a template is not this project's
+code, and measuring it inflates every number. That exclusion is correct for the scanners. It was also
+quietly doing something else: **"not measured" had become "fine."**
+
+Running it once found two things.
+
+### A progress bar that can never fill
+
+The row reads `depth N/5`. The depth it computes maxes out at **3**, because phases 4 and 5 are
+*repository settings* — requiring `verify` on the default branch, and enabling auto-merge — which a
+row that reads files cannot see and must not make a network call to find out.
+
+So a repository that has done everything right displays `depth 3/5 · The Warden's Gate` forever. The
+indicator is accurate about what it measured and misleading about what it means, which is the worse
+combination: it tells a diligent adopter, permanently, that they are not finished.
+
+It now names the wall — `· rest is repo settings` — at exactly the depth where the code runs out and
+the settings begin. An honest ceiling is more useful than an unreachable one.
+
+### The failure the try/catch could not catch
+
+`readFileSync(0)` on a TTY reads until EOF. That is a **hang**, not a throw — so the file's careful
+"never fail loudly, swallow everything" contract, which is the right contract, could not have saved
+it. Silence is the correct failure mode for a status line; freezing the row is not a failure mode at
+all, it is a hostage situation. It now reads stdin only when something is actually piped.
+
+### The general shape
+
+An exclusion is a statement about **who measures**, never about whether something matters. The
+scanners were right to skip `templates/`. Nothing was right to conclude from that skip that the most
+frequently executed file in the whole distribution was fine.
+
+Worth a sweep of anything else excluded on principle — fixtures, generated output — for the same
+silent promotion from *out of scope* to *assumed good*.
