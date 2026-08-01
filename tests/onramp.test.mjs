@@ -122,6 +122,35 @@ test("every task offered on the page is pinned here", () => {
   assert.equal(offered, TASKS.length, `CONTRIBUTING.md offers ${offered} tasks but ${TASKS.length} are pinned — an unpinned task is one nobody is watching`);
 });
 
+test("the README says why you would care and how to start, and defers the rest", () => {
+  // The README is the only page most people will ever read, and it does exactly two jobs: say why
+  // this is worth your attention, and give you the one thing to paste. Everything else is reference,
+  // and reference in front of a decision is a cost paid by every reader to serve a few.
+  //
+  // This grew to 84 open lines of tables before anyone noticed — not by a bad decision, by a dozen
+  // reasonable ones, each adding something genuinely useful to a page nobody was measuring. That is
+  // the only way this particular defect ever happens, which is why the ceiling is a test rather than
+  // an intention.
+  const readme = read("README.md");
+  // Split on the TAG, not on one spelling of it. The first version matched the literal "<details>"
+  // and silently measured the whole file the moment a drawer gained an id attribute — a check that
+  // reads 171 lines as the open section is not stricter, it is broken.
+  const open = readme.split(/<details\b/)[0];
+  const lines = open.split("\n").length;
+  assert.ok(lines <= 55, `${lines} lines before the first drawer — the pitch and the paste, nothing else. Move it behind <details>.`);
+
+  // Both jobs must actually still be done up front. A ceiling met by deleting the reason to care
+  // would pass the line count and fail the reader.
+  assert.ok(open.includes("## Get started"), "the paste must be above the fold, not in a drawer");
+  assert.ok(/```shell/.test(open), "the command itself has to be in the open — a link to it is one click too many");
+  assert.ok(open.indexOf("Writing code got cheap") < open.indexOf("## Get started"), "why you would care comes before how to start");
+
+  // And the deferred material must still be reachable. Brevity that loses the map is not brevity.
+  for (const kept of ["CONTRIBUTORS.md", "DECIDING.md", "METAPHORS.md", "DESCRIPTOR.md"]) {
+    assert.ok(readme.includes(kept), `${kept} fell out of the README entirely — it was meant to move into a drawer, not vanish`);
+  }
+});
+
 test("every copy/paste one-shot in the README names things that exist", () => {
   // The README's shell blocks are the single most-pasted text in this project, and a wrong line in
   // one fails in someone else's terminal where nobody here can see it. Every name in them is
