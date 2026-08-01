@@ -11,7 +11,7 @@ import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { GEARS, FLOORS, ceilingFor, floorFor, gear, headroom } from "../plugins/harness-core/lib/gear.mjs";
+import { GEARS, FLOORS, ceilingFor, floorFor, gear, gearLabel, headroom } from "../plugins/harness-core/lib/gear.mjs";
 
 const REPO = join(dirname(fileURLToPath(import.meta.url)), "..");
 const LAUNCHER = join(REPO, "plugins/harness-core/bin/harness-gear");
@@ -102,6 +102,21 @@ test("the account's limit is never read from a file this repository could commit
   const src = execFileSync("cat", [join(REPO, "plugins/harness-core/lib/gear.mjs")], { encoding: "utf8" });
   assert.match(src, /HARNESS_TOKEN_LIMIT/);
   assert.ok(!/\.harness\/gear/.test(src), "the limit must not acquire a state file");
+});
+
+test("the one-line form never prints a gear without the signal that set it", () => {
+  // A gear on its own is a number nobody can argue with, which makes it decoration. The signal is
+  // what turns it into a claim someone can check — and an automatic lever that cannot be checked is
+  // indistinguishable from no lever at all.
+  assert.equal(gearLabel(gear({ signals: ["novel"], fraction: 1 })), "careful ← novel");
+  assert.equal(gearLabel(gear({ signals: [] })), "standard ← default");
+  assert.equal(gearLabel(gear({ signals: ["drill"] }), "verify:onramp"), "verify:onramp · mechanical ← drill");
+
+  // A refusal must never render as a gear — reading "mechanical" on work that needed "deep" is the
+  // silent downgrade wearing a label.
+  const refused = gearLabel(gear({ signals: ["irreversible"], fraction: 0.01 }));
+  assert.match(refused, /^REFUSED \(needs deep, affords mechanical\)$/);
+  assert.doesNotMatch(refused, /←/);
 });
 
 test("the launcher runs, and a refusal exits non-zero", () => {

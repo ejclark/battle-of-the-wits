@@ -133,6 +133,21 @@ export function gear({ signals = [], fraction = null } = {}) {
   return { gear: floor, floor, ceiling, refuse: false, why, note: null };
 }
 
+/**
+ * The one-line form, for an agent label, a status row, or a sentence back to a human.
+ *
+ * ALWAYS carries the signal alongside the gear. "careful" is a number and nobody can disagree with
+ * it; "careful ← novel" is a claim, and a claim is the only kind of report worth printing — it is
+ * what makes an automatic choice auditable instead of decorative. A lever nobody can watch choose is
+ * indistinguishable from a lever that does nothing.
+ */
+export function gearLabel(result, prefix = "") {
+  if (!result) return prefix;
+  const fired = /^evidence: /.test(result.why) ? result.why.replace(/^evidence: /, "") : "default";
+  const body = result.refuse ? `REFUSED (needs ${result.floor}, affords ${result.ceiling})` : `${result.gear} ← ${fired}`;
+  return prefix ? `${prefix} · ${body}` : body;
+}
+
 // ── CLI ────────────────────────────────────────────────────────────────────────
 // Guarded so importing this module for its functions never runs the command.
 if (process.argv[1] && process.argv[1].endsWith("gear.mjs")) {

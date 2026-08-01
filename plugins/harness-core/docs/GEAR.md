@@ -126,6 +126,35 @@ The corollary is the uncomfortable half: **a repository with no gates cannot aff
 and the fix is to build the net rather than to turn the effort up forever. Turning effort up is
 renting the safety; building the gate is owning it.
 
+## A gear nobody can see cannot be calibrated
+
+The selection above is worthless if it happens invisibly, and for two separate reasons that are worth
+keeping apart.
+
+**The first is trust in the lever.** A system that picks its own effort is asking to be trusted with a
+decision the human used to make. Trust in an automatic choice is built by *watching it choose* —
+seeing it go low on a rename and high on a migration is what turns "it decides" from a claim into an
+observation. Hidden, the same mechanism is indistinguishable from nothing happening at all, and the
+first time it gets something wrong there is no record to argue with.
+
+**The second is that the gear is a free read on the WORK.** It is the system's honest estimate of how
+much thinking a request demanded — so it doubles as a scale nobody had to build: *that idea was a
+`deep` one; this one was mechanical.* That is genuinely useful information about your own request,
+and it costs one word to surface.
+
+So gear is reported, always, in three places:
+
+| Where | Form |
+|---|---|
+| A dispatched agent's label | `verify:onramp · careful` — the gear rides in the label the progress view already shows |
+| The run ledger | `{"kind":"dispatch","gear":"careful","signals":["novel"]}` — so a retro can ask which gears the work actually needed |
+| Prose back to the human | one line, at the end: what gear, and what fired |
+
+**Never report the gear without the signal that set it.** "Ran at careful" is a number; "ran at
+careful — novel, no procedure exists yet" is a claim someone can disagree with, and a claim someone
+can disagree with is the only kind worth printing. The signal is the part that makes the choice
+auditable rather than decorative.
+
 ## Getting back down
 
 A system that only ratchets up ends expensive, so the descent matters as much as the climb:
