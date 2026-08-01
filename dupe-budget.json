@@ -1,4 +1,3 @@
 {
-  "duplicateDefs": 39,
-  "_why": "39 not 38: harness-claim is the ninth standalone PATH executable and follows the same pattern as the other eight \u2014 its own ROOT, read from process.cwd(). Those tools must not import across the PATH boundary, so the recurrence is deliberate architecture, not debt. Renaming ROOT in one of nine to dodge the counter would make the code less consistent for the sake of a number, which is the gate distorting the codebase. Raised as the deliberate reviewable act the scanner's own message describes."
+  "duplicateDefs": 39
 }

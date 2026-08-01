@@ -340,3 +340,40 @@ test("both gate flavors name every scanner — neither may quietly cover less", 
     }
   }
 });
+
+test("a .gitignore is written — without it the automated run commits node_modules", () => {
+  // Found by running --auto on a clean repo: `git add -A` staged the entire dependency tree.
+  const root = makeRepo();
+  try {
+    run(root);
+    const ignored = readFileSync(join(root, ".gitignore"), "utf8");
+    assert.match(ignored, /node_modules/);
+    assert.match(ignored, /\.harness/, "runtime claim state must never be committed either");
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("an existing .gitignore is appended to, never replaced", () => {
+  const mine = "dist/\n*.env\n";
+  const root = makeRepo({ "package.json": "{}\n", ".gitignore": mine });
+  try {
+    run(root);
+    const after = readFileSync(join(root, ".gitignore"), "utf8");
+    assert.match(after, /dist\//, "the repo's own rules must survive");
+    assert.match(after, /\*\.env/);
+    assert.match(after, /node_modules/, "and the harness's needs are added");
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("a .gitignore that already covers it is left alone", () => {
+  const root = makeRepo({ "package.json": "{}\n", ".gitignore": "node_modules/\n.harness/\n*.log\n.DS_Store\n" });
+  try {
+    const out = run(root);
+    assert.match(out, /already covers what the harness needs/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});

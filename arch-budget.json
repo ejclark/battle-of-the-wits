@@ -1,4 +1,5 @@
 {
+  "_why_incident_scan": "incident-scan.mjs 165 \u2192 170: a bug fix, not growth. It was the only gate that assumed its budget file already existed and died with ENOENT on a repo adopting the harness \u2014 the exact moment a gate must not fail. The five lines are the existsSync guard every other scanner already had.",
   "plugins/harness-core/lib/bootstrap.mjs": 247,
   "plugins/harness-core/lib/detect.mjs": 59,
   "plugins/harness-core/lib/dungeon.mjs": 175,
@@ -7,6 +8,6 @@
   "plugins/harness-gates/lib/clone-scan.mjs": 107,
   "plugins/harness-gates/lib/dead-scan.mjs": 116,
   "plugins/harness-gates/lib/dupe-scan.mjs": 108,
-  "plugins/harness-gates/lib/incident-scan.mjs": 165,
+  "plugins/harness-gates/lib/incident-scan.mjs": 170,
   "plugins/harness-gates/lib/spec-gap-scan.mjs": 133
 }

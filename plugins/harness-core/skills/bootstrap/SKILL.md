@@ -14,7 +14,18 @@ in, in a version already proven green.
 ```shell
 harness-bootstrap --dry-run   # always do this first — shows the plan, touches nothing
 harness-bootstrap             # writes what's missing, never clobbers
+harness-bootstrap --auto      # writes, installs, freezes every budget, verifies, commits
+harness-bootstrap --auto --ship   # …and pushes the branch
 ```
+
+**`--auto` runs the whole mechanical sequence** rather than handing back a checklist: install →
+freeze all six budgets → verify → commit. It stops before pushing on purpose — everything up to that
+point is local and reversible, while a push lands in someone's repository, and a bootstrap other
+people run on their own projects must not do that uninvited. `--ship` opts in.
+
+The genuinely human step is narrower and cannot be done from here at all: branch protection,
+auto-merge, and the App grant need repo-admin credentials. The run ends by naming the exact settings,
+including the two ordering traps.
 
 `--force` overwrites existing files. It is destructive; only use it when the user explicitly asks to
 reset their config.

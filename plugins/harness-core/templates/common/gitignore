@@ -1,0 +1,6 @@
+node_modules/
+*.log
+.DS_Store
+
+# Runtime coordination state — live territory claims, never committed.
+.harness/
