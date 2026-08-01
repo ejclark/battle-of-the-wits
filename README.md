@@ -56,6 +56,7 @@ Detail lives in folders; this is the map. Nothing below is needed to start.
 |---|---|
 | [`COACHES.md`](plugins/harness-core/docs/COACHES.md) | Detect-and-correct doctrine — the coaching staff, the codification ladder, detection lag |
 | [`METAPHORS.md`](plugins/harness-core/docs/METAPHORS.md) | The metaphor catalog + rubric — skin vs. skeleton, and where each one breaks |
+| [`THEORIES.md`](plugins/harness-core/docs/THEORIES.md) | Borrowed theory as hypotheses with falsifiers — what holds, what shifted, what is untested |
 | [`ENGINEERING.md`](plugins/harness-core/docs/ENGINEERING.md) | Standards, the BDD loop, why commit size is a sampling rate |
 | [`GEAR.md`](plugins/harness-core/docs/GEAR.md) | How much thinking a task needs — evidence sets the floor, budget sets the ceiling |
 | [`OPERATING-MODEL.md`](plugins/harness-core/docs/OPERATING-MODEL.md) | How a human and Claude divide work |
