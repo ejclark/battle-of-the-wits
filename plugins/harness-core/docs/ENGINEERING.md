@@ -16,6 +16,31 @@ decision, the ADR lands in the same PR. Routine changes do not need one.
 The test for "significant" is not size. It is **reversibility**: if undoing it in six months would
 mean a migration rather than a revert, write it down while the reasoning is still in someone's head.
 
+## A commit is a fault line — and commit size is your sampling rate
+
+Small, focused commits are usually defended on review and revert: a reviewer can hold one idea, and a
+bad one is cheap to undo. Both true, and both understate it.
+
+**A commit is the natural boundary at which this system can notice something about itself.** It is the
+smallest point where work is finished, verified and nameable. Retros, ledger records, gate results and
+blame all attach there. So the number of commits in a stretch of work is the number of points at which
+learning is even *possible* — and each one has to account for everything since the last.
+
+That makes the cost asymmetric in a way that is easy to miss:
+
+| | Many small commits | Few large ones |
+|---|---|---|
+| The timeline is | **read** off the diff | **reconstructed**, expensively and lossily |
+| A gate failure points at | one small change | a large surface, ambiguously |
+| What was briefly confusing then fixed | is visible in a diff | leaves no trace at all |
+
+The last row is the one that costs most. Reconstruction can only ever see what *survived*, and the
+thing that was confusing for ten minutes and then quietly resolved is usually the finding.
+
+The practical test, and it is stricter than "is this commit small": **does this commit contain more
+than one thing that could have shipped on its own?** If yes, it is several commits wearing one
+message — and every retro after it pays for the merge.
+
 ## The compiler is the first test
 
 Whatever the language, turn its checking up as far as it goes and leave it there. Types are the

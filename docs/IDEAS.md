@@ -149,6 +149,18 @@ clear first: an adopter installs plugins, they do not stand up Postgres, so what
 or it lives in the target repo rather than in the harness. _(src: Eric · while: "we likely need to
 invest in database infrastructure to organize our information")_
 
+**16. Commit size is the sampling rate of learning — measure the trend, do not police it.**
+The `commit` records in the ledger now make commit shape a series rather than an anecdote, which
+raises the obvious next question: should a gate refuse an oversized commit? **Probably not, and the
+reason is worth keeping.** A file-count threshold is a proxy for "contains more than one shippable
+thing", and the proxy is bad in both directions — a mechanical rename touches forty files and is one
+idea, while three files can hold three unrelated decisions. A gate on the proxy would be routed
+around by splitting mechanically rather than meaningfully, which is worse than no gate because it
+looks like compliance. The honest instrument is the **trend**, read at a retro, next to what the
+retros actually cost. Revisit only if the trend gets worse while someone is watching it, which is the
+one condition under which a gate would be adding something. _(src: Eric · while: "the intent of the
+retro is applied at a natural fault line; small commits relative to the task at hand")_
+
 ### Side quests (surfaced by Claude while working — proposals to prune)
 
 **3. Humans do not claim territory; athletes do.**
