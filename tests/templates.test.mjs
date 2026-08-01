@@ -42,6 +42,12 @@ function reachedPaths() {
   return out;
 }
 
+// Templates that are HANDED TO A PERSON rather than installed into a repository. The rule below is
+// right — a template nothing writes is a promise to the adopter that nothing keeps — but it assumes
+// every template is machine-written, and one is not: FIRST-APP.md is read by a human who has never
+// built anything, and installing it into their repo would be the wrong verb entirely.
+const HANDED_OVER = ["starter/FIRST-APP.md"];
+
 test("every shipped template is reached by the bootstrap", () => {
   // A template nothing writes is dead weight that ships, and knip cannot see it here.
   const reached = reachedPaths();
@@ -52,7 +58,8 @@ test("every shipped template is reached by the bootstrap", () => {
         // Either the loader names it directly, or its full path appears as a literal somewhere in
         // lib — `gateSpecFor` picks between two spec templates and hands the choice to `tpl()`.
         !reached.some((r) => (r.prefix ? rel.startsWith(r.path) : rel === r.path)) &&
-        !libSources.includes(`"${rel}"`),
+        !libSources.includes(`"${rel}"`) &&
+        !HANDED_OVER.includes(rel),
     );
   assert.deepEqual(
     orphans,
@@ -74,6 +81,20 @@ test("the two gate-spec templates defend the same dimensions", () => {
   const forNodeTest = gates("gates.test.mjs");
   assert.ok(forNodeTest.length >= 6, "the parse found too few gates to be reading the file right");
   assert.deepEqual(gates("gates.spec.ts"), forNodeTest);
+});
+
+test("a hand-over template is still pointed at by something a reader will meet", () => {
+  // The exemption above buys it out of the bootstrap, not out of being findable. A file nobody is
+  // ever sent to is the same dead weight the rule was written for, arriving through the door the
+  // exemption just opened.
+  const pointers = [
+    readFileSync(join(CORE, "../../CONTRIBUTING.md"), "utf8"),
+    readFileSync(join(CORE, "skills/spark/SKILL.md"), "utf8"),
+  ].join("\n");
+  for (const rel of HANDED_OVER) {
+    const leaf = rel.split("/").pop();
+    assert.ok(pointers.includes(leaf), `${rel} is exempt from the bootstrap and nothing points at it either`);
+  }
 });
 
 test("no template names a path the harness does not ship", () => {
