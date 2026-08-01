@@ -374,3 +374,34 @@ test("the patch-forward prompt refuses the things a stranger's session must not 
   assert.match(paste, /did NOT fix/, "what it could not fix must reach the PR too, or the report is a lie by omission");
   assert.match(paste, /as you go|as you work/, "the record has to be built during the work — a reconstruction is missing what mattered");
 });
+
+test("the way to start the local view is the same sentence on every platform", () => {
+  // A newcomer's first Windows contributor found three defects in one afternoon, all of the same
+  // shape: a command that resolves on POSIX and does not on Windows — no `npm.cmd`, no `PATHEXT`, no
+  // shebang. The launcher twins fix that for `bin/`, but only once `bin/` is on PATH, and INSTALLING
+  // A PLUGIN DOES NOT PUT IT THERE.
+  //
+  // So the start instruction has to route through `node` and a module path, which is identical
+  // everywhere. This asserts the property rather than the sentence: any runnable serve command these
+  // documents hand a reader must go through node, however it is worded.
+  for (const file of ["README.md", "CONTRIBUTING.md"]) {
+    const body = readFileSync(join(REPO, file), "utf8");
+    // A bare `harness-serve` presented as the thing to RUN — in a fence, or after "run"/"open" —
+    // is the platform-dependent form. Mentioning the name while explaining the difference is fine.
+    const runnable = [...body.matchAll(/(?:^|\n)```[^\n]*\n([\s\S]*?)```/g)].map((m) => m[1]);
+    for (const block of runnable) {
+      for (const line of block.split("\n").map((l) => l.trim()).filter(Boolean)) {
+        if (!/harness-serve/.test(line)) continue;
+        assert.fail(`${file} tells a reader to run \`${line}\` — that needs PATH, which installing a plugin does not set`);
+      }
+    }
+    // Either platform-neutral form counts. `npm start` resolves through the shell, which DOES
+    // consult PATHEXT and finds npm.cmd — the Windows failures in this project all came from
+    // execFileSync bypassing the shell, not from a human typing a command.
+    assert.match(
+      body,
+      /npm start|node [\w./-]*serve\.mjs/,
+      `${file} must give a platform-neutral way to start the local view`,
+    );
+  }
+});

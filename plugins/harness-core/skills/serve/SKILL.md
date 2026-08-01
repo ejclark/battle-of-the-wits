@@ -10,9 +10,22 @@ This is those answers, assembled, at one address.
 
 ## Run it
 
+In a checkout of the harness itself, the repository provides the alias:
+
+```
+npm start
+```
+
+Anywhere else — an adopter's repository, with the plugin installed:
+
 ```
 node ${CLAUDE_PLUGIN_ROOT}/lib/serve.mjs
 ```
+
+Prefer `npm start` when a `package.json` in the working directory declares it; it is shorter, it
+carries the intent, and it is the command somebody will guess. Fall back to the module path when it
+does not exist, which is the normal case for an adopter — `harness-bootstrap` deliberately does not
+add a `start` script to a repository that may already have one.
 
 Run it **in the background** and report the URL. It is a server; it does not exit, and waiting on it
 blocks the session forever.
@@ -26,7 +39,7 @@ Then say what is on each view, so nobody has to click all four to find the one t
 | `/map` | the repository as territory |
 | `/city` | the repository as a skyline |
 
-## Why this and not `harness-serve`
+## Why neither of these is `harness-serve`
 
 `harness-serve` is the same program and works once the plugin's `bin/` is on `PATH`. Installing a
 plugin does **not** put it there, so on a fresh machine the bare command is a confusing failure for

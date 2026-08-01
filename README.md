@@ -162,8 +162,16 @@ Detail lives in folders; this is the map. Nothing below is needed to start.
 banked observation · `/retro` failure into prevention · `/ears` wish into requirement ·
 `/governor` one dispatch cycle · `/decompose` `/dedupe` `/ship`
 
-**See your repository** — `harness-serve` opens a local view at `localhost:4173` that re-derives on
-every request and reloads when the repo moves. Nothing installed, localhost only.
+**See your repository** — `npm start` opens a local view at `localhost:4173` that re-derives on every
+request and reloads when the repo moves. Nothing installed, localhost only.
+
+```
+npm start                                    # or: node plugins/harness-core/lib/serve.mjs
+```
+
+The same line on every platform. Both forms run the module directly, so nothing depends on `PATH`, on
+`PATHEXT`, or on a `.cmd` twin. (`harness-serve` is the same program, once the plugin's `bin/` is on
+`PATH` — which installing a plugin does not do.)
 
 **Hit a harness defect?** `harness-report` composes a complete issue from files already on your
 disk — zero tokens, nothing transmitted, you press the button.

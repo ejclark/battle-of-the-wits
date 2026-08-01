@@ -275,7 +275,14 @@ The rails catch mistakes and a squash-merge undoes them, so the expensive part o
 already been paid for.
 
 **The local application is the best place to aim**, and it is deliberate advice rather than a
-consolation. Run `harness-serve` and open it. Everything it shows is derived from data already in the
+consolation. Ask Claude to **"start the local view"**, or run it yourself — the same line on every
+platform, because both forms run the module directly and nothing depends on `PATH` or a `.cmd` twin:
+
+```
+npm start                                    # or: node plugins/harness-core/lib/serve.mjs
+```
+
+Everything it shows is derived from data already in the
 repository — gates, budgets, the run ledger, the structural model — so a new view is *reading*
 something that exists, never inventing a source. It is new, so there is no legacy to break; it is
 read-only, so nothing it does is dangerous; and it is visual, so you see whether it worked

@@ -12,6 +12,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { handle, indexDocument, revision } from "../plugins/harness-core/lib/serve.mjs";
@@ -92,4 +93,50 @@ test("it needs nothing installed", () => {
   for (const i of imports) {
     assert.ok(i.startsWith("node:") || i.startsWith("./"), `serve.mjs imports "${i}" — it must depend on nothing`);
   }
+});
+
+test("the browser opens by default, and failing to open one is never fatal", () => {
+  // A headless box, a container, an SSH session and a machine with no default browser are all normal
+  // places to run this. In every one of them, failing to open a tab says nothing about whether the
+  // server came up — so the convenience must not be able to look like a server that did not start.
+  assert.match(SRC, /detached: true/);
+  assert.match(SRC, /\.unref\(\)/, "an attached child that ignores SIGINT holds the terminal after Ctrl-C");
+
+  // Not through a shell, on any platform — the URL is an argument a shell could interpret.
+  assert.doesNotMatch(SRC, /shell:\s*true/, "no opener may run through a shell");
+  assert.doesNotMatch(SRC, /exec\(/, "exec() is a shell — spawn with an argv is not");
+
+  // Every platform gets an opener, and Windows gets the `cmd /c start ""` form: `start` is a builtin
+  // rather than a program, and without the empty title argument cmd treats the URL as a window title
+  // and opens nothing. That is a silent no-op on the platform of this project's first contributor.
+  for (const p of ["darwin", "win32"]) assert.match(SRC, new RegExp(`"${p}"`), `${p} needs an opener`);
+  assert.match(SRC, /"open"|"xdg-open"/);
+  assert.match(SRC, /"cmd", \["\/c", "start", "", url\]/, "the empty title argument is load-bearing on Windows");
+});
+
+test("a machine with no browser at all still gets a server", { concurrency: false }, () => {
+  // THE BEHAVIOUR, not the shape of the code that implements it. The first version of this test
+  // asserted a try/catch was present and passed while the server crashed on every boot in this very
+  // container — because a missing opener arrives as an 'error' EVENT and try/catch never sees it.
+  // An unhandled 'error' on a child process takes the process with it.
+  //
+  // So this runs the real CLI with PATH emptied, which is exactly a box with no xdg-open, no open
+  // and no cmd, and requires it to serve anyway. It reproduced the crash before the fix.
+  const port = 4100 + (process.pid % 400);
+  const out = spawnSync(process.execPath, [join(REPO, "plugins/harness-core/lib/serve.mjs"), "--port", String(port)], {
+    encoding: "utf8",
+    timeout: 4000,
+    env: { ...process.env, PATH: "", CI: "" },
+  });
+  const log = `${out.stdout ?? ""}${out.stderr ?? ""}`;
+  assert.doesNotMatch(log, /Unhandled 'error' event|ENOENT/, `the server died trying to open a browser:\n${log}`);
+  assert.match(log, /http:\/\/127\.0\.0\.1/, "it must still print its URL");
+  assert.equal(out.signal, "SIGTERM", "it must still be running when the timeout kills it, not exited early");
+});
+
+test("CI never opens a tab, and there is a flag for everyone else", () => {
+  // A build agent spawning browsers is a hang waiting to happen, and it must not depend on somebody
+  // remembering a flag in a workflow file.
+  assert.match(SRC, /--no-open/);
+  assert.match(SRC, /process\.env\.CI/, "CI must be detected, not left to the caller to remember");
 });
