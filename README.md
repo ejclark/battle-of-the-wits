@@ -103,6 +103,16 @@ property of the download and not a mistake you made.
 
 </details>
 
+<details>
+<summary><b>First one through on an untested setup? Patch forward instead of reporting.</b></summary>
+
+The normal shape — hit a wall, report it, wait, try again — costs a round trip per defect and finds
+about two a day. [`PATCH-FORWARD.md`](plugins/harness-core/templates/starter/PATCH-FORWARD.md) is the
+other shape: **fix them as you go, and the fixes arrive as one pull request at the end.** It tells the
+session to say whose fault each failure was, keep the record as it works, and refuse to guess.
+
+</details>
+
 **Contributing here instead?** [`CONTRIBUTING.md`](CONTRIBUTING.md) takes you from nothing to a
 merged change entirely on github.com — no install, no terminal, no git. **If anything above did not
 work for you, start there**: it is a complete path, not a consolation prize.
@@ -142,6 +152,7 @@ Detail lives in folders; this is the map. Nothing below is needed to start.
 |---|---|
 | [`DESCRIPTOR.md`](plugins/harness-core/docs/DESCRIPTOR.md) | `harness.json` — the interface that makes this portable |
 | [`DISPATCH.md`](plugins/harness-gates/docs/DISPATCH.md) | The bracket every background agent runs inside |
+| [`ROADMAP.md`](docs/ROADMAP.md) | Where this is heading and why that order — the layer above the bank |
 | [`LESSONS.md`](docs/LESSONS.md) · [`IDEAS.md`](docs/IDEAS.md) · [`JOURNAL.md`](docs/JOURNAL.md) | Incidents with preventions · what is banked and unbuilt · the long record |
 
 **Drills** — ask in plain language, or invoke directly
@@ -150,6 +161,9 @@ Detail lives in folders; this is the map. Nothing below is needed to start.
 `/spark` no idea what to build · `/profile` their own GitHub profile · `/intake` feedback into a
 banked observation · `/retro` failure into prevention · `/ears` wish into requirement ·
 `/governor` one dispatch cycle · `/decompose` `/dedupe` `/ship`
+
+**See your repository** — `harness-serve` opens a local view at `localhost:4173` that re-derives on
+every request and reloads when the repo moves. Nothing installed, localhost only.
 
 **Hit a harness defect?** `harness-report` composes a complete issue from files already on your
 disk — zero tokens, nothing transmitted, you press the button.

@@ -55,6 +55,10 @@ const gate = (bin, t) => {
     }
   }
   try {
+    // Never the bare name on Windows: execFileSync does not consult PATHEXT, so it fails with
+    // ENOENT even when the command is on PATH — and the branch below would then SKIP a gate that is
+    // perfectly installed. Every adopter on Windows would silently measure nothing. Naming the
+    // `.cmd` outright does not work either (EINVAL, per the note above), so `cmd.exe` runs it.
     if (WIN) execFileSync("cmd.exe", ["/d", "/s", "/c", bin], { cwd: process.cwd(), stdio: "pipe" });
     else execFileSync(bin, { cwd: process.cwd(), stdio: "pipe" });
   } catch (err) {

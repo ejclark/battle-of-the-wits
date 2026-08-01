@@ -17,7 +17,8 @@
     "validate": "node scripts/validate-manifests.mjs && node scripts/sync-launchers.mjs --check",
     "check-versions": "node scripts/check-versions.mjs",
     "commitlint": "commitlint --from origin/main --to HEAD --verbose",
-    "verify": "npm run validate && npm run check-versions && npm test"
+    "verify": "npm run validate && npm run check-versions && npm test",
+    "sync-labels": "node scripts/sync-labels.mjs"
   },
   "devDependencies": {
     "@commitlint/cli": "^20.1.0",

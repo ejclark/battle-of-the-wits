@@ -46,7 +46,7 @@ function reachedPaths() {
 // right — a template nothing writes is a promise to the adopter that nothing keeps — but it assumes
 // every template is machine-written, and one is not: FIRST-APP.md is read by a human who has never
 // built anything, and installing it into their repo would be the wrong verb entirely.
-const HANDED_OVER = ["starter/FIRST-APP.md"];
+const HANDED_OVER = ["starter/FIRST-APP.md", "starter/PATCH-FORWARD.md"];
 
 // The starter app is written by `harness-starter`, not by the bootstrap — adopting the harness into
 // an existing repository must never drop a to-do app into it. Reached by a different command is
@@ -95,6 +95,7 @@ test("a hand-over template is still pointed at by something a reader will meet",
   // exemption just opened.
   const pointers = [
     readFileSync(join(CORE, "../../CONTRIBUTING.md"), "utf8"),
+    readFileSync(join(CORE, "../../README.md"), "utf8"),
     readFileSync(join(CORE, "skills/spark/SKILL.md"), "utf8"),
   ].join("\n");
   for (const rel of HANDED_OVER) {

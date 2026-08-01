@@ -21,6 +21,24 @@ export function outPath(argv, fallback) {
 }
 
 /**
+ * Run git under `root` and hand back stdout, or null.
+ *
+ * Null covers every way this can fail to answer — not a repository, no commits yet, a path git has
+ * never seen — because all three are STATES a view has to render honestly, and none is an error a
+ * visualiser should die on. The distinction between them is the caller's to draw if it needs one.
+ *
+ * Shared because the duplication gate caught the second copy the moment it appeared, in a file whose
+ * whole purpose is shared plumbing. Two swallow-the-error git runners drift in what they swallow.
+ */
+export function gitOut(root, args) {
+  try {
+    return execFileSync("git", args, { cwd: root, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] });
+  } catch {
+    return null;
+  }
+}
+
+/**
  * The REPOSITORY's name, not the checkout directory's.
  *
  * A worktree is routinely called something like `repo-2`, and that in the title of a file people

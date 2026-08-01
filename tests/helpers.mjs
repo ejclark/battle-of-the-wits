@@ -4,7 +4,7 @@
 // standalone PATH executables that deliberately must not import across that boundary — test files
 // are ordinary modules in one tree, so there is no reason for them to each own a copy.
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -42,6 +42,21 @@ export function runLauncher(file, args = [], opts = {}) {
     return execFileSync("cmd.exe", ["/d", "/s", "/c", file, ...args], opts);
   }
   return execFileSync(file, args, opts);
+}
+
+/**
+ * A module's CODE, with its comment lines removed.
+ *
+ * Every "the source must not contain X" assertion needs this, because scanning the whole file also
+ * matches the COMMENT explaining why X is refused — which makes documenting a rule indistinguishable
+ * from breaking it. That trap is in LESSONS.md and it has now been walked into enough times to be
+ * worth one shared function.
+ */
+export function codeOf(path) {
+  return readFileSync(path, "utf8")
+    .split("\n")
+    .filter((l) => !l.trim().startsWith("//") && !l.trim().startsWith("*"))
+    .join("\n");
 }
 
 /** A throwaway repository seeded with exactly the files a case needs. */
@@ -105,4 +120,21 @@ export function assertDocument(assert, html) {
   for (const tag of ["<html lang=", "<head>", "<meta charset=", "</head>", "<body>", "</body>", "</html>"]) {
     assert.ok(html.includes(tag), `missing ${tag}`);
   }
+}
+
+/**
+ * Every repo-relative path a document names in backticks that does not exist.
+ *
+ * Extracted when the clone gate caught the second copy. Both callers are defending the same thing —
+ * the on-ramp's exact failure, where a document made confident claims about files and two of them
+ * stopped being true inside a week — so there is no reason for each to own a slightly different
+ * version of the check that will drift.
+ */
+export function missingPathsIn(text, root, { skip = [] } = {}) {
+  const out = [];
+  for (const m of text.matchAll(/`([A-Za-z0-9_./-]+\.(?:md|mjs|json|yml))`/g)) {
+    if (skip.includes(m[1]) || out.includes(m[1])) continue;
+    if (!existsSync(join(root, m[1]))) out.push(m[1]);
+  }
+  return out;
 }

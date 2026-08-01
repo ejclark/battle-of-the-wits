@@ -29,6 +29,7 @@ import assert from "node:assert/strict";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { missingPathsIn } from "./helpers.mjs";
 
 const REPO = join(dirname(fileURLToPath(import.meta.url)), "..");
 const read = (rel) => readFileSync(join(REPO, rel), "utf8");
@@ -290,17 +291,12 @@ test("the escape ladder is present, and every rung it names is real", () => {
 test("no path CONTRIBUTING.md names is one a newcomer cannot find", () => {
   // A first-week reader follows every path on the page literally. One that does not resolve reads as
   // "I have already broken something", which is the opposite of what this page is for.
-  const missing = [];
   // A backticked name that is a LINK LABEL is not a claim about a path — the path is the link
-  // target, and it is checked as itself. `[`FIRST-APP.md`](plugins/.../FIRST-APP.md)` reads as a
-  // broken path only to a parser that stopped at the backticks.
-  const labels = new Set([...ONRAMP.matchAll(/\[`([^`]+)`\]\(([^)]+)\)/g)].map((m) => m[1]));
-  for (const m of ONRAMP.matchAll(/`([A-Za-z0-9_./-]+\.(?:md|mjs|json|yml))`/g)) {
-    const p = m[1];
-    if (labels.has(p)) continue;
-    if (p.startsWith("docs/GLOSSARY.md")) continue; // the one path named BECAUSE it does not exist
-    if (!existsSync(join(REPO, p))) missing.push(p);
-  }
+  // target, and it is checked as itself below. `[`FIRST-APP.md`](plugins/.../FIRST-APP.md)` reads as
+  // a broken path only to a parser that stopped at the backticks.
+  const labels = [...ONRAMP.matchAll(/\[`([^`]+)`\]\(([^)]+)\)/g)].map((m) => m[1]);
+  // docs/GLOSSARY.md is the one path named BECAUSE it does not exist.
+  const missing = missingPathsIn(ONRAMP, REPO, { skip: [...labels, "docs/GLOSSARY.md"] });
   // And every link TARGET must resolve, which is the check the labels were standing in for.
   for (const m of ONRAMP.matchAll(/\]\(([^)#][^)]*)\)/g)) {
     const t = m[1].split("#")[0];
@@ -362,4 +358,19 @@ test("the setup paste is self-contained for a session that knows nothing", () =>
   // project exists to prevent.
   const first = read("plugins/harness-core/templates/starter/FIRST-APP.md");
   assert.ok(first.includes(paste.trim()), "FIRST-APP.md ships a different setup paste from the README");
+});
+
+test("the patch-forward prompt refuses the things a stranger's session must not do", () => {
+  // It runs unattended on somebody else's machine, fixing this repository as it goes. Two rails
+  // matter more than everything else in it: never touch the irreversible class, and never guess.
+  const doc = read("plugins/harness-core/templates/starter/PATCH-FORWARD.md");
+  const paste = [...doc.matchAll(/```\n([\s\S]*?)```/g)][0]?.[1];
+  assert.ok(paste, "the paste is gone or its fence changed");
+
+  assert.match(paste, /\.github\/workflows\//, "the irreversible class must be named, not implied");
+  assert.match(paste, /credentials/, "and so must credentials");
+  assert.match(paste, /do not\s+guess/i, "a guessed fix that silences an error is worse than no fix — it hides the real one");
+  assert.match(paste, /whether the fault is mine, my machine's, or the\s+harness/, "an unattributed failure is read as self-inflicted every time");
+  assert.match(paste, /did NOT fix/, "what it could not fix must reach the PR too, or the report is a lie by omission");
+  assert.match(paste, /as you go|as you work/, "the record has to be built during the work — a reconstruction is missing what mattered");
 });

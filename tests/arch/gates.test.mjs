@@ -15,10 +15,23 @@ import { bin, runLauncher } from "../helpers.mjs";
 // platform-runnable twin, and `runLauncher()` so Windows can actually spawn it.
 const REPO = join(dirname(fileURLToPath(import.meta.url)), "../..");
 
+// TWO THINGS THIS FILE GOT WRONG THAT THE SHIPPED TEMPLATE GOT RIGHT — the repo's own gate was worse
+// than the one it hands adopters, which is the wrong way round.
+//
+// 1. WINDOWS. The launchers are extensionless `#!/bin/sh`; Windows cannot execute them, and
+//    execFileSync does not consult PATHEXT. The .cmd twin is the runnable form there — which is what
+//    `bin()` picks, and `runLauncher()` is what can actually spawn it.
+// 2. CANNOT MEASURE IS NOT A VERDICT. Without this, a scanner that could not RUN was reported as
+//    "reported debt over budget" — and on the first Windows machine to try it, 131 tests failed with
+//    a message accusing the repository of debt it does not have. The finding was real; the words
+//    were a lie, and a confident wrong diagnosis costs more than a blank one.
 const gate = (name) => {
   try {
     runLauncher(bin("harness-gates", name), [], { cwd: REPO, stdio: "pipe" });
   } catch (err) {
+    if (err.code === "ENOENT") {
+      assert.fail(`${name} could not be executed at all — NOTHING WAS MEASURED. This is not a debt finding.`);
+    }
     assert.fail(`${name} reported debt over budget:\n\n${err.stdout ?? ""}${err.stderr ?? ""}`);
   }
 };

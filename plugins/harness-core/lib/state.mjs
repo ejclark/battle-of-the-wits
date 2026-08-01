@@ -23,6 +23,25 @@ export function readJson(root, path) {
 }
 
 /**
+ * What one budget file totals, from its parsed contents.
+ *
+ * Two shapes are in the wild — a bare number (one debt total) and a map of file → budget — and every
+ * surface that reads a budget has to handle both. Shared rather than copied because the history view
+ * compares a budget against ITS OWN PAST: two readers that disagree about what a file totals would
+ * render a change that never happened, which is worse than not drawing the line at all.
+ *
+ * `null` for anything unreadable, because "we could not measure this" is a state and it must never
+ * arrive downstream as 0.
+ */
+export function budgetTotal(raw) {
+  if (typeof raw === "number") return raw;
+  if (raw === null || typeof raw !== "object") return null;
+  return Object.entries(raw)
+    .filter(([k, v]) => !k.startsWith("_why") && typeof v === "number")
+    .reduce((sum, [, v]) => sum + v, 0);
+}
+
+/**
  * The canonical boss list — every standing target, derived from committed budgets.
  *
  * Extracted because three surfaces (the dungeon view, the forge, the map) each derived this from the
