@@ -165,3 +165,33 @@ Prevention ranks, best first:
 - **SIDE QUESTS:** "fixed the thing that was named, not the thing that was wrong" is the general
   shape. Worth asking, after any portability fix: what does the fixed thing *read*, and was that
   fixed too?
+
+### A duplication finding was argued away by a rationale nobody tested
+- **SHA:** `n/a`   **DATE:** 2026-08-01   **STATUS:** closed
+- **SIGNAL:** none for months. The duplication gate reported the finding correctly the whole time —
+  32 duplicated definitions, the largest block in the repository — and a comment in the gate's own
+  source explained why it was fine.
+- **ROOT CAUSE:** the explanation said nine standalone `PATH` executables "must not import across
+  that boundary." There is no boundary: a `bin/` launcher runs `node lib/<x>.mjs`, and from there a
+  sibling import is an ordinary relative specifier. `harness-claim` had been importing `registry.mjs`
+  since the day it was written, in the same directory, which falsified the claim before it was made.
+  The cost was not the copies themselves — it was that `spec-gap-scan` silently ignored the `exclude`
+  key two of its siblings honoured, which is exactly the bug six copies of one preamble produces.
+- **PREVENTION:** gate + doctrine — the preamble is now one module (`descriptor.mjs`), and the
+  `IGNORE` comment records that its previous justification was false so a future maintainer cannot
+  re-import it. Duplication debt 32 → 25, clones 10 → 4.
+- **SIDE QUESTS:** a gate can be argued *out* of a finding as easily as into one, and the argument
+  that wins is the one that sounds like architecture. A rationale nobody has tested is not a
+  rationale — and this one was cheap to test.
+
+### A green suite hid a crash in the command people run most
+- **SHA:** `n/a`   **DATE:** 2026-08-01   **STATUS:** closed
+- **SIGNAL:** `harness-dupe-scan --update` died with a ReferenceError seconds after a 108-passing
+  test run. Caught only because the consolidation happened to require running it by hand.
+- **ROOT CAUSE:** a missing import on the write path. Every gate case invoked the REPORT path only,
+  so nothing exercised `--update` — the command a person runs immediately after a cleanup, at the
+  moment they most need the tool to work.
+- **PREVENTION:** gate — six cases run each scanner's `--update` in a throwaway repo. A test suite
+  that covers one of two code paths reports the coverage of a suite that covers both.
+- **SIDE QUESTS:** worth a sweep for other "second mode" commands with no case at all — `--candidate`
+  is the obvious next one, and it is what every athlete calls to pick its target.

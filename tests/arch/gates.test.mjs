@@ -54,3 +54,32 @@ test("--update preserves the recorded justification for a raise", () => {
   assert.equal(after._why_a, "raised on purpose, see PR #1");
   assert.equal(after["src/a.ts"], 2, "the numeric budget should still ratchet down");
 });
+
+// Every gate's `--update` must actually run.
+//
+// `harness-dupe-scan --update` crashed with a ReferenceError while a full green suite said
+// otherwise: the cases above only ever invoke the REPORT path, so a missing import on the write
+// path was invisible. `--update` is the command a person runs right after a cleanup, at the moment
+// they most want the tool to work — and it is the one command nothing was exercising.
+//
+// Run in a throwaway repo so the real budgets are never rewritten by the act of testing them.
+for (const name of [
+  "harness-arch-scan",
+  "harness-dupe-scan",
+  "harness-dead-scan",
+  "harness-spec-gap-scan",
+  "harness-clone-scan",
+  "harness-incident-scan",
+]) {
+  test(`${name} --update runs cleanly`, () => {
+    const root = mkdtempSync(join(tmpdir(), "botw-update-"));
+    mkdirSync(join(root, "src"), { recursive: true });
+    writeFileSync(join(root, "src/a.ts"), "export const a = 1;\n");
+    writeFileSync(join(root, "package.json"), '{"name":"probe"}\n');
+    try {
+      execFileSync(join(BIN, name), ["--update"], { cwd: root, stdio: "pipe" });
+    } catch (err) {
+      assert.fail(`${name} --update failed:\n\n${err.stdout ?? ""}${err.stderr ?? ""}`);
+    }
+  });
+}

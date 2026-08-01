@@ -12,50 +12,36 @@
 //   node scripts/dupe-scan.mjs --candidate# emit the highest-leverage consolidation target as JSON
 //
 // Enforced in CI via tests/arch/dupe.spec.ts — runs on every PR, no extra workflow.
-import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
-import { join, relative } from "node:path";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { descriptor, isExcluded, isSourceName, readBudget, relTo, walkFiles, writeBudget } from "./descriptor.mjs";
 
 const ROOT = process.cwd();
-// --- capability descriptor -------------------------------------------------
-// The harness is repo-agnostic: every path it scans comes from harness.json at
-// the target repo root, never from an assumption about layout. Missing file =
-// the documented defaults, so a conventional repo needs no config at all.
-const DESC = (() => {
-  const d = { sourceDir: "src", testDir: "tests", specSuffix: ".spec.ts", sourceExt: ".ts", exclude: [] };
-  try { Object.assign(d, JSON.parse(readFileSync(join(ROOT, "harness.json"), "utf8"))); } catch {}
-  return d;
-})();
+// Descriptor, budget I/O, tree walk and repo-relative paths come from descriptor.mjs — one
+// behaviour, not six copies. A `bin/` launcher runs `node lib/<x>.mjs`, so a sibling import is an
+// ordinary relative specifier; the "standalone executables must not import" rule was never true.
+const DESC = descriptor(ROOT);
 const SRC = join(ROOT, DESC.sourceDir);
-const BUDGET_FILE = join(ROOT, "dupe-budget.json");
-
-function walk(dir, acc = []) {
-  for (const e of readdirSync(dir, { withFileTypes: true })) {
-    const p = join(dir, e.name);
-    if (e.isDirectory()) walk(p, acc);
-    else if (e.name.endsWith(DESC.sourceExt) && !e.name.endsWith(".d.ts")) acc.push(p);
-  }
-  return acc;
-}
-const rel = (f) => relative(ROOT, f).split("\\").join("/");
-
-// Paths the repo declares are not first-party source — fixtures, generated output, and TEMPLATES.
-// A template is source-shaped but is not this project's code; measuring it inflates every number and
-// (worse) reports duplication between two deliberate variants of the same file as debt.
-const EXCLUDED = (f) => (DESC.exclude ?? []).some((p) => rel(f).startsWith(p));
+const isSource = (n) => isSourceName(DESC, n);
+const rel = (f) => relTo(ROOT, f);
 
 // Map each top-level definition name → the set of files that define it. A name defined in ≥2 files is
 // duplication debt. We match top-level `function`/`const`/`class` declarations (exported or not).
 // A same name in two files isn't *proof* of a pasted implementation — the drill judges that — but it's
-// the cheap, high-recall signal. IGNORE holds conventional per-file names that are legitimately separate.
-// Per-CLI entrypoint scaffolding, not shared code: nine standalone PATH executables each parse argv
-// and resolve their own root because they must not import across that boundary. Renaming them one at
-// a time was the gate distorting the codebase. Narrow on purpose — domain names (budget, DESC) stay
-// caught.
+// the cheap, high-recall signal. IGNORE holds conventional per-file names that are legitimately separate:
+// each standalone executable owns its own flags and its own root, so `argv`/`args`/`ROOT` recurring is
+// scaffolding, not shared code. Renaming those one at a time was the gate distorting the codebase.
+//
+// This list USED to carry a second justification — that the executables "must not import across the
+// PATH boundary" — which was false, and was defending the six copies of the descriptor preamble that
+// descriptor.mjs now replaces. A duplication gate can be argued out of a finding as easily as into
+// one, and the argument that wins is the one that sounds like architecture. Keep this narrow: domain
+// names stay caught, and a rationale nobody has tested is not a rationale.
 const IGNORE = new Set(["main", "argv", "args", "ROOT"]);
 const defRe = /^(?:export\s+)?(?:async\s+)?(?:function|const|class)\s+([A-Za-z_$][\w$]*)/gm;
 const defs = new Map(); // name → Set(file)
-for (const f of walk(SRC)) {
-  if (EXCLUDED(f)) continue;
+for (const f of walkFiles(SRC, isSource)) {
+  if (isExcluded(DESC, rel(f))) continue;
   const src = readFileSync(f, "utf8");
   for (const m of src.matchAll(defRe)) {
     const name = m[1];
@@ -80,14 +66,12 @@ if (process.argv.includes("--candidate")) {
   process.exit(0);
 }
 
-const budget = existsSync(BUDGET_FILE)
-  ? JSON.parse(readFileSync(BUDGET_FILE, "utf8"))
-  : { duplicateDefs: Number.POSITIVE_INFINITY };
+const budget = readBudget(ROOT, "dupe", { duplicateDefs: Number.POSITIVE_INFINITY });
 
 if (process.argv.includes("--update")) {
   const prev = Number.isFinite(budget.duplicateDefs) ? budget.duplicateDefs : debt;
   const next = { duplicateDefs: Math.min(prev, debt) }; // ratchet down only
-  writeFileSync(BUDGET_FILE, `${JSON.stringify(next, null, 2)}\n`);
+  writeBudget(ROOT, "dupe", next);
   console.log(`dupe-budget.json updated — duplicateDefs=${next.duplicateDefs} (only lowers).`);
   process.exit(0);
 }
