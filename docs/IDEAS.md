@@ -418,6 +418,24 @@ Pairs with #15 — a database becomes right at a stateable, unanswerable query, 
 **stateable** one; it is just not unanswerable, because JSONL plus `jq` covers it for years.
 _(src: Eric · while: "ideally, our harness lowers the token consumption")_
 
+**33. The API-cost leg of the batching argument has lifted — verify, then spend the headroom on smaller PRs.**
+`COACHES.md` prices the GraphQL bucket as scarce and the governor batches a whole cycle into one pull
+request partly to conserve it. **That was measured on a private repository.** This one is public,
+which changes the rate-limit picture substantially, and the observation is that the limit stopped
+binding.
+**Falsifiable form, because this is an observation and not yet a measurement:** run a normal week of
+governor cycles and check whether any run is refused or throttled on rate limit. None means the leg
+is genuinely gone. Cheap to check and worth checking, because a constraint quoted out of habit is
+exactly what the ToC entry in `METAPHORS.md` warns about — *a model of the constraint that nobody
+re-derives is just a slogan*, now recorded three times in this project.
+**What the headroom buys, and it is the thing worth spending it on:** smaller pull requests, more of
+them, in parallel. The case has strengthened independently — a commit is the boundary at which a
+retro reads its timeline instead of reconstructing it (#16), a gate failure against a small surface
+is attributable and against a large one is not (#13), and independent revert is worth more when
+several reps land together. Two lighter legs remain (CI minutes, release-note noise) and both should
+be checked rather than assumed. _(src: Eric · while: "as long as automerge API limit is not at risk,
+we can afford more PRs to create smaller increments of work")_
+
 ### Side quests (surfaced by Claude while working — proposals to prune)
 
 **3. Humans do not claim territory; athletes do.**

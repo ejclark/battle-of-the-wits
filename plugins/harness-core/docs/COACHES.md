@@ -204,7 +204,8 @@ an unnecessary sentence costs a moment, a missing one costs the person.
 ## Resource cost is a fitness dimension
 
 The constraint isn't only Eric's attention — it's every **finite resource** a run consumes: tokens,
-GitHub API budget (esp. the scarce 5k/hr GraphQL bucket), GHA minutes, wall-clock. Treat waste in
+GitHub API budget (the GraphQL bucket — **scarce on a private repo, much less so on a public one, so
+re-derive this before quoting it**), GHA minutes, wall-clock. Treat waste in
 these the way defense treats slop: measure it, and convert the recurring cost into a one-time one.
 
 **Codify the loop into a script/codemod.** A model-in-the-loop procedure costs tokens (and often API
