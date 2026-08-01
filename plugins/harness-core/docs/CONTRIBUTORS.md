@@ -226,6 +226,26 @@ The operational test is short: **if the person it describes read it, would it be
 them to see?** Anything that fails that test is local state at most, and usually should not be
 written down at all.
 
+### The one profile that *is* public — and why it is the opposite case
+
+Two things share the word, and they are opposites:
+
+| | **A profile ABOUT someone** | **A profile BY someone** |
+|---|---|---|
+| Written and published by | someone else | themselves |
+| Lives | nowhere the repository can reach | on their own GitHub profile |
+
+**The whole difference is authorship and consent**, and once that is named the tension disappears.
+The roster is closed, local and gitignored because a characterisation of a person must not be
+published. A contributor's own `<username>/<username>` profile README is the complement: the one
+place a profile legitimately *is* public is the one its subject wrote about themselves.
+
+Worth building deliberately rather than leaving to chance — `/harness-core:profile` — because it is
+also the **safest possible first git exercise**: their repository, no blast radius, real mechanics
+learned where nothing can break, and an asset they keep whatever happens to this project. Offering it
+before asking for anything is the point. **Offer it; never require it** — framed as an expectation it
+reads as *you are not presentable yet*, which is this same rule failing in the other direction.
+
 ---
 
 ## What this costs before it pays

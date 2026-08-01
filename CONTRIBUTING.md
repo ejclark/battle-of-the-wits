@@ -97,6 +97,21 @@ owner — it is never automatic, and it is never a score.
 
 ---
 
+---
+
+## Optional, and entirely yours: a GitHub profile
+
+GitHub reserves one repository per account for this — a public repo named **exactly your username**,
+whose `README.md` renders at the top of your profile page. It is a good thing to have, it belongs to
+you rather than to this project, and it outlives anything you do here.
+
+It also happens to be the **safest possible way to learn git**: it is your repository, so nothing you
+do to it can affect anyone else's work, and you will practise every mechanic you need next — create,
+edit, commit — somewhere nothing can break.
+
+Entirely optional, and nobody is keeping track. If you want a hand, ask and someone will walk through
+it with you — you write it, they do the fiddly parts.
+
 ## The thing you can do that nobody else here can
 
 This is the part worth reading twice.
