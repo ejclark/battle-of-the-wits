@@ -533,6 +533,38 @@ first is a fact the author can act on; the second is a rule they will argue with
 _(src: Eric · while: "2 week open PRs is still bad, because the ideas/changes on the main branch
 could have significantly evolved during that span")_
 
+**40. Precision about words is right; a dictionary is the wrong instrument for it.**
+The instinct is correct and it matters more here than in most repositories, because **this project's
+product is prose.** Its entire quality argument rests on words that mean exactly one thing, and the
+distinctions doing real load are fine ones: *grandfather* vs *freeze*, *refuse* vs *block* vs
+*reject*, *gate* vs *check*, *ratchet*, *drill*, *athlete*, *principal*, *zoning*, *standing*. An
+etymology habit — reaching for the word that means precisely the thing and nothing adjacent — is a
+drafting discipline worth holding explicitly, and it costs nothing to hold.
+**But the failure it would fix is not the failure we have.** A dictionary tells you what a word means
+in general. The problem here is that this repository has **assigned private meanings to ordinary
+words** and never written the assignments down — Webster's will not tell anyone what *gate* means in
+this repo, where it appears over three hundred times. That gap is `docs/GLOSSARY.md`, it is already
+task 1 on the on-ramp, and it is **reserved** because it has to be written by someone who did not
+know the words. Vendoring a corpus would look like progress on it and would not be.
+Also checked and worth recording: the connector registry has **no** dictionary, etymology, or general
+knowledge-base server. Every documentation server in it is a vendor indexing its own product.
+_(src: Eric · while: "websters dictionary type packages seem great to be aware of etymology")_
+
+**41. The gates wrap third-party tools and nothing pins them to those tools' real contracts.**
+This is the version of "install the documentation" that has already cost something. `dead-scan.mjs`
+read a top-level `files` key from knip's JSON reporter that **knip does not emit** — so unused files
+were structurally invisible, the gate printed `0 ≤ 0`, and `npx knip` named a file the gate could not
+see. It went green for months. The fix came from reading knip's own `reporters/json.js`, not from
+reading our code.
+Six gates wrap outside tools this way: knip, jscpd, biome, commitlint, semantic-release, husky. Each
+one is a place where our assumption about an output shape can drift from the shape without anything
+going red, and the failure mode is always the same — **a confident number computed from nothing.**
+The cheap, high-payout version is not a vendored corpus: it is a **contract case per wrapped tool**,
+planting a violation the raw tool would report and requiring the gate to report it too. That is the
+"raw tool and gate disagree" smell already logged twice, promoted to a rule.
+_(src: Eric · while: "we should install documentation packages where available… feels like a
+negligible tax with high payout")_
+
 ### Side quests (surfaced by Claude while working — proposals to prune)
 
 **3. Humans do not claim territory; athletes do.**
