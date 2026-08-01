@@ -1,212 +1,181 @@
-# Engineering Practices — Skynet Capital
+# Engineering practices
 
-These are the non-negotiables. They exist so the codebase scales to many personas and a
-live dashboard without turning into a swamp. Every PR is held to them.
+The non-negotiables. They exist so a codebase can grow without turning into a swamp, and so a
+change is cheap to make in year two rather than only in week one. Every PR is held to them.
+
+These are **portable** — nothing here names a language, a framework, or a directory that only one
+project has. Where a concrete example makes a rule land, it is marked as an example rather than
+written as though it were the rule.
 
 ## Architecture decisions
 
-Significant, hard-to-reverse decisions (a new host, an auth model, a data-flow seam, a CI/CD
-pipeline) are recorded as [Architecture Decision Records](adr/README.md) in `docs/adr/`. When a
-PR makes such a decision, add an ADR in the same PR. Routine changes don't need one.
+Significant, hard-to-reverse decisions — a new host, an auth model, a data-flow seam, a CI/CD
+pipeline — are recorded as **Architecture Decision Records** in `docs/adr/`. When a PR makes such a
+decision, the ADR lands in the same PR. Routine changes do not need one.
 
-## Stack
+The test for "significant" is not size. It is **reversibility**: if undoing it in six months would
+mean a migration rather than a revert, write it down while the reasoning is still in someone's head.
 
-| Concern | Tool | Why |
-|---|---|---|
-| Language | TypeScript (strict, ESM) | Types are the cheapest documentation and the first test. |
-| Lint + format | [Biome](https://biomejs.dev/) | One fast tool, zero-config drift. `npm run lint` / `lint:fix`. |
-| Unit / BDD tests | [Rstest](https://rstest.rs/) (`@rstest/core`) | Fast, Vitest-compatible API, globals on. `npm test`. |
-| Browser / E2E / autonomous scripting | [Playwright](https://playwright.dev/) | Reserved for the dashboard's E2E layer and any browser-driven data-gathering or execution. Not needed by the headless engine yet. |
+## The compiler is the first test
 
-`tsc` runs with `strict`, `noUncheckedIndexedAccess`, and `verbatimModuleSyntax` — the
-compiler is the first line of defense, so we keep it maximally paranoid.
+Whatever the language, turn its checking up as far as it goes and leave it there. Types are the
+cheapest documentation and the earliest failing test — the ones you get without writing anything.
+A setting that catches a class of bug for free is worth more than a lint rule someone has to
+remember, and far more than a convention someone has to enforce in review.
 
-## Test-Driven, Behavior-Driven
+## Test-driven, behaviour-driven
 
 - **TDD:** write the failing spec first, then the code that makes it pass. Tests are not an
-  afterthought — they are how we design the interface.
-- **BDD, not implementation testing:** specs assert on *observable behavior* — the intents a
-  persona produces, the fills a broker returns, the equity after a cycle — never on private
-  fields or call counts. This is what lets us refactor internals freely.
-  - See `tests/personas/news-fader.spec.ts`: it feeds a market and asserts "sells the position",
-    with no knowledge of *how* the decision is reached.
-- Spec structure mirrors behavior: `describe("when <situation>") → it("<expected behavior>")`.
+  afterthought — they are how the interface gets designed. The first caller of a function should be
+  a test, because that is when a bad signature is still free to change.
+- **BDD, not implementation testing:** specs assert **observable behaviour** — what the unit
+  returns, what it emits, what state a caller can see — never private fields or call counts. This
+  is what makes refactoring safe: a suite that pins internals turns every improvement into a
+  rewrite of the tests.
+- Spec structure mirrors behaviour: `describe("when <situation>") → it("<expected behaviour>")`.
 
-### Requirements in EARS (the upstream half of BDD)
+### Requirements in EARS — the upstream half of BDD
 
 Before the failing spec, state the **requirement** in **EARS** (Easy Approach to Requirements
 Syntax). One requirement per statement, a **named system**, a single **verifiable** response, the
-word **shall**. Five patterns cover ~everything; reach for the simplest that fits:
+word **shall**. Five patterns cover almost everything; reach for the simplest that fits:
 
 | Pattern | Template | Cue |
 |---|---|---|
 | **Ubiquitous** (always true) | `The <system> shall <response>.` | — |
 | **Event-driven** | `WHEN <trigger>, the <system> shall <response>.` | WHEN |
 | **State-driven** | `WHILE <state>, the <system> shall <response>.` | WHILE |
-| **Unwanted behavior** | `IF <condition>, THEN the <system> shall <response>.` | IF/THEN |
+| **Unwanted behaviour** | `IF <condition>, THEN the <system> shall <response>.` | IF/THEN |
 | **Optional feature** | `WHERE <feature is present>, the <system> shall <response>.` | WHERE |
 | **Complex** | combine, e.g. `WHILE <state>, WHEN <trigger>, the <system> shall <response>.` | — |
 
-**EARS *is* our BDD grammar, one layer up** — the mapping is mechanical, which is why we adopt it:
-the `WHEN/WHILE/IF/WHERE` clause becomes the `describe("when …")`, and the `shall <response>`
-becomes the `it("<response>")`. So one EARS line ⇒ one spec.
+**EARS *is* the BDD grammar, one layer up**, and the mapping is mechanical — which is the whole
+reason to adopt it. The `WHEN/WHILE/IF/WHERE` clause becomes the `describe("when …")`, and the
+`shall <response>` becomes the `it("<response>")`. One EARS line ⇒ one spec.
 
-> **EARS:** `WHEN the persona sees the position at its take-profit target, the persona shall close it.`
-> **Spec:** `describe("when the position hits its take-profit target") → it("closes the position")`.
+> **EARS:** `WHEN a claim overlaps territory another athlete holds, the dispatcher shall refuse it.`
+> **Spec:** `describe("when the territory is already held") → it("refuses the dispatch")`.
 
-Write EARS acceptance criteria in plans, issues, and PRs; the `/ears` drill
-(`/harness-core:ears`) classifies a raw request into these patterns and scaffolds the
-matching specs. Anti-patterns EARS kills: vague "should/support/handle", compound requirements
-(one `shall` per line), and unverifiable responses (if a spec can't assert it, rewrite it).
+Write EARS acceptance criteria in plans, issues, and PRs; `/harness-core:ears` classifies a raw
+request into these patterns and scaffolds the matching specs.
 
-**Automated enforcement (Claude Code hooks).** The red-green-refactor loop is backed by harness
-hooks in `.claude/settings.json`, so the suite runs deterministically, not just when someone
-remembers:
-- **PostToolUse** (`.claude/hooks/skynet-tdd-postedit.sh`) — on every `.ts` edit under
-  `skynet-capital/`, runs typecheck + tests and feeds any failure straight back into context.
-  Non-blocking: it's a safety net for the green/refactor phases, not a gate.
-- **Stop** (`.claude/hooks/skynet-tdd-stop.sh`) — end-of-turn backstop; runs typecheck + tests +
-  lint and warns if the turn left anything red.
-- Shared test data lives in `tests/support/builders.ts` — specs state only the fields they care
-  about. No copy-pasted fixtures.
+Anti-patterns EARS kills: vague *should / support / handle*, compound requirements (one `shall` per
+line), and unverifiable responses — if a spec cannot assert it, rewrite the requirement.
+
+### Make the loop run itself
+
+The red-green-refactor loop should not depend on anyone remembering. Back it with **hooks** in the
+project's `.claude/settings.json` so the suite runs deterministically:
+
+- **PostToolUse** — on every source edit, run typecheck + tests and feed any failure straight back
+  into context. Non-blocking: a safety net for the green and refactor phases, not a gate.
+- **Stop** — an end-of-turn backstop; typecheck + tests + lint, warning if the turn left anything
+  red.
+
+Hooks are code execution, so they live in the **project's** settings rather than being shipped by a
+plugin. Write them deliberately, and read one before you install it.
 
 ## DRY, with a bias toward one owner per concept
 
-- Valuation math lives once in `src/domain/portfolio.ts`. The engine, guards, and reports all
-  call it — nobody re-derives "equity".
-- Risk lives once in `src/engine/guards.ts`. Personas never check cash or limits; the engine
-  clamps every intent through one guard pipeline. Add a limit there and every persona inherits it.
-- Signal math (momentum, sentiment) is computed by the market-data port, not inside personas.
+The rule is not "never repeat a line." It is **one owner per idea**. A concept with two owners does
+not stay in sync; it drifts, and the drift is invisible until the two disagree in production.
+
+- A calculation that more than one caller needs lives in exactly one module, and everyone calls it.
+  Nobody re-derives it locally "just for here."
+- A cross-cutting rule — a limit, a permission, a validation — is enforced at **one** chokepoint
+  that every path goes through, not re-checked by each caller. Add a rule there and every caller
+  inherits it.
+- Derived data is computed where it is owned, not recomputed by each consumer.
+
+The duplication gate (`harness-dupe-scan`) exists to make the drift visible. Note what it cannot do:
+it can be argued *out* of a finding as easily as into one, and the argument that wins is the one
+that sounds like architecture. A rationale nobody has tested is not a rationale.
 
 ## Decomposition — explicitly named modules, no dumping grounds
 
-A generic `utils.ts` becomes a junk drawer that does everything and is safe to change nowhere.
-We don't have one, and we won't add one. Instead:
+A generic `utils` module becomes a junk drawer: it does everything, so it is safe to change nowhere.
+`harness-arch-scan` blocks the name outright for new files.
 
-- Helpers live in the **explicitly named module they belong to**: portfolio math in
-  `domain/portfolio.ts`, persona-reasoning helpers in `personas/persona.ts`, risk in
-  `engine/guards.ts`.
-- If a helper doesn't have an obvious named home, that's a signal the concept it serves hasn't
-  been named yet — name it and give it a file, don't file it under "utils".
-- Folder structure encodes the architecture, so structure alone tells you where behavior lives:
+- Helpers live in the **explicitly named module they belong to**, named for the job they do.
+- If a helper has no obvious named home, that is a signal the concept it serves **has not been named
+  yet**. Name it and give it a file; do not file it under "utils."
+- Folder structure encodes the architecture, so structure alone tells a newcomer where behaviour
+  lives. A directory listing should be a table of contents, not an inventory.
 
-```
-src/
-  domain/     pure types + pure math (no I/O, no mutation)
-  ports/      interfaces at the system boundary (BrokerPort, MarketDataPort)
-  adapters/   concrete implementations of ports (in-memory today, Alpaca next)
-  personas/   strategies — pure decide(context, portfolio) => intents
-  engine/     orchestration + risk (owns the cycle, owns the guards)
-```
+## Depend on interfaces at the boundary
 
-## Ports & Adapters (Hexagonal)
+Core logic depends on **interfaces**, never on a concrete database, vendor, or transport. That is
+what lets the same core run against an in-memory fake in tests and a real backend in production with
+no change to the logic under test. A new vendor is a new adapter and nothing else.
 
-The engine depends on **interfaces**, never on concrete brokers or feeds. That's what lets the
-same engine drive the in-memory paper simulator in tests and a live Alpaca paper account in
-production with no code change. New execution or data backends are new adapters, nothing else.
+The practical test: if swapping a vendor means editing files that have nothing to do with that
+vendor, the boundary is in the wrong place.
 
-## Component libraries & consistent look/feel
+## Change communication — commits and PRs are documents
 
-When the dashboard arrives, UI is built from a shared component library — reusable, modular
-components with one source of truth for look, feel, and behavior. No bespoke one-off widgets,
-no god components. The same principle the backend already follows, applied to the frontend.
+Commits and pull requests are the project's durable record: how a non-author — a teammate, a future
+agent, yourself in six months — reconstructs *what changed and why*. Assume some readers are
+**analytical but non-technical**: they think like engineers without the formal background. Write for
+them. Structure follows the inverted pyramid: **most important first, the weeds below the fold.**
 
-## State management — the deliberate stance
+**Commits.** [Conventional Commits](https://www.conventionalcommits.org) (enforced by commitlint),
+lowercase-led subject, imperative mood — "add", not "added" — the classic
+[Chris Beams rules](https://cbea.ms/git-commit/). The subject says *what*; the body says *why* and
+any non-obvious *how*. One logical change per commit; in-PR commits are working granularity that
+helps a reviewer navigate before merge.
 
-The question of whether a tool like **Redux Toolkit** helps is really a question about
-*legibility*: a single, explicit, serializable state shape with typed transitions is far cheaper
-to read, extend, and reason about (for humans and for agents) than mutations scattered across
-modules. We buy that principle in full. Where we apply it differs by layer:
+**If squash-merge is configured to use the PR title and description** — the default this harness
+assumes — then on the default branch the **PR description becomes the squash commit's body**, and
+`semantic-release` analyses it. Two consequences: the **PR title must be a valid Conventional-Commit
+subject**, because it becomes the commit subject and drives the version bump; and the **PR
+description, not the in-PR commit bodies, is the durable record**. Write it as the thing a future
+reader will `git log`.
 
-- **The eventual dashboard (React): yes, Redux Toolkit is the likely choice.** Normalized store,
-  typed slices, one source of truth for what the UI is showing.
-- **The headless engine: adopt the *pattern*, not the dependency.** Engine and account state is
-  already an explicit, typed, serializable shape (`Portfolio`, `CycleReport`) with transitions
-  modeled as data (`OrderIntent` → `OrderResult`). That is a reducer in spirit. Pulling a
-  React-oriented state library into a Node trading loop adds weight for no gain — the value is the
-  *shape and the discipline*, and we already have those. If the engine's state graph grows complex
-  enough to warrant a formal event-sourced store, we revisit then, with that evidence in hand.
-
-The through-line: state is explicit, typed, and serializable everywhere, because that is what
-makes the system cheap to extend — including by an agent reading it fresh.
-
-## Lovable DX / UX
-
-- Every `OrderIntent` carries a human-readable `reason`. Replaying a session reads like a
-  narrative, which is exactly what the weekly touch-point recaps and the learning loop need.
-- `npm run lint:fix` and `npm test` are the whole inner loop. Fast feedback, no ceremony.
-- Errors are values where it matters: brokers return a rejected `OrderResult` with a `reason`
-  rather than throwing, so callers handle outcomes uniformly.
-
-## Change communication — commits & PRs are documents
-
-Commits and pull requests are the project's durable record: how a non-author (a teammate, a future
-bot, Eric six months on) reconstructs *what changed and why*. As engagement grows, more members will
-read PRs to follow along — many **analytical but non-technical** (they think like engineers without the
-formal background). Write for them. Structure follows the inverted pyramid: **most important first, the
-weeds below the fold.**
-
-**Commits — concise and articulate.** [Conventional Commits](https://www.conventionalcommits.org)
-(enforced by commitlint), lowercase-led subject, imperative mood ("add", not "added") — the classic
-[Chris Beams rules](https://cbea.ms/git-commit/). The subject says *what*; the body says *why* and any
-non-obvious *how*. One logical change per commit — in-PR commits are working granularity that helps a
-reviewer (and Claude) navigate before merge.
-
-**Squash-merge is configured to use the PR title + PR description**, so on `main` the **PR description
-becomes the squash commit's body** and `semantic-release` analyzes it. Two consequences: the **PR title
-must be a valid Conventional-Commit subject** (it becomes the commit subject and drives the version
-bump), and the **PR description — not the in-PR commit bodies — is the durable record**. Write it as the
-thing a future reader will `git log` on `main`.
-
-**PRs — a document with a fold** (mirror [`.github/pull_request_template.md`](../.github/pull_request_template.md)):
+**PRs — a document with a fold:**
 
 1. **Summary** — the gist in plain language, skimmable by a non-technical reader: what ships.
-2. **Why** — the intent / user value in a sentence or two.
-3. **Details, below the fold** (`<details>`): the file-level walkthrough, design trade-offs (link an
-   ADR for hard-to-reverse calls), verification, risk/rollback, follow-ups. The weeds live here so the
-   top stays legible; the depth is one click away for whoever wants it.
+2. **Why** — the intent and the value, in a sentence or two.
+3. **Details, below the fold** (`<details>`) — the file-level walkthrough, design trade-offs (link an
+   ADR for hard-to-reverse calls), verification, risk and rollback, follow-ups. The weeds live here
+   so the top stays legible, and the depth is one click away for whoever wants it.
 
-**Quality bar — succinct & high-signal.** The description is `main`'s commit body; make every line earn
+**Quality bar — succinct and high-signal.** The description is the commit body; make every line earn
 its place:
 
-- **Lead with the outcome, not the process.** The first line is what's *true after merge*, in plain
+- **Lead with the outcome, not the process.** The first line is what is *true after merge*, in plain
   language a non-technical reader skims in ten seconds.
-- **Don't restate the diff.** The diff already shows *which lines* changed; the description says *why it
-  matters* and *what it enables*. Cut any bullet that just narrates code.
-- **1–3 Summary bullets.** If the Summary needs more, it's probably two PRs (or a batched suite whose
-  bullets should each name a shipped capability, not a step).
-- **No filler, no hedging.** Drop "this PR does…", "various improvements", "as requested". Name the *one*
-  non-obvious decision, not every obvious one.
-- **A diagram only when a structure is faster seen than read** (a Mermaid graph for a new data flow or
-  route map) — chiefly for human readers; skip it when a sentence is clearer.
+- **Do not restate the diff.** The diff already shows which lines changed; the description says why
+  it matters and what it enables. Cut any bullet that just narrates code.
+- **One to three Summary bullets.** If the Summary needs more, it is probably two PRs — or a batched
+  suite whose bullets should each name a shipped capability, not a step.
+- **No filler, no hedging.** Drop "this PR does…", "various improvements", "as requested". Name the
+  *one* non-obvious decision, not every obvious one.
+- **A diagram only when a structure is faster seen than read.** Skip it when a sentence is clearer.
 
-Keep it proportional — a one-line typo fix is a one-line description, not a populated template (don't tax
-flow with ceremony; see the interrupt-economics principle). The template is a layout to populate, not a
-checklist to satisfy.
+Keep it proportional: a one-line typo fix gets a one-line description, not a populated template.
+A template is a layout to populate, not a checklist to satisfy.
 
-### Guarding the shared record (higher-stakes trust)
+### Changes to the standard itself clear a higher bar
 
-Members are welcome to open issues suggesting *how information is presented* — clearer summaries, better
-templates, naming. These are valuable. But changes to the **shared communication standard itself** (this
-section, the PR template, the commit convention) shape everyone's environment, so they clear a **higher
-review bar** than a feature: Claude reviews them **at Eric's level of scrutiny**, because a well-meaning
-but muddying change can quietly pollute the record and hurt everyone's experience. This is the
-autonomous-contribution trust ladder applied to the record: additive/display contributions are low-risk;
-edits to shared standards are not, and are gated accordingly (see
-[`LIVING-UNIVERSE.md`](LIVING-UNIVERSE.md)).
+Suggestions about *how information is presented* — clearer summaries, better templates, naming — are
+welcome from anyone. But an edit to the **shared communication standard itself** (this section, the
+PR template, the commit convention) changes everyone's environment, so it clears a higher review bar
+than a feature would. A well-meaning but muddying change quietly pollutes the record for every
+future reader, and unlike a bad feature it is never obviously wrong at the time.
 
-### Releases and the protected `main`
+## Releases and a protected default branch
 
-`semantic-release` runs on every push to `main` (the `deploy` job) and does three things: work out the
-next version from the Conventional-Commit history, create the **git tag + GitHub Release**, and bump
-`package.json` **in the runner's workspace** — which is the same workspace `flyctl deploy` then ships,
-so the deployed app reports the correct version (`src/server/auth/app-version.ts`).
+`semantic-release` runs on every push to the default branch: it works out the next version from the
+Conventional-Commit history and creates the **git tag and release**.
 
-**It deliberately does NOT push the version bump back to `main`.** The `@semantic-release/git` plugin
-was removed because branch protection correctly rejects a direct push (`GH006: Changes must be made
-through a pull request. Required status check "verify" is expected.`) — which silently broke **every
-deploy** for several merges until it was caught. The version of record is the **git tag**, not the
-committed `package.json`, so the repo's `package.json` version will lag; that is expected.
+**Do not have it push the version bump back.** If the branch is protected — and it should be — a
+direct push is correctly rejected (`GH006`/`GH013`: *changes must be made through a pull request*),
+and the failure mode is nasty: the release job goes red *after* the merge, so nothing blocks and
+nobody is watching. Two mechanisms, each right on its own, that deadlock when composed.
 
-To restore the committed bump, the release identity needs a branch-protection bypass on `main` (an
-Eric-only governance change) — then `@semantic-release/git` can be added back.
+The consequence to accept deliberately: **the tag is the version of record**, and the committed
+version field will lag or be absent. Say so in the repository's README, so a missing version reads
+as a decision rather than an oversight.
+
+To restore a committed bump, the release identity needs a branch-protection bypass — a governance
+change, and therefore a human's call, not a tool's.
