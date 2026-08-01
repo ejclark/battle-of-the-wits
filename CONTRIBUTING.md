@@ -283,10 +283,15 @@ If you already have an idea you are burning to build, do not let this stop you �
 come back when you want the rails. **A stalled first week is the only real failure here**, and
 somebody waiting politely for permission to work on their own thing is one of the ways it happens.
 
-No idea what to build? Ask for `/harness-core:spark`. Its default first project is a to-do list,
-which sounds unambitious and is not: everyone already knows the spec, so all your effort goes into
-making it exist rather than deciding what it should do — and by the end you are holding the thing that
-stores what to build next, with the first entries already written by having built it.
+**No idea what to build?** There is a written path from nothing to a working app —
+[`FIRST-APP.md`](plugins/harness-core/templates/starter/FIRST-APP.md). Five steps, each ending at
+something you can see, starting from one file you open by double-clicking. Paste it at Claude and say
+*walk me through this*, or just follow it.
+
+It builds a to-do list, which sounds unambitious and is not: **you already know exactly what it should
+do**, so none of your effort goes into deciding and all of it goes into making it exist. And by the
+end you are holding the thing that stores what to build next — with the first entries already written,
+by you, because building it produced them.
 
 ---
 

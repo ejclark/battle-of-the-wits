@@ -291,10 +291,21 @@ test("no path CONTRIBUTING.md names is one a newcomer cannot find", () => {
   // A first-week reader follows every path on the page literally. One that does not resolve reads as
   // "I have already broken something", which is the opposite of what this page is for.
   const missing = [];
+  // A backticked name that is a LINK LABEL is not a claim about a path — the path is the link
+  // target, and it is checked as itself. `[`FIRST-APP.md`](plugins/.../FIRST-APP.md)` reads as a
+  // broken path only to a parser that stopped at the backticks.
+  const labels = new Set([...ONRAMP.matchAll(/\[`([^`]+)`\]\(([^)]+)\)/g)].map((m) => m[1]));
   for (const m of ONRAMP.matchAll(/`([A-Za-z0-9_./-]+\.(?:md|mjs|json|yml))`/g)) {
     const p = m[1];
+    if (labels.has(p)) continue;
     if (p.startsWith("docs/GLOSSARY.md")) continue; // the one path named BECAUSE it does not exist
     if (!existsSync(join(REPO, p))) missing.push(p);
+  }
+  // And every link TARGET must resolve, which is the check the labels were standing in for.
+  for (const m of ONRAMP.matchAll(/\]\(([^)#][^)]*)\)/g)) {
+    const t = m[1].split("#")[0];
+    if (/^https?:|^mailto:/.test(t)) continue;
+    if (!existsSync(join(REPO, t))) missing.push(t);
   }
   assert.deepEqual(missing, [], `CONTRIBUTING.md names paths that do not exist: ${missing.join(", ")}`);
 });

@@ -203,3 +203,29 @@ test("the generated gate spec survives the linter and the runner the same run in
   assert.match(spec, /^import \{ describe, it \} from "vitest";$/m, "describe/it must be imported, not assumed global");
   assert.match(mjs, /from "node:test"/, "and the node flavour must import its own");
 });
+
+// ── 6 · one Node version, declared in three places ─────────────────────────────
+
+test("nvmrc, CI and engines agree on the Node version", () => {
+  // `engines` said ">=22" while .nvmrc and CI both pinned 24 — a floor nothing tests, published as a
+  // requirement. The first person to read it asked why they were being told to install dated
+  // software, which is the right question: a claim the suite never exercises is a claim, not a fact.
+  //
+  // The invariant is agreement rather than a number, so bumping Node stays a one-line change instead
+  // of a scavenger hunt across three files that fail at different times and in different places.
+  const pinned = readFileSync(join(REPO, ".nvmrc"), "utf8").trim();
+  assert.match(pinned, /^\d+$/, ".nvmrc must pin a bare major");
+
+  const engines = JSON.parse(readFileSync(join(REPO, "package.json"), "utf8")).engines?.node ?? "";
+  assert.equal(engines, `>=${pinned}`, `engines says "${engines}" but .nvmrc pins ${pinned} — the floor must be what is actually tested`);
+
+  for (const m of readFileSync(join(REPO, ".github/workflows/pipeline.yml"), "utf8").matchAll(/node-version:\s*'?(\d+)'?/g)) {
+    assert.equal(m[1], pinned, `CI runs Node ${m[1]} while .nvmrc pins ${pinned}`);
+  }
+
+  // And the shipped workflow must read the file rather than hardcode a number, or every adopter
+  // inherits ours and finds out when it is wrong for them.
+  const shipped = readFileSync(join(TEMPLATES, "github/workflows/harness.yml"), "utf8");
+  assert.match(shipped, /node-version-file:\s*'\.nvmrc'/, "the shipped pipeline must take the version from the adopter's .nvmrc");
+  assert.doesNotMatch(shipped, /node-version:\s*'?\d/, "a hardcoded Node version in the shipped workflow is our opinion imposed as their requirement");
+});

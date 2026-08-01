@@ -130,9 +130,14 @@ That last property is why this beats any other starter app. A calculator is fini
 to-do list is finished when it works and then immediately suggests the next five things — so the
 first rep does not just build confidence, it **hands back a backlog they own.**
 
-Scaffold it through `/harness-core:launch`. Get to something rendering before adding anything at all;
-the reaction to *"that's on my screen because I typed that"* is the thing worth optimising for, and
-everything else can follow it.
+**The step-by-step is written down** — `${CLAUDE_PLUGIN_ROOT}/templates/starter/FIRST-APP.md`. Hand
+it over, or walk it with them. Five steps, each ending at something visible, starting from one HTML
+file they open by double-clicking.
+Two things about the order, because both are easy to get wrong. **Get to something rendering before
+adding anything at all** — the reaction to *"that's on my screen because I typed that"* is what the
+whole exercise is optimising for. And **the rails come last**: tests, CI and the gates are worth
+introducing at the moment breaking the thing would annoy them, not before, because that is when they
+can see what the rails are protecting. `/harness-core:launch` is for that step, not this one.
 
 ## When an idea does arrive
 
