@@ -78,6 +78,21 @@ that is taste, and taste is not a thing to be inferred from an in-degree count.
 The load-bearing metaphors catalog ([`docs/METAPHORS.md`](docs/METAPHORS.md)) is the worked example:
 banked, structural, specific, reversible — so it got built rather than proposed.
 
+## Assert the property, not one rendering of it
+
+Four times in one session a **correct** change turned a suite red because an assertion had pinned a
+synonym of the thing it defended — a reporter's `#` prefix, a `<details>` literal, a ```` ```shell ````
+fence, a sentence's wording. Cheap to write, because the string is right there in the file. Expensive
+twice over: it costs the diagnosis, and it **argues against a change that was right**.
+
+The practical test before writing one: **would this survive a correct change to how the thing is
+expressed?** If a rendering genuinely must be fixed, fix it at the source — pin the inner run's
+reporter rather than widening the regex to accept both.
+
+And the sharp edge: one of the four (`doesNotMatch(/# fail [1-9]/)`) would have passed **vacuously**
+under the new format. A brittle assertion is not merely fragile; it is strongest exactly where it has
+already stopped working.
+
 ## What does not belong here
 
 - Anything true of only one project (its budgets, its exemptions, its deploy target, its brand).

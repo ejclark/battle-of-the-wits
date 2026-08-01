@@ -579,3 +579,29 @@ Prevention ranks, best first:
   bypass with better ergonomics rather than a toil-killer.
 - **SIDE QUESTS:** `--accept` exists only for the arch gate; dupe and clone still hand-edit. Left
   deliberately — one recurrence each so far, and the rule of three is not met.
+
+### A test that pins a spelling instead of the thing it means
+
+- **SHA:** n/a   **DATE:** 2026-08-01   **STATUS:** closed
+- **SIGNAL:** four times in one session, a green change turned a suite red without breaking
+  anything. Each time the fix was correct and the assertion was checking a synonym of the property
+  it was written to defend: `# skipped 6` when CI's newer node emitted `ℹ skipped 6`; the literal
+  `"<details>"` the moment a drawer gained an `id`; a ```` ```shell ```` fence after the paste
+  became plain English *because slash commands are not available everywhere*; and the phrase
+  `"what to build"` after a rewrite said `"what to point them at"`.
+- **ROOT CAUSE:** an assertion written against the current *rendering* of a property rather than
+  the property. Every one of these was cheap to write because the string was right there in the
+  file, and every one silently narrowed the test from "the on-ramp shows something to copy" to
+  "the on-ramp contains this exact byte sequence". The failure is doubly expensive: it costs the
+  time to diagnose, and it **argues against a correct change** — twice here the honest reading of
+  the red was "your fix is wrong", which is the most dangerous thing a test can say untruthfully.
+  Worse, one of them (`doesNotMatch(/# fail [1-9]/)`) would have passed **vacuously** under the new
+  format, so the guard was strongest exactly where it was already broken.
+- **PREVENTION:** doctrine, in `CLAUDE.md` — *assert the property, not one rendering of it*, with
+  the practical test: **would this assertion survive a correct change to how the thing is
+  expressed?** Where a rendering must be pinned, pin it at the source instead (this is why
+  `--test-reporter=tap` now fixes the inner run's format rather than the regex being widened to
+  accept both). Not mechanised: no gate can tell a brittle regex from a deliberately exact one, and
+  a rule that flagged every string literal in a test would be turned off in a day.
+- **SIDE QUESTS:** the four fixes are in the branch history; the vacuous-pass one is the reason this
+  is `closed` rather than `ledger-only`.

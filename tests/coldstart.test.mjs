@@ -246,7 +246,11 @@ test("FIRST-APP.md walks the whole journey, and every command in it is real", ()
     ["a repository", /github\.com\/new/],
     ["the pipeline", /harness-bootstrap --auto/],
     ["one change all the way round", /pull request/i],
-    ["the segue out", /what to build/i],
+    ["the deliberate failure", /break(ing)? .*on purpose|Do not skip this one/i],
+    ["the three features", /\*\*edit\*\* a to-do item/],
+    // The segue is a STRUCTURE, not a sentence: the last section points back at the list their own
+    // use generated in step 4. Pinning its wording is what broke this assertion once already.
+    ["the segue out", /Look back at the list you wrote/],
   ]) {
     assert.match(doc, cue, `the walkthrough lost its "${leg}" leg — that strands someone mid-journey`);
   }

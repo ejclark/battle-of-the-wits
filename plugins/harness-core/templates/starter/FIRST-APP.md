@@ -4,7 +4,9 @@ For someone who has never built one. Every step ends with something you can see,
 can break anything** — it is your machine and your repository.
 
 If you are working with Claude, paste this whole file at it and say *"walk me through this"*. That is
-the intended way to use it, and it needs no plugins, no terminal skills, and no prior setup.
+the intended way to use it, and it needs no plugins, no terminal skills, and no prior setup. If you
+have the plugins installed, ask for the **project-starter** agent instead — same route, and it does
+the mechanical parts for you rather than reading them out.
 
 ---
 
@@ -133,10 +135,47 @@ Now do the whole loop once, deliberately, on something trivial — change the he
 Branch → commit → pull request → checks go green → merge. **On purpose, while nothing is at stake**,
 so the first time you do it under pressure it is already familiar.
 
-You now have what most projects never get around to: **a machine that catches your mistakes before
-anyone else sees them.** Everything from here is just deciding what to build.
+## Step 8 · Break it on purpose, and watch the rails hold
 
-## Step 8 · The better ideas start here
+**Do not skip this one.** It is the only step here that will not happen by accident, and it is the
+one that makes everything before it worth having.
+
+Open a pull request that breaks something small and obvious. Delete a closing bracket. Make a test
+assert the wrong number. Something you can undo in five seconds.
+
+Then watch:
+
+- the checks go **red**
+- the merge button stop working
+- the failure tell you exactly what is wrong
+
+Now fix it, push, and watch it clear.
+
+**A safety net you have never fallen into is a claim.** You have now seen it catch something, which
+is the difference between believing the rails work and knowing it — and it is what turns every future
+red check from an insult into information. Most people never do this deliberately and spend years
+slightly not trusting their own pipeline.
+
+You now have what most projects never get around to: **a machine that catches your mistakes before
+anyone else sees them, and that you have personally watched do it.**
+
+## Step 9 · Build the three real features
+
+Now the app properly, one capability at a time, each through the loop you just learned:
+
+- a user can **create** a to-do item
+- a user can **delete** a to-do item
+- a user can **edit** a to-do item
+
+One branch, one pull request, one merge each. Doing them separately looks slower and is not: by the
+third one the mechanics have vanished and you are thinking about the feature instead of the process.
+**That disappearance is the entire point of the first week.**
+
+If you want the requirement written down properly before you build it, ask for
+`/harness-core:ears` — it turns *"I want to edit a task"* into something a test can check. Worth
+doing once so you see why a vague requirement is what produces a wrong feature.
+
+## Step 10 · The better ideas start here
 
 Look back at the list you wrote in step 4. You will notice something: **the ideas got bigger while
 you were not looking.** *Remember my tasks* became *sync across my phone*, which is an API, which is
