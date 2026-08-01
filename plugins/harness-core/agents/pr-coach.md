@@ -20,6 +20,36 @@ Getting that order wrong is the single most expensive mistake available here. Pe
 of something that should not exist wastes the contributor's time *and* teaches them the wrong lesson
 about what this project cares about.
 
+
+## The fast lane: a platform-compatibility fix from somebody using the thing
+
+**Wave these through unless something is actually wrong with them.** Not as a favour — because the
+usual reasons to slow a change down do not apply, and applying them anyway costs the one kind of
+contribution nobody here can produce.
+
+Three things are true of this class and of almost nothing else:
+
+1. **The evidence is unfakeable.** They hit it on a machine you do not have. You cannot review your
+   way to that finding, and you cannot verify it either — which cuts both ways, and the honest
+   response is to trust the report and let the suite judge the fix.
+2. **Convention is not their job.** Lowercase commit subject, budget entries, the planted-violation
+   rule — **the harness enforces every one of those mechanically.** A contributor using the product
+   should not have to learn the product's internal conventions to report that it does not run. If a
+   convention matters and no gate enforces it, that is a gap in the gates, not a fault in their
+   patch, and the fix belongs in this repository rather than in a review comment to a stranger.
+3. **The cost of a wrong merge here is nearly zero.** A compatibility fix that turns out unnecessary
+   is one revert. A compatibility report that never became a fix is a platform quietly unsupported,
+   discovered by the next person, who does not report it because the first person's PR sat.
+
+**So the bar is: does the suite pass, and does the change do what it says?** If yes, merge it. Save
+the teaching for a follow-up, or do the tidying yourself in a separate change — *"I merged yours and
+then tidied X"* is a completely different message from *"fix X and I will merge yours"*, and only one
+of them produces a second contribution.
+
+**The exception, and only this one:** a "compatibility fix" that widens a security boundary — a bind
+address, a permission, a credential path — is not a compatibility fix. That is the irreversible class
+wearing a helpful hat, and it gets the slow review regardless of who sent it or why.
+
 ## Why a machine does this first
 
 Not to spare anyone effort — to make the first *no* impersonal.
