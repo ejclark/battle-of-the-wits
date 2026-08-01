@@ -24,6 +24,26 @@ const PLUGINS = join(dirname(fileURLToPath(import.meta.url)), "../plugins");
  */
 export const bin = (plugin, name) => join(PLUGINS, plugin, "bin", process.platform === "win32" ? `${name}.cmd` : name);
 
+/**
+ * `execFileSync`, but able to spawn the launchers `bin()` resolves to.
+ *
+ * The .cmd twins fixed the PATH; they did not make the launcher spawnable from a test. Node refuses
+ * to spawn a `.cmd`/`.bat` directly — it throws EINVAL, part of the CVE-2024-27980 hardening — so a
+ * suite that hands execFileSync the `.cmd` path fails on Windows exactly where it stopped failing on
+ * PATH. Route those through `cmd.exe /d /s /c`. No `shell:true`: that would make Node stop quoting,
+ * putting the burden of escaping paths and args back on every call site. With an explicit argv Node
+ * still quotes, so a launcher path or argument containing a space is safe.
+ *
+ * Semantics match execFileSync exactly — returns stdout, throws on non-zero with `status`/`stdout`/
+ * `stderr` intact — so it is a drop-in wherever a launcher path was being run.
+ */
+export function runLauncher(file, args = [], opts = {}) {
+  if (process.platform === "win32" && file.endsWith(".cmd")) {
+    return execFileSync("cmd.exe", ["/d", "/s", "/c", file, ...args], opts);
+  }
+  return execFileSync(file, args, opts);
+}
+
 /** A throwaway repository seeded with exactly the files a case needs. */
 export function makeRepo(files = {}) {
   const root = mkdtempSync(join(tmpdir(), "botw-"));
@@ -38,7 +58,7 @@ export function makeRepo(files = {}) {
 export function runTool(binPath, cwd, args = [], env = {}) {
   const opts = { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], env: { ...process.env, ...env } };
   try {
-    return { code: 0, out: execFileSync(binPath, args, opts) };
+    return { code: 0, out: runLauncher(binPath, args, opts) };
   } catch (err) {
     return { code: err.status ?? 1, out: `${err.stdout ?? ""}${err.stderr ?? ""}` };
   }

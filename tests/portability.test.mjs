@@ -14,18 +14,17 @@ import { execFileSync } from "node:child_process";
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
-
-const BIN = join(dirname(fileURLToPath(import.meta.url)), "../plugins/harness-gates/bin");
+import { bin, runLauncher } from "./helpers.mjs";
 
 /**
  * Run a gate in `cwd`; returns { code, out }. Never throws on a non-zero exit — that's a result.
  * Invokes the `bin/` launcher rather than the module directly, so the launcher itself is under
- * test: a broken wrapper is exactly as fatal to an adopter as a broken scanner.
+ * test: a broken wrapper is exactly as fatal to an adopter as a broken scanner. `runLauncher` keeps
+ * that true on Windows, where the launcher is the `.cmd` twin and Node cannot spawn it bare.
  */
 function runGate(name, cwd, args = []) {
   try {
-    const out = execFileSync(join(BIN, name), args, {
+    const out = runLauncher(bin("harness-gates", name), args, {
       cwd,
       encoding: "utf8",
       stdio: ["ignore", "pipe", "pipe"],

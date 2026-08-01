@@ -59,7 +59,7 @@ test("every shipped shell script passes shellcheck", () => {
   const files = shipped();
   assert.ok(files.length > 0, "no scripts found — the glob is wrong, not the repo");
   assert.ok(
-    files.some((f) => f.includes("/husky/")),
+    files.some((f) => /[\\/]husky[\\/]/.test(f)),
     "the git hooks must be in scope — they run on every commit in an adopter's repo",
   );
   if (!available()) {

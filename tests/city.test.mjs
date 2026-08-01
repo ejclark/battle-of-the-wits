@@ -91,7 +91,11 @@ test("a district with nothing over budget says so plainly", () => {
   assert.match(cityDocument(root, "probe"), /Nothing is over budget/);
 });
 
-test("file and district names are escaped — they are untrusted input", () => {
+// `< >` are legal in a POSIX path and forbidden by Win32/NTFS, so the one input that stages this —
+// a directory literally named `<script>` — cannot be created on Windows at all. The escaping under
+// test lives in cityDocument and is platform-independent; skip only the staging that the filesystem
+// refuses, rather than pretend the case ran.
+test("file and district names are escaped — they are untrusted input", { skip: process.platform === "win32" && "NTFS forbids < > in filenames — the input cannot be staged here" }, () => {
   const root = makeRepo({ "harness.json": '{"sourceDir":"src","sourceExt":".ts"}' });
   mkdirSync(join(root, "src/<script>"), { recursive: true });
   writeFileSync(join(root, "src/<script>/a.ts"), "x\n");

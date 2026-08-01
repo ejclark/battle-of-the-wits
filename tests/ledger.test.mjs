@@ -69,7 +69,9 @@ test("an absent ledger reads as empty, not as an error", () => {
 
 test("the ledger path comes from the descriptor, not from a hardcoded name", () => {
   const root = makeRepo({ "harness.json": JSON.stringify({ metricsFile: "telemetry/runs.jsonl" }) });
-  assert.match(ledgerPath(root), /telemetry\/runs\.jsonl$/);
+  // `[\\/]` not `/`: the assertion is that the descriptor's metricsFile is honoured, and the path
+  // separator is `\` on Windows — pinning `/` tests the OS, not the behaviour.
+  assert.match(ledgerPath(root), /telemetry[\\/]runs\.jsonl$/);
   append(root, "note", { x: 1 });
   assert.equal(read(root).records.length, 1, "and the writer and reader must agree about where it is");
 });

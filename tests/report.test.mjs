@@ -16,13 +16,12 @@
 // the button, on their own account, having read what it says.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { fieldReport, issueBody, issueUrl } from "../plugins/harness-core/lib/report.mjs";
-import { bin } from "./helpers.mjs";
+import { bin, runLauncher } from "./helpers.mjs";
 
 const REPO = join(dirname(fileURLToPath(import.meta.url)), "..");
 const LAUNCHER = bin("harness-core", "harness-report");
@@ -116,7 +115,7 @@ test("the module cannot send anything, and holds no credential", () => {
 test("the run shows what it would file BEFORE the link, and says nothing was sent", () => {
   // Consent by construction. A report someone files without reading is a habit, not consent, and
   // reading it is the entire justification for the design.
-  const out = execFileSync(LAUNCHER, ["--what", "gates went red with an empty message"], { cwd: plantedRepo(), encoding: "utf8" });
+  const out = runLauncher(LAUNCHER, ["--what", "gates went red with an empty message"], { cwd: plantedRepo(), encoding: "utf8" });
   assert.match(out, /Nothing above has been sent/);
   assert.ok(out.indexOf("### Environment") < out.indexOf("github.com"), "the link must come after the contents, never instead of them");
   assert.match(out, /Costs no tokens/, "the cost has to be stated — an adopter has no way to know otherwise");

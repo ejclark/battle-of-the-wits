@@ -5,7 +5,7 @@
 // throttle. A suite that only checked "returns a gear" would pass against a function that returns
 // "standard" unconditionally, which is precisely the behaviour this module exists to prevent.
 import { test } from "node:test";
-import { bin } from "./helpers.mjs";
+import { bin, runLauncher } from "./helpers.mjs";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { mkdtempSync, writeFileSync } from "node:fs";
@@ -121,11 +121,11 @@ test("the one-line form never prints a gear without the signal that set it", () 
 });
 
 test("the launcher runs, and a refusal exits non-zero", () => {
-  const out = execFileSync(LAUNCHER, ["--signal", "formatting", "--json"], { cwd: REPO, encoding: "utf8" });
+  const out = runLauncher(LAUNCHER, ["--signal", "formatting", "--json"], { cwd: REPO, encoding: "utf8" });
   assert.equal(JSON.parse(out).gear, "mechanical");
 
   // A misspelled signal is REPORTED, never silently dropped: swallowing it yields a lower gear than
   // the evidence called for, which is the silent downgrade this module exists to stop.
-  const typo = execFileSync(LAUNCHER, ["--signal", "regresion", "--json"], { cwd: REPO, encoding: "utf8" });
+  const typo = runLauncher(LAUNCHER, ["--signal", "regresion", "--json"], { cwd: REPO, encoding: "utf8" });
   assert.deepEqual(JSON.parse(typo).unknownSignals, ["regresion"]);
 });

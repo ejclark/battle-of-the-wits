@@ -13,11 +13,10 @@
 //   harness-clone-scan --candidate # emit the biggest clone pair as JSON (two file:line locs)
 //
 // Enforced in CI via tests/arch/clone.spec.ts — runs on every PR, no extra workflow.
-import { execFileSync } from "node:child_process";
 import { mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { descriptor, readBudget, writeBudget } from "./descriptor.mjs";
+import { descriptor, readBudget, runNpx, writeBudget } from "./descriptor.mjs";
 
 const ROOT = process.cwd();
 // Descriptor, budget I/O, tree walk and repo-relative paths come from descriptor.mjs — one
@@ -29,7 +28,7 @@ const DESC = descriptor(ROOT);
 // verdict, so tolerate jscpd's own exit code and read its JSON report from a temp dir.
 const outDir = mkdtempSync(join(tmpdir(), "jscpd-"));
 try {
-  execFileSync("npx", ["jscpd", "--silent", "--reporters", "json", "--output", outDir], {
+  runNpx(["jscpd", "--silent", "--reporters", "json", "--output", outDir], {
     cwd: ROOT,
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
