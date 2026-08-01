@@ -2,8 +2,16 @@ import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { test } from "node:test";
+import { test as nodeTest } from "node:test";
 import { bin, makeRepo } from "./helpers.mjs";
+
+// `harness-ship` is a POSIX bash program that drives git and gh directly; its `.cmd` twin is a stub
+// that prints "cannot run on Windows" and exits 1 (by design — there is no Node module to hand off
+// to). Every case here asserts the bash script's own refusal logic, which cannot run on Windows at
+// all, so skip the suite there rather than assert Windows-specific stub output. Run it from WSL,
+// macOS or Linux, where CI also enforces it.
+const test = (name, fn) =>
+  nodeTest(name, { skip: process.platform === "win32" && "harness-ship is POSIX-only; nothing to exercise on Windows" }, fn);
 
 // `harness-ship` is the athlete's LAST command, the way `--candidate` is its first. It had never
 // been run by anything, and it showed: it was lifted verbatim out of the repository the harness grew

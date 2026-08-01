@@ -31,16 +31,39 @@
 import { execFileSync } from "node:child_process";
 import { test } from "node:test";
 
+// ── WINDOWS: A `.cmd`, NOT A BARE NAME ────────────────────────────────────────
+//
+// On Windows the scanners arrive on PATH as `.cmd` shims. Node refuses to spawn a `.cmd` directly —
+// it throws EINVAL, part of the CVE-2024-27980 hardening — and the first version of this file read
+// that thrown error as OVER BUDGET, so an adopter with the plugin correctly installed saw every gate
+// fail. The scanner is run through `cmd.exe`, which spawns the `.cmd` and propagates its exit code.
+//
+// That reroute costs the ENOENT signal this file leans on to tell ABSENT from OVER BUDGET — a missing
+// command under `cmd.exe` exits 1 just like a scanner that found debt. So on Windows, existence is
+// checked FIRST with `where`, which exits non-zero when the command is not on PATH, locale-
+// independently. Absence stays a skip; only a scanner that ran and returned non-zero fails the gate.
+const WIN = process.platform === "win32";
+const SKIP = (bin) => `${bin} is not on PATH — NOTHING WAS MEASURED. Install the harness-gates plugin here, or rely on pre-push.`;
+
 const gate = (bin, t) => {
+  if (WIN) {
+    try {
+      execFileSync("where", [bin], { stdio: "pipe" });
+    } catch {
+      t.skip(SKIP(bin)); // not installed here — skipped rather than passed, never reads as measured
+      return;
+    }
+  }
   try {
-    // `.cmd` on Windows: execFileSync does not consult PATHEXT, so the bare name fails with
+    // Never the bare name on Windows: execFileSync does not consult PATHEXT, so it fails with
     // ENOENT even when the command is on PATH — and the branch below would then SKIP a gate that is
-    // perfectly installed. Every adopter on Windows would silently measure nothing.
-    execFileSync(process.platform === "win32" ? `${bin}.cmd` : bin, { cwd: process.cwd(), stdio: "pipe" });
+    // perfectly installed. Every adopter on Windows would silently measure nothing. Naming the
+    // `.cmd` outright does not work either (EINVAL, per the note above), so `cmd.exe` runs it.
+    if (WIN) execFileSync("cmd.exe", ["/d", "/s", "/c", bin], { cwd: process.cwd(), stdio: "pipe" });
+    else execFileSync(bin, { cwd: process.cwd(), stdio: "pipe" });
   } catch (err) {
     if (err.code === "ENOENT") {
-      // Not installed here. Skipped rather than passed, so it never reads as a gate that measured.
-      t.skip(`${bin} is not on PATH — NOTHING WAS MEASURED. Install the harness-gates plugin here, or rely on pre-push.`);
+      t.skip(SKIP(bin)); // POSIX: not installed here
       return;
     }
     const out = `${err.stdout ?? ""}${err.stderr ?? ""}`;

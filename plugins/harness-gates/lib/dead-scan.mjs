@@ -12,8 +12,7 @@
 //   harness-dead-scan --candidate # highest-leverage cleanup target as JSON
 //
 // Enforced in CI via tests/arch/dead.spec.ts.
-import { execFileSync } from "node:child_process";
-import { descriptor, readBudget, writeBudget } from "./descriptor.mjs";
+import { descriptor, readBudget, runNpx, writeBudget } from "./descriptor.mjs";
 
 const ROOT = process.cwd();
 // Descriptor, budget I/O, tree walk and repo-relative paths come from descriptor.mjs — one
@@ -24,7 +23,7 @@ const DESC = descriptor(ROOT);
 // knip exits non-zero when it finds issues; we own the verdict, so tolerate that.
 let out = "";
 try {
-  out = execFileSync("npx", ["knip", "--no-exit-code", "--reporter", "json"], {
+  out = runNpx(["knip", "--no-exit-code", "--reporter", "json"], {
     cwd: ROOT,
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],

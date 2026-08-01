@@ -25,7 +25,7 @@ import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join, dirname } from "node:path";
+import { join, dirname, delimiter } from "node:path";
 import { fileURLToPath } from "node:url";
 import { NPM_STUB_TEST, effectiveTestScript, scriptsFor } from "../plugins/harness-core/lib/configs.mjs";
 import { mergePackageJson } from "../plugins/harness-core/lib/merge.mjs";
@@ -106,7 +106,11 @@ test("the gate template SKIPS a scanner that is absent and FAILS one that found 
   // machine emits `# skipped 6` — so an assertion on the default format tests the toolchain rather
   // than the behaviour. It went red on a run where the behaviour was exactly right. Pin the format
   // and the assertion means what it says.
-  const bare = { ...process.env, PATH: dirname(process.execPath) };
+  // Strip the PROJECT's PATH so the scanners are unreachable — but on Windows keep System32, where
+  // `where` and `cmd.exe` live: the gate template uses those to FIND and RUN a scanner, and a PATH
+  // without them would make even a present scanner unfindable, testing the harness rather than it.
+  const core = process.platform === "win32" ? [join(process.env.SystemRoot ?? "C:\\Windows", "System32")] : [];
+  const bare = { ...process.env, PATH: [dirname(process.execPath), ...core].join(delimiter) };
   delete bare.NODE_TEST_CONTEXT;
   delete bare.NODE_OPTIONS;
   const absent = execFileSync(process.execPath, ["--test", "--test-reporter=tap"], { cwd: dir, encoding: "utf8", env: bare });
@@ -122,10 +126,14 @@ test("the gate template SKIPS a scanner that is absent and FAILS one that found 
     const over = name === "harness-arch-scan";
     writeFileSync(join(bin, name), `#!/bin/sh\n${over ? 'echo "3 files over budget"; exit 1' : "exit 0"}\n`);
     chmodSync(join(bin, name), 0o755);
+    // The `.cmd` twin is the scanner that actually exists on Windows: `where` finds it and the
+    // template runs it through cmd.exe, so PLANT B exercises the real Windows path rather than a
+    // `#!/bin/sh` file that platform can neither find nor run.
+    writeFileSync(join(bin, `${name}.cmd`), `@echo off\r\n${over ? "echo 3 files over budget\r\nexit /b 1" : "exit /b 0"}\r\n`);
   }
   let failed = "";
   try {
-    execFileSync(process.execPath, ["--test", "--test-reporter=tap"], { cwd: dir, encoding: "utf8", env: { ...bare, PATH: `${bin}:${bare.PATH}` } });
+    execFileSync(process.execPath, ["--test", "--test-reporter=tap"], { cwd: dir, encoding: "utf8", env: { ...bare, PATH: `${bin}${delimiter}${bare.PATH}` } });
     assert.fail("a scanner that ran and found debt must fail the suite");
   } catch (err) {
     failed = `${err.stdout ?? ""}${err.stderr ?? ""}`;

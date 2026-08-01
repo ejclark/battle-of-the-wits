@@ -20,9 +20,16 @@ import { fileURLToPath } from "node:url";
 const BIN = join(dirname(fileURLToPath(import.meta.url)), "../bin");
 const ROOT = process.cwd();
 
+// The sibling launchers are `#!/bin/sh` with `.cmd` twins. On Windows the shell file is unrunnable
+// and Node cannot spawn the `.cmd` directly (EINVAL, the CVE-2024-27980 hardening) — a bare
+// execFileSync of either was caught as a non-zero result, so acquire refused every slot with no
+// output. Resolve the `.cmd` and route it through `cmd.exe`, which runs it; explicit argv, no shell.
+const win = process.platform === "win32";
 function tool(name, args) {
+  const launcher = join(BIN, win ? `${name}.cmd` : name);
+  const [file, pre] = win ? ["cmd.exe", ["/d", "/s", "/c", launcher]] : [launcher, []];
   try {
-    return { code: 0, out: execFileSync(join(BIN, name), args, { cwd: ROOT, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }) };
+    return { code: 0, out: execFileSync(file, [...pre, ...args], { cwd: ROOT, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }) };
   } catch (err) {
     return { code: err.status ?? 1, out: `${err.stdout ?? ""}${err.stderr ?? ""}` };
   }

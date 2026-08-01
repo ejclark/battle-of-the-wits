@@ -57,15 +57,21 @@ function step(label, fn) {
   }
 }
 
-// WINDOWS HAS NO `npm`, IT HAS `npm.cmd`. execFileSync does not consult PATHEXT, so every call here
-// threw ENOENT on the first Windows machine that tried it — and EVERY mechanical step of the
-// adoption reported ✗ (install, freeze, format, verify) while the file-writing half worked fine. A
-// run that writes everything and enforces nothing is the false green this project exists to
-// prevent, found by a contributor on a platform nobody had tested.
-const winExe = (cmd) => (process.platform === "win32" && !/\.(cmd|exe|bat)$/i.test(cmd) ? `${cmd}.cmd` : cmd);
-
-const run = (cmd, args, cwd) =>
-  execFileSync(winExe(cmd), args, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+// WINDOWS SPAWNING IS TWO TRAPS, NOT ONE. The npm-family commands are shims — `npm.cmd`, `npx.cmd` —
+// and the harness launchers resolve to their `.cmd` twins; Node refuses to spawn any `.cmd` directly
+// (EINVAL, the CVE-2024-27980 hardening). `git` and `node`, meanwhile, are plain `.exe`. An earlier
+// fix appended `.cmd` to every command name to answer the first trap — but that renamed `git` to a
+// `git.cmd` that does not exist, and still hit EINVAL on the shims it did name. Route everything
+// through `cmd.exe` instead: it resolves a bare name via PATHEXT (finding `git.exe` or `npm.cmd` or a
+// launcher's `.cmd`) and runs a `.cmd` the one way Node cannot. Explicit argv, no shell, so a spaced
+// path or argument stays a single token. A run that writes everything and enforces nothing is the
+// false green this project exists to prevent, and it hides on the platform nobody here tested.
+const run = (cmd, args, cwd) => {
+  const opts = { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] };
+  return process.platform === "win32"
+    ? execFileSync("cmd.exe", ["/d", "/s", "/c", cmd, ...args], opts)
+    : execFileSync(cmd, args, opts);
+};
 
 export function autoAdopt(root, { ship = false, wrote = [] } = {}) {
   console.log("\n⚙  Automated adoption run\n");

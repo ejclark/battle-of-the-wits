@@ -6,15 +6,14 @@
 // value themselves. Every case below pins the value statement, not the layout.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { makeRepo, bin } from "./helpers.mjs";
+import { makeRepo, bin, runLauncher } from "./helpers.mjs";
 
 const BIN = bin("harness-core", "harness-dungeon");
-const today = (cwd) => execFileSync(BIN, ["--today"], { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+const today = (cwd) => runLauncher(BIN, ["--today"], { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
 
 
 /** A repo with every dimension measured, so "unlit" never masks what is being tested. */

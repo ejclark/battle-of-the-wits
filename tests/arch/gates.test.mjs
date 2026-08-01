@@ -1,33 +1,33 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { bin, runLauncher } from "../helpers.mjs";
 
 // The harness gating itself — dogfooding as the first eval. If it cannot hold its own repository to
 // the standard it sells, it has no business holding anyone else's.
 //
 // This differs from the shipped template in exactly one way, deliberately: an adopter gets the
-// scanners on PATH from the installed plugin, whereas here they live in the working tree. So the bin
-// directory is resolved locally rather than assumed.
-const BIN = join(dirname(fileURLToPath(import.meta.url)), "../../plugins/harness-gates/bin");
+// scanners on PATH from the installed plugin, whereas here they live in the working tree. So the
+// launcher is resolved locally rather than assumed — via the same `bin()` that also picks the
+// platform-runnable twin, and `runLauncher()` so Windows can actually spawn it.
+const REPO = join(dirname(fileURLToPath(import.meta.url)), "../..");
 
 // TWO THINGS THIS FILE GOT WRONG THAT THE SHIPPED TEMPLATE GOT RIGHT — the repo's own gate was worse
 // than the one it hands adopters, which is the wrong way round.
 //
 // 1. WINDOWS. The launchers are extensionless `#!/bin/sh`; Windows cannot execute them, and
-//    execFileSync does not consult PATHEXT. The .cmd twin is the runnable form there.
+//    execFileSync does not consult PATHEXT. The .cmd twin is the runnable form there — which is what
+//    `bin()` picks, and `runLauncher()` is what can actually spawn it.
 // 2. CANNOT MEASURE IS NOT A VERDICT. Without this, a scanner that could not RUN was reported as
 //    "reported debt over budget" — and on the first Windows machine to try it, 131 tests failed with
 //    a message accusing the repository of debt it does not have. The finding was real; the words
 //    were a lie, and a confident wrong diagnosis costs more than a blank one.
-const runnable = (name) => join(BIN, process.platform === "win32" ? `${name}.cmd` : name);
-
 const gate = (name) => {
   try {
-    execFileSync(runnable(name), { cwd: join(BIN, "../../.."), stdio: "pipe" });
+    runLauncher(bin("harness-gates", name), [], { cwd: REPO, stdio: "pipe" });
   } catch (err) {
     if (err.code === "ENOENT") {
       assert.fail(`${name} could not be executed at all — NOTHING WAS MEASURED. This is not a debt finding.`);
@@ -63,7 +63,7 @@ test("--update preserves the recorded justification for a raise", () => {
     join(root, "arch-budget.json"),
     JSON.stringify({ _why_a: "raised on purpose, see PR #1", "src/a.ts": 99 }, null, 2),
   );
-  execFileSync(join(BIN, "harness-arch-scan"), ["--update"], { cwd: root, stdio: "pipe" });
+  runLauncher(bin("harness-gates", "harness-arch-scan"), ["--update"], { cwd: root, stdio: "pipe" });
   const after = JSON.parse(readFileSync(join(root, "arch-budget.json"), "utf8"));
   assert.equal(after._why_a, "raised on purpose, see PR #1");
   assert.equal(after["src/a.ts"], 2, "the numeric budget should still ratchet down");
@@ -91,7 +91,7 @@ for (const name of [
     writeFileSync(join(root, "src/a.ts"), "export const a = 1;\n");
     writeFileSync(join(root, "package.json"), '{"name":"probe"}\n');
     try {
-      execFileSync(join(BIN, name), ["--update"], { cwd: root, stdio: "pipe" });
+      runLauncher(bin("harness-gates", name), ["--update"], { cwd: root, stdio: "pipe" });
     } catch (err) {
       assert.fail(`${name} --update failed:\n\n${err.stdout ?? ""}${err.stderr ?? ""}`);
     }

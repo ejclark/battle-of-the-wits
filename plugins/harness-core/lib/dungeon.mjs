@@ -147,7 +147,7 @@ export function render() {
   return L.join("\n");
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (process.argv[1]?.endsWith("dungeon.mjs")) {
   // `--new` forges a dungeon from measured debt; the default view is the adoption crawl.
   // --today answers "what dungeons should I build?" with coherent campaigns; --new lists the raw
   // encounters behind them; bare shows where you are in the adoption crawl.

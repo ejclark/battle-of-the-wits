@@ -7,15 +7,14 @@
 // one of those.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { makeRepo, bin } from "./helpers.mjs";
+import { makeRepo, bin, runLauncher } from "./helpers.mjs";
 
 const BIN = bin("harness-core", "harness-dungeon");
-const run = (cwd) => execFileSync(BIN, [], { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+const run = (cwd) => runLauncher(BIN, [], { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
 
 
 test("an untouched repo is at the door with every power locked", () => {
@@ -114,7 +113,7 @@ test("it renders in a directory with nothing at all rather than crashing", () =>
 
 // ── the forge ──────────────────────────────────────────────────────────────────
 const forgeRun = (cwd) =>
-  execFileSync(BIN, ["--new"], { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+  runLauncher(BIN, ["--new"], { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
 
 test("the forge invents nothing — every encounter traces to a committed budget", () => {
   const root = makeRepo({

@@ -20,8 +20,24 @@
 //
 // The second kind is what this module ends. `spec-gap-scan` ignoring the `exclude` key that
 // `arch-scan` and `dupe-scan` both honoured was exactly that bug, and it was invisible for months.
+import { execFileSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, relative } from "node:path";
+
+/**
+ * Run `npx <tool …>` and return its stdout — how the detector-backed scanners (jscpd, knip) reach
+ * their tools. On Windows `npx` is `npx.cmd`, which Node refuses to spawn directly (EINVAL, the
+ * CVE-2024-27980 hardening); a bare `execFileSync("npx", …)` failed for every Windows adopter, the
+ * error was swallowed by the caller's tolerate-the-exit-code catch, and the gate surfaced later as an
+ * unrelated "report not found". Route it through `cmd.exe`, which resolves the `.cmd` via PATHEXT —
+ * explicit argv, no shell, so a spaced path or arg stays one token. Throws on non-zero as execFileSync
+ * does, so callers keep owning the verdict.
+ */
+export function runNpx(args, opts = {}) {
+  return process.platform === "win32"
+    ? execFileSync("cmd.exe", ["/d", "/s", "/c", "npx", ...args], opts)
+    : execFileSync("npx", args, opts);
+}
 
 /**
  * The documented defaults — a conventional TypeScript repository needs no `harness.json` at all.

@@ -1,9 +1,8 @@
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { test } from "node:test";
-import { bin, makeRepo } from "./helpers.mjs";
+import { bin, makeRepo, runLauncher } from "./helpers.mjs";
 
 // `--candidate` IS THE MACHINE INTERFACE.
 //
@@ -46,7 +45,7 @@ const bareRepo = () => makeRepo({ "package.json": '{"name":"probe"}\n' });
 const candidate = (gate, cwd) => {
   let out;
   try {
-    out = execFileSync(bin("harness-gates", gate), ["--candidate"], {
+    out = runLauncher(bin("harness-gates", gate), ["--candidate"], {
       cwd,
       encoding: "utf8",
       stdio: ["ignore", "pipe", "pipe"],
