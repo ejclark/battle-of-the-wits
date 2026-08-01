@@ -479,6 +479,18 @@ into itself, dirty tree, merge with no number. Opening a real PR cannot be teste
 that fires *before* anything irreversible happens can be, and those are the ones that protect an
 athlete.
 
+### The check that only existed in CI
+
+The PR then went red on **shellcheck**, from the same sweep: a skill reference rewritten into
+backticks inside a double-quoted shell string, which is command substitution.
+
+`npm test` was green. Shellcheck was installed on this machine the whole time — it just was not part
+of the project's own command, only of CI. So a 200ms check became a commit-push-wait cycle.
+
+It now runs in the suite. The general rule, worth more than the fix: **every check CI runs should be
+runnable by the project's own command.** A step that exists only in CI does not make verification
+stricter, it makes it slower — and the wait is where people quietly stop verifying.
+
 ### Banked, not fixed
 
 `ENGINEERING.md` ships inside `harness-core` and still describes **skynet-capital**: hooks at

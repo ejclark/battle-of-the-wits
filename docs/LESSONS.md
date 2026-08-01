@@ -236,3 +236,18 @@ Prevention ranks, best first:
   and taught nothing, so the same bug regrew in the files it had not listed. Prefer a rule that names
   the *category* — the doctrine gate and this one both do, and both caught things their authors had
   not thought of.
+
+### CI caught a typo that was already checkable locally
+- **SHA:** `6fedd17`   **DATE:** 2026-08-01   **STATUS:** closed
+- **SIGNAL:** the `verify` job went red on a PR whose local suite was green. Round trip: a push, a
+  runner, and a red PR — for a 200ms check that was already installed on the machine that made the
+  mistake.
+- **ROOT CAUSE:** a sweep rewrote a skill reference into backticks inside a double-quoted shell
+  string, which is command substitution (SC2006). Shellcheck ran only in CI, so `npm test` could not
+  see it. The deeper fault is the split: CI verified a dimension the project's own command did not.
+- **PREVENTION:** gate — shellcheck now runs inside the test suite, so `npm test` covers what CI
+  covers. It reports plainly when shellcheck is absent rather than passing silently; CI installs it,
+  so the dimension is always measured somewhere.
+- **SIDE QUESTS:** a verification step that exists only in CI turns a typo into a commit-push-wait
+  cycle, and the wait is where people quietly stop verifying. Worth auditing the CI workflow for any
+  other step the local command cannot reproduce.

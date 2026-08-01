@@ -103,7 +103,7 @@ cmd_open() {
     local num url; num="$(printf '%s' "$body" | json_field number)"; url="$(printf '%s' "$body" | json_field html_url)"
     echo "ship: opened PR #$num  $url"
     echo "$num"
-    echo "ship: NEXT (per `/harness-gates:ship`) — one enable_pr_auto_merge MCP call, then STOP. No polling."
+    echo "ship: NEXT (per the /harness-gates:ship skill) — one enable_pr_auto_merge MCP call, then STOP. No polling."
   else
     echo "ship: REST open returned HTTP $http (proxy may block writes). Body:" >&2
     printf '%s\n' "$body" | head -5 >&2
