@@ -1,0 +1,98 @@
+name: Pipeline
+
+# One workflow, two mutually-exclusive jobs, so no runner-minute is spent twice:
+#   • verify  (pull_request only) — commitlint + manifests + portability suite, on ONE runner.
+#   • release (push to main only) — semantic-release, with NO re-verify: branch protection
+#     requires `verify` before merge, so the merged commit is already validated.
+#
+# This repo ships no application, so "deploy" is a release: a version tag plus the version synced
+# into every plugin manifest. Claude Code decides whether users get an update by reading that
+# field, so the release IS the distribution — nothing else has to happen.
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
+concurrency:
+  group: pipeline-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  verify:
+    name: verify
+    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.draft == false }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0            # commitlint needs the PR commit range
+
+      - name: Set up Node 24
+        uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Commit lint
+        run: npx commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose
+
+      # Structural check that runs on bare Node — catches a marketplace entry pointing at a
+      # directory that doesn't exist, a name mismatch, or a plugin nobody can install.
+      - name: Validate manifests
+        run: npm run validate
+
+      # The authoritative check, using the same validator the community marketplace runs.
+      - name: Validate with the Claude CLI
+        run: |
+          npm i -g @anthropic-ai/claude-code
+          claude plugin validate .
+          for p in plugins/*/; do claude plugin validate "$p"; done
+
+      # Versions must agree across package.json, marketplace.json and every plugin.json. Drift here
+      # is silent: installs go stale with nothing red.
+      - name: Check version sync
+        run: node scripts/sync-versions.mjs --check
+
+      # The DNA expression test — every gate run against a repo with a non-default layout.
+      - name: Portability suite
+        run: npm test
+
+      # A launcher with a syntax error is exactly as broken as a scanner with one.
+      - name: Shellcheck the launchers
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck
+          shellcheck plugins/harness-gates/bin/harness-*-scan
+
+  release:
+    name: release
+    # Merged commits are already verified, so this path only ships.
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Set up Node 24
+        uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Semantic Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx semantic-release

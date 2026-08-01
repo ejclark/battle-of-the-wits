@@ -74,8 +74,30 @@ state, not the harness's. The harness carries the procedure; the repo carries it
 | [`docs/OPERATING-MODEL.md`](docs/OPERATING-MODEL.md) | The portable operating model — how a human and Claude divide work |
 | [`docs/DESCRIPTOR.md`](docs/DESCRIPTOR.md) | `harness.json` — the interface that makes all of the above portable |
 
+## Working on the harness itself
+
+```shell
+npm ci
+npm test                              # the portability suite
+npm run validate                      # marketplace + plugin manifests
+node scripts/sync-versions.mjs --check
+```
+
+CI runs all of the above plus `claude plugin validate` and shellcheck on every PR. Merging to `main`
+runs `semantic-release`, which tags a version and writes it into every plugin manifest — that field
+is how Claude Code decides whether an installed plugin has an update, so the release *is* the
+distribution.
+
+Never hand-edit a `version`. See [`CLAUDE.md`](CLAUDE.md) for the rules a new gate has to satisfy.
+
 ## Status
 
-Early. The plugins install and the gates run against a real repository, but this has been proven in
-exactly one codebase so far. The honest test of a portable system is expressing it somewhere it did
-not grow — until that has happened more than once, treat "portable" as a claim rather than a fact.
+Early, and honest about it. The plugins validate, the gates run, and the portability suite passes —
+but this has been proven in exactly one codebase. The real test of a portable system is expressing it
+somewhere it did not grow; until that has happened more than once, treat "portable" as a claim rather
+than a fact.
+
+The suite has already earned its keep: lifting the harness out carried three project-specific
+accidents with it — hardcoded `src/` prefixes, spec exemptions that only made sense for a WebGL app,
+and a crash when `knip` wasn't installed. All three were invisible until a test demanded the gates
+work somewhere else.

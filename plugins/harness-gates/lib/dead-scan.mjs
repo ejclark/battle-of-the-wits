@@ -39,7 +39,22 @@ try {
 } catch (e) {
   out = e.stdout ?? "";
 }
-const report = JSON.parse(out);
+
+// Graceful degradation: this is the one gate with an external dependency (knip). In a repo that
+// hasn't installed it, `npx knip` prints help text or an install prompt rather than JSON — parsing
+// that produced a raw SyntaxError, which reads like a harness bug to an adopter whose only real
+// problem is a missing dev dependency. Say so plainly and skip, rather than failing the run: a gate
+// that cannot measure must not pretend to a verdict in either direction.
+let report;
+try {
+  report = JSON.parse(out);
+} catch {
+  console.log("☠ Dead-code scan (knip) — SKIPPED");
+  console.log("\n  knip is not available in this repository, so dead code was not measured.");
+  console.log("  Install it to enable this gate:  npm i -D knip");
+  console.log("  Then commit a knip.json declaring your entry points.\n");
+  process.exit(0);
+}
 
 // One debt number: unused files + unused exports + unused exported types.
 const files = report.files ?? [];

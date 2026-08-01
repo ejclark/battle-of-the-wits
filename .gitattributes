@@ -1,0 +1,5 @@
+* text=auto eol=lf
+
+# The bin/ launchers must stay executable and LF-terminated on every platform — a CRLF shebang
+# fails with a confusing "bad interpreter" error.
+plugins/harness-gates/bin/* text eol=lf

@@ -28,6 +28,9 @@ const DESC = (() => {
 const BUDGET_FILE = join(ROOT, "spec-gap-budget.json");
 
 function walk(dir, pred, acc = []) {
+  // A repo may legitimately have no test tree yet — that is the *finding* (everything is a gap),
+  // not a crash. Missing directories read as empty so a fresh adopter gets a report, not a stack.
+  if (!existsSync(dir)) return acc;
   for (const e of readdirSync(dir, { withFileTypes: true })) {
     const p = join(dir, e.name);
     if (e.isDirectory()) walk(p, pred, acc);
@@ -44,40 +47,40 @@ const isTypeOnly = (f) => {
   return exports.length > 0 && exports.every((e) => /^export\s+(interface|type)\b/.test(e));
 };
 
-// WebGL/DOM-bound render code. These build meshes, materials and post-process pipelines against a
-// live GPU context; there is no honest unit assertion to make about them without a browser, and a
-// spec that only checked "a mesh was constructed" would be implementation-peeking theatre. They are
-// verified instead by the screenshot harness (scripts/shoot-tower.mjs), which is the real contract.
-// NOTE the deliberate split that makes this narrow: all the *decidable* logic (the tower profile
-// curve, the seeded RNG, state→render params) lives in src/three/kit/{profile,rng,params}.ts, which
-// are pure, excluded from this list, and fully specced in tests/three/kit.spec.ts.
-const isWebglBound = (f) =>
-  f.startsWith("src/three/pieces/") ||
-  f === "src/three/scene-main.ts" ||
-  ["src/three/kit/env.ts", "src/three/kit/materials.ts", "src/three/kit/greebles.ts"].includes(f);
+// Files with no honest unit assertion available — WebGL/DOM-bound render code, CLI mains, fixture
+// data. Which files those *are* is a property of the project, not of the harness, so the list lives
+// in the target repo's descriptor under `specExempt` (path prefixes or exact paths, relative to the
+// repo root). The skynet-capital values are a worked example, not a default:
+//
+//   "specExempt": ["src/three/pieces/", "src/scripts/", "src/evals/scenarios/", "src/three/scene-main.ts"]
+//
+// Defaulting to [] is deliberate: an exemption the adopter did not ask for is a silently lowered
+// bar, and a gate that quietly excuses files is worse than no gate.
+const EXEMPT = DESC.specExempt ?? [];
+const isExempt = (f) => EXEMPT.some((p) => (p.endsWith("/") ? f.startsWith(p) : f === p));
 
-// Every src module, minus files with no unit-testable behavior:
-//   - src/scripts/*  — CLI mains, exercised by running, not import (like d.ts)
-//   - src/evals/scenarios/*  — eval fixture DATA, exercised by the eval harness, not unit specs
-//   - type-only modules  — interfaces/types that compile to nothing (see isTypeOnly)
-//   - WebGL-bound render modules  — verified by screenshot (see isWebglBound)
-const srcFiles = walk(join(ROOT, DESC.sourceDir), (n) => n.endsWith(".ts") && !n.endsWith(".d.ts"))
+// Every source module, minus files with no unit-testable behavior:
+//   - descriptor exemptions (see above)
+//   - type-only modules — interfaces/types that compile to nothing (see isTypeOnly)
+const srcFiles = walk(join(ROOT, DESC.sourceDir), (n) => n.endsWith(DESC.sourceExt) && !n.endsWith(".d.ts"))
   .map(rel)
-  .filter((f) => !f.startsWith("src/scripts/"))
-  .filter((f) => !f.startsWith("src/evals/scenarios/"))
-  .filter((f) => !isWebglBound(f))
+  .filter((f) => !isExempt(f))
   .filter((f) => !isTypeOnly(f));
 
-// Which src files do specs import (directly)?
+// Which source files do specs import (directly)?
 const importRe = /from\s+["']([^"']+)["']/g;
 const tested = new Set();
+const SRC_PREFIX = `${DESC.sourceDir}/`;
 for (const spec of walk(join(ROOT, DESC.testDir), (n) => n.endsWith(DESC.specSuffix))) {
   const body = readFileSync(spec, "utf8");
   for (const m of body.matchAll(importRe)) {
     if (!m[1].startsWith(".")) continue;
-    const target = resolve(dirname(spec), m[1]).replace(/\.js$/, ".ts");
-    const r = rel(target);
-    if (r.startsWith("src/")) tested.add(r);
+    // A spec may import "../lib/foo" (extensionless), "../lib/foo.js" (NodeNext), or the full path.
+    const base = resolve(dirname(spec), m[1]).replace(/\.js$/, "");
+    for (const candidate of [base + DESC.sourceExt, base]) {
+      const r = rel(candidate);
+      if (r.startsWith(SRC_PREFIX)) tested.add(r);
+    }
   }
 }
 

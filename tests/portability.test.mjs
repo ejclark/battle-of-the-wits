@@ -82,9 +82,30 @@ test("dupe-scan finds a symbol defined in two files under the descriptor's sourc
   const dup = "export function clamp(v) {\n  return v;\n}\n";
   const root = makeRepo({ "lib/one.ts": dup, "lib/two.ts": dup });
   try {
-    const { code, out } = runGate("harness-dupe-scan", root);
-    assert.equal(code, 1, "the same symbol in two files is duplication debt above a zero budget");
+    // A first run GRANDFATHERS: with no budget file, existing debt is frozen rather than blocked,
+    // so exit 0 is correct here. What must be true is that it SAW the duplication.
+    const { out } = runGate("harness-dupe-scan", root);
     assert.match(out, /clamp/, "the duplicated symbol must be named");
+    assert.match(out, /lib\/one\.ts/, "must report the file under the descriptor's sourceDir");
+    assert.match(out, /debt.*1/s, "one symbol in two files is a debt of 1");
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("dupe-scan blocks NEW duplication once a budget is committed", () => {
+  // The ratchet is the actual contract: freeze today's debt, then refuse growth. This is the case
+  // that would let real drift through if the descriptor were being ignored.
+  const dup = "export function clamp(v) {\n  return v;\n}\n";
+  const root = makeRepo({
+    "lib/one.ts": dup,
+    "lib/two.ts": dup,
+    "dupe-budget.json": JSON.stringify({ duplicateDefs: 0 }),
+  });
+  try {
+    const { code, out } = runGate("harness-dupe-scan", root);
+    assert.equal(code, 1, "debt of 1 against a committed budget of 0 must fail the gate");
+    assert.match(out, /clamp/);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

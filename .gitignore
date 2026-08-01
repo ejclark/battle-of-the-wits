@@ -1,0 +1,6 @@
+node_modules/
+*.log
+.DS_Store
+
+# Release artifacts — semantic-release writes CHANGELOG.md and commits it itself.
+.semrel/
