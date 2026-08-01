@@ -7,3 +7,4 @@ node_modules/
 
 # harness-map output — a READ surface, regenerate it any time
 dungeon-map.html
+city.html

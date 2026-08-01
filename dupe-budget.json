@@ -1,3 +1,4 @@
 {
-  "duplicateDefs": 10
+  "_why": "10 → 14: harness-core's model.mjs re-derives `descriptor`, `DEFAULT_CAP` and `WARN_AT`, which harness-gates' descriptor.mjs and arch-scan.mjs also define. This is the PLUGIN boundary, which — unlike the imagined PATH boundary this gate's IGNORE list once defended — is real: an adopter may install harness-core alone, and a cross-plugin import would resolve only in a checkout of this repository. The copies are small, documented at the point of duplication, and the alternative is a view that crashes for anyone who installed one plugin. Everything that could genuinely be shared in this change WAS shared (render.mjs, and model.mjs itself, which cartography.mjs now consumes instead of deriving rooms() twice).",
+  "duplicateDefs": 14
 }

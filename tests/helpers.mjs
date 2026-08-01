@@ -51,3 +51,26 @@ export function makeGitRepo(files = { "README.md": "probe\n" }) {
   }
   return { root, git };
 }
+
+/**
+ * The promise every rendered page in this repo makes: it opens from disk, survives being emailed,
+ * and renders under a strict CSP. Asserted identically by the map and the city, so it lives once —
+ * the clone gate flagged the second copy in the change that created it.
+ */
+export function assertStandalone(assert, html) {
+  assert.doesNotMatch(html, /<link\b[^>]*rel=["']?stylesheet/i, "no external stylesheet");
+  assert.doesNotMatch(html, /<script\b/i, "no script at all");
+  assert.doesNotMatch(html, /https?:\/\/[^"')\s]+\.(css|js|woff2?|png|jpg|svg)/i, "no remote asset");
+}
+
+/**
+ * A page written to disk must be a whole document. Without a doctype every browser opens it in
+ * QUIRKS MODE, where box-sizing and several inherited properties differ from the standards mode the
+ * CSS was written against — it renders, which is why nothing complains, just not as designed.
+ */
+export function assertDocument(assert, html) {
+  assert.match(html, /^<!doctype html>/i, "no doctype means quirks mode");
+  for (const tag of ["<html lang=", "<head>", "<meta charset=", "</head>", "<body>", "</body>", "</html>"]) {
+    assert.ok(html.includes(tag), `missing ${tag}`);
+  }
+}

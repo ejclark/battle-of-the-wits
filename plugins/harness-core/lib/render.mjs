@@ -1,0 +1,37 @@
+// Shared rendering primitives for the visual ladder.
+//
+// Small on purpose. The rule the ladder runs on is that each rung is a new VIEW over ONE model, and
+// the corollary is that the views may share their plumbing but never their conclusions: escaping and
+// argument parsing are plumbing, "what counts as a big file" is a conclusion and lives in model.mjs.
+//
+// The duplication gate asked for this in the same change that introduced the second view, which is
+// the earliest it could possibly have asked. Worth noting rather than quietly obeying: the gate was
+// right, and it was right about a file whose whole purpose was to prevent that class of drift.
+import { execFileSync } from "node:child_process";
+import { basename, resolve } from "node:path";
+
+/** HTML-escape. Every value that reaches a page is untrusted — file names most of all. */
+export const esc = (s) =>
+  String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+
+/** The `-o | --out PATH` both renderers accept, resolved against the cwd. */
+export function outPath(argv, fallback) {
+  const i = Math.max(argv.indexOf("-o"), argv.indexOf("--out"));
+  return resolve(i >= 0 ? argv[i + 1] : fallback);
+}
+
+/**
+ * The REPOSITORY's name, not the checkout directory's.
+ *
+ * A worktree is routinely called something like `repo-2`, and that in the title of a file people
+ * share reads as a different project. Falls back to the directory when there is no remote — an
+ * answer, rather than an empty title.
+ */
+export function repoNameOf(root) {
+  try {
+    const url = execFileSync("git", ["remote", "get-url", "origin"], { cwd: root, encoding: "utf8" });
+    return basename(url.trim().replace(/\.git$/, ""));
+  } catch {
+    return basename(root);
+  }
+}
