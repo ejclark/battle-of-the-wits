@@ -105,3 +105,74 @@ harness code still sits in both repos, and removing it needs a scope call. Manag
 the harness needs cross-repo write credentials, which is a blast-radius multiplier and should be
 mechanized before it is granted. Coordination — territory claims so parallel athletes stop colliding
 — is the next chamber, and the reason more agents do not yet buy more throughput.
+
+---
+
+## 2026-08-01 · The rails, and the last mile that wasn't code
+
+Second half of the same day. The first half made the harness portable; this half made it safe to run
+unsupervised. Sixteen PRs total, every one after the first two merged itself on green.
+
+### The order that turned out to be wrong, and the correction
+
+The stated plan was **rails → agents**, with token budget as the lever: *"if we have tokens to burn,
+that directly correlates to the speed and amount of work we can ship."*
+
+That is true only until a different constraint binds, and **two bind before tokens do**. Coordination
+comes first — athletes that collide produce conflicts and duplicated work, so past that point adding
+agents drives throughput *negative*. Review capacity comes second: every athlete PR still spends the
+one genuinely scarce resource. So the order became **rails → coordination → agents**, and the
+Cartographer chamber stopped being plumbing and became the thing that makes every later chamber pay.
+
+### Four rails, and what each is actually defending
+
+- **Territory claims.** Symmetric overlap, atomic under an `O_EXCL` lock, expiring so a crashed
+  athlete cannot hold ground forever — a permanent claim from a dead worker is indistinguishable from
+  a live one and silently serialises everything.
+- **Blast-radius preflight.** Workflow files, credentials, a *raised* budget, work on the default
+  branch. Doctrine was prose, and prose stops a careful reader; an athlete is not a reader.
+- **Fleet control.** WIP cap, kill switch, token ceiling. The cap defends **review** capacity, not
+  machine capacity.
+- **The dispatch bracket.** The three above in one all-or-nothing command, because asking an athlete
+  to remember them in order is how a rail gets skipped.
+
+### What testing the refusals bought
+
+Every rail was written, then attacked. Two findings justify the whole practice:
+
+- The preflight was built on `git diff`, which **does not report untracked files** — so it waved
+  through the dangerous case, an athlete *creating* `.github/workflows/evil.yml` rather than editing
+  one. A rail that looked green while being wide open.
+- Every athlete still invoked `node scripts/arch-scan.mjs` — skynet-capital's layout, absent in any
+  adopting repo. All four would have died on their first command. Found by reading, without spending
+  a dispatch on it.
+
+### The gates kept working on their author
+
+Three PRs today were *shaped* by a gate refusing something I wrote. `phases.mjs` got decomposed
+because `--update` refused to raise its own budget. `bootstrap.mjs` got split when it hit 275 lines.
+And the doctrine gate — added in the morning to catch dead `${CLAUDE_PLUGIN_ROOT}` references —
+caught me writing one into the governor that afternoon.
+
+**Four budget raises, all recorded in the budget files with reasons.** Individually justified; the
+*frequency* is the thing worth watching, which is why each one says why in the file rather than only
+in a commit message.
+
+### One rule change, deliberately
+
+I renamed four variables in one session purely to satisfy the duplication counter — `args`, `HERE`,
+`files`, `argv`. **Four renames is the signal the rule is wrong, not the code.** Ten standalone
+`PATH` executables each parse argv and resolve their own root *because they must not import across
+that boundary*. So the scanner's `IGNORE` list grew to cover per-CLI scaffolding, narrowly — domain
+names stay caught. Duplication debt fell 39 → 31 as a consequence, which is the honest number rather
+than a contorted one.
+
+### Left open
+
+The athletes have still never been run — deliberately, on instruction. That remains the only
+untested surface, and three of the four unproven things touched today broke on first contact.
+Decoupling from `skynet-capital` is half done: doctrine is single-sourced here, but the harness code
+still exists in both repos and removing it needs a scope call. Managing skynet *from* the harness
+needs cross-repo write credentials, which is the blast-radius multiplier the preflight now exists to
+contain — mechanised before granted, in that order.
+
