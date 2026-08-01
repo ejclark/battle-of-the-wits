@@ -1,0 +1,150 @@
+# Lessons ledger
+
+Every net that catches a slip is a *lesson we paid for*. This file is where that payment is banked,
+so the same tuition is never paid twice. It is the output of the `/harness-core:retro` drill and is
+enforced by `harness-incident-scan`.
+
+**The rule: an incident is not closed until it has an entry here with a `PREVENTION` line.** A
+prevention that only exists in a chat window protects nothing — the next session never reads it.
+Prevention ranks, best first:
+
+1. **A gate or a script** — the drift becomes impossible, or is caught mechanically. Free forever.
+2. **A doctrine line** in `CLAUDE.md` — loaded into every session, so it steers the next decision.
+3. **A ledger entry alone** — acceptable only when mechanizing costs more than the expected damage.
+   Say so explicitly; don't default here because it's cheapest.
+
+**Entry format** (parsed by the gate — keep the field names):
+
+```
+### <short title>
+- **SHA:** <7-char sha or `n/a`>   **DATE:** YYYY-MM-DD   **STATUS:** closed | open
+- **SIGNAL:** what first indicated something was wrong, and how long after the cause
+- **ROOT CAUSE:** the actual mechanism, not the symptom
+- **PREVENTION:** gate / script / doctrine / ledger-only (+ where it landed)
+- **SIDE QUESTS:** threads pulled, or `none`
+```
+
+---
+
+<!-- Entries go below, newest last. -->
+
+### CI died in ten seconds because no lockfile was committed
+- **SHA:** `9d8c6d4`   **DATE:** 2026-07-31   **STATUS:** closed
+- **SIGNAL:** both CI jobs failed inside 10s at `setup-node`, on the very first pipeline run. Fast,
+  but only because nothing had ever passed — a green history would have made this ambiguous.
+- **ROOT CAUSE:** the workflow uses `npm ci`, which requires `package-lock.json`. The repository was
+  scaffolded by hand and the lockfile was never generated, so the cache step had nothing to key on
+  and the install refused. Nothing in the scaffolding step asserted that the file it depends on
+  exists.
+- **PREVENTION:** script — `harness-bootstrap` now generates and stages the lockfile as part of
+  adoption rather than assuming a hand-built repo has one.
+- **SIDE QUESTS:** the general shape here is "a workflow that depends on a file nobody generated",
+  which is the same failure class as a `--frozen-lockfile` install in any ecosystem.
+
+### `npm test` never ran the test suite, and it was verified by hand instead
+- **SHA:** `96ee834`   **DATE:** 2026-07-31   **STATUS:** closed
+- **SIGNAL:** noticed by reading the script, not by a failure — the suite had been "passing" for
+  several PRs. Detection lag: several merges, which is the worst number in this ledger.
+- **ROOT CAUSE:** two faults compounding. The script was `node --test tests/`, which resolves to
+  MODULE_NOT_FOUND rather than a glob; and every verification run up to that point had used a
+  hand-typed glob that *did* work. The equivalent command passing is not evidence that the project's
+  own command passes — the difference between them is precisely where this class of bug lives.
+- **PREVENTION:** doctrine — verify by running the project's own scripts, never a hand-typed
+  equivalent, and check exit status rather than tailed output (a pipeline exits with `tail`'s
+  status). Landed in `CLAUDE.md`; the script itself is now `node --test "tests/**/*.test.mjs"`.
+- **SIDE QUESTS:** a gate could assert that `npm test` actually executes more than zero tests. Cheap,
+  and it would have caught this on the first run.
+
+### The shipped gate template targeted a runner the repo does not have
+- **SHA:** `96ee834`   **DATE:** 2026-07-31   **STATUS:** closed
+- **SIGNAL:** found while wiring the harness into its own repository — the template wrote a
+  `.spec.ts` file using `describe/it/expect`, into a project whose runner discovers
+  `tests/**/*.test.mjs` and provides none of those globals. The file would simply never have been
+  collected: a gate that silently does not run, which is worse than a gate that fails.
+- **ROOT CAUSE:** the template was lifted verbatim from the repository it grew in, carrying that
+  repository's runner as an unstated assumption. A ported artifact keeps the accidents of its origin
+  unless something forces them to be named.
+- **PREVENTION:** script — the bootstrap detects the target's runner and writes the matching
+  template (`gates.spec.ts` or `gates.test.mjs`) instead of one fixed flavour.
+- **SIDE QUESTS:** the same class produced the hardcoded `.ts` extensions in the scanners, which
+  measured 1 file of 10 in this `.mjs` repository. Porting reveals assumptions; nothing else does.
+
+### The release could not push its own version bump
+- **SHA:** `1b7a5cd`   **DATE:** 2026-07-31   **STATUS:** closed
+- **SIGNAL:** the release job failed on `main` with GH013 immediately after the first merge that
+  should have cut a version.
+- **ROOT CAUSE:** `@semantic-release/git` commits the version bump and pushes it straight to `main`,
+  which the branch ruleset requiring pull requests correctly refuses. Two safety mechanisms, each
+  right on its own, whose composition is a deadlock.
+- **PREVENTION:** ledger + doctrine — the git plugin was dropped and `version` removed from the
+  plugin manifests, so the tag is the single source of truth and Claude Code falls back to the
+  commit SHA. Recorded in `README.md` so the absent field reads as deliberate rather than missing.
+- **SIDE QUESTS:** "two correct mechanisms that deadlock when composed" is the interesting shape. It
+  showed up twice in one week — see the next entry.
+
+### A required check on *every* branch deadlocks the repository
+- **SHA:** `n/a`   **DATE:** 2026-07-31   **STATUS:** closed
+- **SIGNAL:** immediate — no pull request could merge, including the one that would have made the
+  required check pass.
+- **ROOT CAUSE:** a ruleset requiring a status check was scoped to all refs rather than the default
+  branch. A check required on the branch that must run it to become passable is circular. Ordering
+  matters as much as the rule: a required check should only be enabled after it has passed once.
+- **PREVENTION:** ledger-only, deliberately. The change lives in GitHub settings, not the repository,
+  so no gate here can see it — and the credentialed step is the human's by design. Mechanizing this
+  would cost more than the incident.
+- **SIDE QUESTS:** the same "correct rule, wrong scope" shape as the release deadlock above.
+
+### The preflight refusal was blind to the exact case it existed to stop
+- **SHA:** `99b8cfb`   **DATE:** 2026-07-31   **STATUS:** closed
+- **SIGNAL:** caught by writing a test that tried to *defeat* the gate rather than confirm it — a
+  case creating `.github/workflows/evil.yml` sailed through. Zero lag, because the test was written
+  adversarially on purpose.
+- **ROOT CAUSE:** the change set was computed from `git diff` alone, which does not report a file
+  that has never been added. So the gate saw an athlete *editing* a workflow file and missed one
+  *creating* it — the more dangerous half, and the one an agent starting from nothing would hit
+  first.
+- **PREVENTION:** gate — `changedFiles` now unions committed, staged, unstaged, and untracked paths.
+- **SIDE QUESTS:** a refusal is only worth what its adversarial test is worth. Confirming a gate says
+  yes to good input tells you almost nothing about what it says no to.
+
+### The doctrine gate caught its own author
+- **SHA:** `a704013`   **DATE:** 2026-08-01   **STATUS:** closed
+- **SIGNAL:** the doctrine test failed on the same pull request that wrote the offending line.
+  Detection lag: minutes.
+- **ROOT CAUSE:** a skill in `harness-core` pointed at `${CLAUDE_PLUGIN_ROOT}/docs/DISPATCH.md`, but
+  that document ships inside `harness-gates` — a cross-plugin path that resolves only in a checkout
+  of this repository, never in an adopter's install. Writing the gate does not exempt you from it.
+- **PREVENTION:** gate — already mechanized; the existing doctrine test caught it unaided. The
+  reference was changed to a public URL.
+- **SIDE QUESTS:** this is the healthiest entry in the ledger. It is what the whole system is for.
+
+### The harness did not hold itself to the standard it sells
+- **SHA:** `n/a`   **DATE:** 2026-08-01   **STATUS:** closed
+- **SIGNAL:** found by running `harness-dungeon --today`, which named three dimensions this
+  repository could not see. The shipped gate template wires **six** gates into an adopter's suite;
+  this repository ran **three**. Nothing had been failing, because nothing was looking.
+- **ROOT CAUSE:** the three unwired gates each had a soft prerequisite — `knip` uninstalled, no
+  ledger file, no frozen budget — and each degraded politely to a skip rather than a failure. Every
+  individual choice was right; the sum was a quiet blind spot with no single owner. An unmeasured
+  dimension is not a passing grade.
+- **PREVENTION:** gate — all six gates now run in this repository's own suite, with budgets frozen at
+  today's honest numbers.
+- **SIDE QUESTS:** the spec-gap gate scored this repository 24 untested files of 24, while 81 tests
+  drove those files end to end. It counted only `import` as evidence of exercise, which is close to a
+  lie in a codebase whose deliverable is a set of commands. Fixed in the same change
+  (`references.mjs`). A number that is wrong in the safe-looking direction is the expensive kind:
+  it makes the honest reading of every other gate suspect.
+
+### Ratcheting a budget deleted the reasoning behind it
+- **SHA:** `n/a`   **DATE:** 2026-08-01   **STATUS:** closed
+- **SIGNAL:** noticed by reading the diff after a routine `harness-arch-scan --update` — the
+  `_why_dupe_scan` note explaining a deliberate raise was simply gone. Nothing failed, and nothing
+  would have; the only detector was a human reading a JSON diff.
+- **ROOT CAUSE:** `--update` rebuilds the budget file from the measured file list, so any key that
+  is not a measured file disappears. The prose was always the load-bearing half of a raise — the
+  number alone cannot tell a future maintainer whether the raise is still earned — and the routine
+  act of ratcheting destroyed it.
+- **PREVENTION:** gate — `--update` now carries `_`-prefixed keys through, asserted by a test that
+  ratchets a throwaway budget and checks the justification survives.
+- **SIDE QUESTS:** the failure shape is "a lossy rewrite of a file that carries two kinds of
+  content." Worth checking wherever else a tool regenerates something a human also writes into.

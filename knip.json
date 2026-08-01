@@ -1,0 +1,32 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": [
+    "plugins/harness-core/lib/bootstrap.mjs",
+    "plugins/harness-core/lib/dungeon.mjs",
+    "plugins/harness-core/lib/map.mjs",
+    "plugins/harness-gates/lib/arch-scan.mjs",
+    "plugins/harness-gates/lib/claims.mjs",
+    "plugins/harness-gates/lib/clone-scan.mjs",
+    "plugins/harness-gates/lib/dead-scan.mjs",
+    "plugins/harness-gates/lib/dispatch.mjs",
+    "plugins/harness-gates/lib/dupe-scan.mjs",
+    "plugins/harness-gates/lib/fleet.mjs",
+    "plugins/harness-gates/lib/incident-scan.mjs",
+    "plugins/harness-gates/lib/preflight.mjs",
+    "plugins/harness-gates/lib/spec-gap-scan.mjs",
+    "scripts/*.mjs",
+    "tests/**/*.test.mjs"
+  ],
+  "project": [
+    "plugins/*/lib/*.mjs",
+    "scripts/*.mjs",
+    "tests/**/*.mjs"
+  ],
+  "ignore": [
+    "plugins/harness-core/templates/**"
+  ],
+  "ignoreDependencies": [
+    "@commitlint/config-conventional",
+    "semantic-release"
+  ]
+}

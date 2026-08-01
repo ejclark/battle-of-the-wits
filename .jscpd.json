@@ -1,0 +1,12 @@
+{
+  "path": ["plugins", "scripts", "tests"],
+  "ignore": [
+    "**/node_modules/**",
+    "plugins/harness-core/templates/**"
+  ],
+  "minTokens": 50,
+  "reporters": ["json"],
+  "absolute": false,
+  "gitignore": true,
+  "threshold": 100
+}

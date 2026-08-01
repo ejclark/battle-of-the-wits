@@ -1,27 +1,23 @@
 #!/usr/bin/env node
 // Spec-gap fitness scan — the eye of the coverage Coach (audit P3, adapted).
 //
-// rstest v0.2 has no line-coverage support yet, so this measures the audit's actual finding
-// directly: HOW MANY src files are exercised by no spec at all. A src file counts as tested when
-// at least one tests/**/*.spec.ts imports it (directly). The debt number is the count of untested
-// files; the committed budget only ever ratchets DOWN. When rstest ships real coverage, this eye
-// upgrades to line-% without changing the coach's shape.
+// Measures the finding directly rather than waiting on line coverage: HOW MANY source files are
+// exercised by no spec at all. A file counts as tested when a spec imports it, or runs a launcher
+// that execs it. The debt number is the count of untested files; the budget only ratchets DOWN.
 //
-//   node scripts/spec-gap-scan.mjs             # report + enforce (exit 1 if the gap grew)
-//   node scripts/spec-gap-scan.mjs --update    # rewrite spec-gap-budget.json (ratchet: only lower)
-//   node scripts/spec-gap-scan.mjs --candidate # highest-leverage untested file as JSON
-//
-// Enforced in CI via tests/arch/spec-gap.spec.ts.
+//   harness-spec-gap-scan              # report + enforce (exit 1 if the gap grew)
+//   harness-spec-gap-scan --update     # rewrite spec-gap-budget.json (ratchet: only lower)
+//   harness-spec-gap-scan --candidate  # highest-leverage untested file as JSON
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
+import { exercisedByExecution, launcherAliases } from "./references.mjs";
 
 const ROOT = process.cwd();
 // --- capability descriptor -------------------------------------------------
-// The harness is repo-agnostic: every path it scans comes from harness.json at
-// the target repo root, never from an assumption about layout. Missing file =
-// the documented defaults, so a conventional repo needs no config at all.
+// Repo-agnostic: every path comes from harness.json at the target repo root, never from an
+// assumption about layout. Missing file = the documented defaults, so a conventional repo needs none.
 const DESC = (() => {
-  const d = { sourceDir: "src", testDir: "tests", specSuffix: ".spec.ts", sourceExt: ".ts" };
+  const d = { sourceDir: "src", testDir: "tests", specSuffix: ".spec.ts", sourceExt: ".ts", exclude: [] };
   try { Object.assign(d, JSON.parse(readFileSync(join(ROOT, "harness.json"), "utf8"))); } catch {}
   return d;
 })();
@@ -47,17 +43,17 @@ const isTypeOnly = (f) => {
   return exports.length > 0 && exports.every((e) => /^export\s+(interface|type)\b/.test(e));
 };
 
-// Files with no honest unit assertion available — WebGL/DOM-bound render code, CLI mains, fixture
-// data. Which files those *are* is a property of the project, not of the harness, so the list lives
-// in the target repo's descriptor under `specExempt` (path prefixes or exact paths, relative to the
-// repo root). The skynet-capital values are a worked example, not a default:
-//
-//   "specExempt": ["src/three/pieces/", "src/scripts/", "src/evals/scenarios/", "src/three/scene-main.ts"]
-//
-// Defaulting to [] is deliberate: an exemption the adopter did not ask for is a silently lowered
-// bar, and a gate that quietly excuses files is worse than no gate.
+// Two descriptor axes, both defaulting to []:
+//   · `specExempt` — first-party, but no honest unit assertion is available (WebGL/DOM render code,
+//     CLI mains, fixture data). Which files those are is a property of the project, not the harness.
+//     e.g. "specExempt": ["src/three/pieces/", "src/scripts/", "src/three/scene-main.ts"]
+//   · `exclude` — not first-party source at all (templates, generated output). arch-scan and
+//     dupe-scan already read it; this one did not, so it scored shipped TEMPLATES as untested code.
+// Empty defaults are deliberate: an exemption the adopter did not ask for is a silently lowered bar.
 const EXEMPT = DESC.specExempt ?? [];
-const isExempt = (f) => EXEMPT.some((p) => (p.endsWith("/") ? f.startsWith(p) : f === p));
+const isExempt = (f) =>
+  EXEMPT.some((p) => (p.endsWith("/") ? f.startsWith(p) : f === p)) ||
+  (DESC.exclude ?? []).some((p) => f.startsWith(p));
 
 // Every source module, minus files with no unit-testable behavior:
 //   - descriptor exemptions (see above)
@@ -67,10 +63,12 @@ const srcFiles = walk(join(ROOT, DESC.sourceDir), (n) => n.endsWith(DESC.sourceE
   .filter((f) => !isExempt(f))
   .filter((f) => !isTypeOnly(f));
 
-// Which source files do specs import (directly)?
+// Which source files do specs exercise? Two relationships: a spec may `import` a module, or RUN a
+// thin launcher that execs it (references.mjs). Imports alone scored this repo 24-of-24 untested.
 const importRe = /from\s+["']([^"']+)["']/g;
 const tested = new Set();
 const SRC_PREFIX = `${DESC.sourceDir}/`;
+const aliases = launcherAliases(ROOT, DESC.sourceDir);
 for (const spec of walk(join(ROOT, DESC.testDir), (n) => n.endsWith(DESC.specSuffix))) {
   const body = readFileSync(spec, "utf8");
   for (const m of body.matchAll(importRe)) {
@@ -82,6 +80,7 @@ for (const spec of walk(join(ROOT, DESC.testDir), (n) => n.endsWith(DESC.specSuf
       if (r.startsWith(SRC_PREFIX)) tested.add(r);
     }
   }
+  for (const f of exercisedByExecution(body, aliases)) tested.add(f);
 }
 
 const lineCount = (f) => readFileSync(join(ROOT, f), "utf8").split("\n").length;

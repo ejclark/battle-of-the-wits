@@ -17,7 +17,7 @@
 import { closeSync, existsSync, mkdirSync, openSync, readFileSync, rmSync, statSync, unlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-export const HARNESS_DIR = (root) => join(root, ".harness");
+const HARNESS_DIR = (root) => join(root, ".harness");
 
 /** Run `fn` holding an exclusive lock. Never spins forever — a wedged lock must surface, not hang. */
 export function withLock(root, name, ttlMs, fn) {

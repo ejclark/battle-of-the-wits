@@ -9,7 +9,7 @@ import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
-export const PLUGINS = join(dirname(fileURLToPath(import.meta.url)), "../plugins");
+const PLUGINS = join(dirname(fileURLToPath(import.meta.url)), "../plugins");
 export const bin = (plugin, name) => join(PLUGINS, plugin, "bin", name);
 
 /** A throwaway repository seeded with exactly the files a case needs. */
@@ -31,6 +31,3 @@ export function runTool(binPath, cwd, args = [], env = {}) {
     return { code: err.status ?? 1, out: `${err.stdout ?? ""}${err.stderr ?? ""}` };
   }
 }
-
-/** Strip ANSI so assertions pin meaning rather than escape codes. */
-export const stripAnsi = (s) => s.replace(/\x1b\[[0-9;]*m/g, "");

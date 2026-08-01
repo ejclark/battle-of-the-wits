@@ -6,18 +6,16 @@
 // shrinks, `--update` ratchets its budget DOWN (never up), so decomposition permanently tightens the
 // limit. Grandfathers today's god files (frozen, not blocked) so there's no flag-day cleanup.
 //
-//   node scripts/arch-scan.mjs            # report + enforce (exit 1 on any over-budget file)
-//   node scripts/arch-scan.mjs --update   # rewrite arch-budget.json (ratchet: budgets only lower)
+//   harness-arch-scan            # report + enforce (exit 1 on any over-budget file)
+//   harness-arch-scan --update   # rewrite arch-budget.json (ratchet: budgets only lower)
 //
-// Enforced in CI via tests/arch/budget.spec.ts, so it runs on every PR with no extra workflow.
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, relative } from "node:path";
 
 const ROOT = process.cwd();
 // --- capability descriptor -------------------------------------------------
-// The harness is repo-agnostic: every path it scans comes from harness.json at
-// the target repo root, never from an assumption about layout. Missing file =
-// the documented defaults, so a conventional repo needs no config at all.
+// Repo-agnostic: every path comes from harness.json at the target repo root, never from an
+// assumption about layout. Missing file = the documented defaults, so a conventional repo needs none.
 const DESC = (() => {
   const d = { sourceDir: "src", testDir: "tests", specSuffix: ".spec.ts", sourceExt: ".ts", exclude: [] };
   try { Object.assign(d, JSON.parse(readFileSync(join(ROOT, "harness.json"), "utf8"))); } catch {}
@@ -89,7 +87,9 @@ if (process.argv.includes("--candidate")) {
 }
 
 if (process.argv.includes("--update")) {
-  const next = {};
+  // `_`-prefixed keys are prose, not budgets: the justification for a deliberate raise. A rewrite
+  // that drops them destroys the reasoning needed to judge whether the raise is still earned.
+  const next = Object.fromEntries(Object.entries(budget).filter(([k]) => k.startsWith("_")));
   for (const { file, lines } of files) {
     const prev = budget[file];
     next[file] = prev !== undefined ? Math.min(prev, lines) : lines; // ratchet down only
