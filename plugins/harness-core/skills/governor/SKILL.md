@@ -17,26 +17,40 @@ earned after the policy proves out over reps.
 ## The cycle
 
 1. **SYNC.** `git fetch origin main` — every decision derives from shipped reality, never a stale tree.
-2. **ROSTER.** For each coach with an athlete (`decomposer` ← arch-scan, `ui-librarian` ← dupe-scan):
-   - **WIP limit 1:** if this coach already has an open PR (`refactor/decompose-*` / `refactor/dedupe-*`
-     branch with an open PR), skip it this cycle. Inventory is waste.
+2. **CHECK THE FLEET.** `harness-fleet --status`. If it reports HALTED, stop the cycle entirely — the
+   switch means a human wants nothing new started. If slots are full or the token ceiling is reached,
+   dispatch nothing this cycle. **Do not read these numbers and decide for yourself**; the whole point
+   of a governor is that the limits are external to the thing they limit.
+3. **ROSTER.** For each coach with an athlete (`decomposer` ← arch-scan, `ui-librarian` ← dupe-scan,
+   `mortician` ← dead-scan, `test-backfiller` ← spec-gap-scan):
    - **TARGET:** `harness-<gate>-scan --candidate`. The gate picks; never hand-pick.
-   - **COLLISION:** if the target file is modified by ANY open PR (`gh`/MCP: list open PR files), skip
-     this coach this cycle — structural work never races feature work on the same file.
-3. **DISPATCH.** Launch the athlete: cheap model tier (sonnet), isolated worktree, its standard contract
-   (branch off origin/main, gate-confirm target, drill, verify by exit status, ratchet, push, report —
-   no PR-opening; athletes carry no GitHub tooling). Include the known worktree caveat: node_modules may
-   need a temporary symlink from the main checkout.
-4. **LAND — one cycle, one PR.** Collect all green athlete reports and land them as a SINGLE cycle PR:
+   - **ACQUIRE:** `harness-dispatch --acquire <athlete> <target path>`. This takes the fleet slot and
+     the territory together, all-or-nothing. **A refusal is the answer, not an obstacle** — it means
+     the fleet is capped or another athlete already holds those files. Skip that coach this cycle.
+     This replaces the old hand-rolled collision check: listing open PR files was an approximation of
+     territory that missed anything not yet pushed, and the claims registry is the real thing.
+4. **DISPATCH.** Launch the athlete: cheap model tier, isolated worktree, its standard contract
+   (branch off origin/main, gate-confirm the target, run the drill, verify by exit status, ratchet,
+   push, report — no PR-opening; athletes carry no GitHub tooling). Its own definition points at
+   [the dispatch bracket](https://github.com/ejclark/battle-of-the-wits/blob/main/plugins/harness-gates/docs/DISPATCH.md) for the bracket. Include the known worktree caveat:
+   `node_modules` may need a temporary symlink from the main checkout.
+5. **PREFLIGHT BEFORE LANDING.** For every athlete branch, `harness-preflight --agent <athlete>` from
+   that worktree. It refuses workflow files, credential-shaped files, a raised budget, and any edit
+   outside the claimed territory. **A refusal never gets routed around** — surface it to the human.
+6. **LAND — one cycle, one PR.** Collect all green athlete reports and land them as a SINGLE cycle PR:
    merge each athlete's branch into one `refactor/governed-cycle-<n>` branch (their commits stay
    distinct for bisectability), verify green once, open one PR titled
-   `refactor: governed cycle <n> — <rep summaries>`, and **enable auto-merge (SQUASH)** if — and only
-   if — every rep in the batch is a class the merge-policy table allows (one disallowed rep = the whole
-   PR waits for human review, or ship that rep separately). Batching halves CI runs, release entries,
-   and GitHub API calls — the measured constraints. Exception: isolate a rep in its own PR when it is
-   unusually large or risky enough that independent revert matters more than the savings.
-   On a failure report: surface it to the human head coach verbatim; do not retry in-cycle.
-5. **STOP.** One dispatch per coach per cycle. The next cycle recomputes targets from the NEW main —
+   `refactor: governed cycle <n> — <rep summaries>`, and **enable auto-merge (SQUASH) AT OPEN** if —
+   and only if — every rep in the batch is a class the merge-policy table allows. Arming auto-merge
+   after CI has gone green is too late: GitHub refuses it on an already-clean PR. One disallowed rep
+   means the whole PR waits for human review, or ship that rep separately. Batching halves CI runs,
+   release entries, and API calls — the measured constraints. Isolate a rep in its own PR only when
+   independent revert matters more than the savings.
+   On a failure report: surface it verbatim to the human head coach; do not retry in-cycle.
+7. **RELEASE.** `harness-dispatch --release <athlete>` for every athlete, green or not. **Not
+   optional, and not conditional on success** — territory still held after a cycle silently serialises
+   the next one, and nobody notices until throughput has already fallen.
+8. **STOP.** One dispatch per coach per cycle. The next cycle recomputes targets from the NEW main —
    that re-derivation is the serializer that prevents two reps racing the same file.
 
 ## Feast mode — planned parallel burn-down
@@ -46,9 +60,11 @@ partitioning**: each athlete gets an exclusive file territory (fence), multiple 
 allowed, and all green work assembles into ONE platter branch/PR (distinct commits kept for bisect).
 Three standing rules:
 
-- **Leftovers ledger.** Every skip-for-collision is recorded WITH the fence that caused it. A skip
-  without a recorded fence is a process bug.
-- **Every athlete completion is a mini-cycle trigger.** On each completion: mark that fence lifted,
+- **Leftovers ledger.** Every skip-for-collision is recorded WITH the fence that caused it — and the
+  fence is now readable rather than remembered: `harness-claim --list` says exactly who holds what. A
+  skip without a recorded fence is a process bug.
+- **Every athlete completion is a mini-cycle trigger.** On each completion: release its territory
+  (`harness-dispatch --release`), which lifts the fence,
   re-check the ledger, and route anything now unfenced — do not idle at an all-done barrier holding
   actionable work.
 - **Cost test.** Dispatch a backfill athlete only if the freed work exceeds athlete spin-up cost;
