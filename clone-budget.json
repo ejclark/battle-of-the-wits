@@ -1,3 +1,4 @@
 {
-  "clones": 4
+  "_why": "4 → 5: crossing.mjs and principals.mjs both read .harness/roster.json, across the PLUGIN boundary where sharing is genuinely impossible — an adopter may install harness-core alone, and a cross-plugin import would resolve only in a checkout of this repository. Same documented exception model.mjs already takes for the capability descriptor, in the other direction. Note what is NOT duplicated: what a tier MEANS lives in principals.mjs and is not restated, because two files disagreeing about a person's standing is the failure that matters. This is a copied READ of a file shape, not a copied decision.",
+  "clones": 5
 }

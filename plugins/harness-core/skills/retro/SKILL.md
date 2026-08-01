@@ -19,6 +19,34 @@ This one looks at us.
 Blameless, always. The question is never "who missed it" — it is "what about the *system* made
 missing it the likely outcome."
 
+## 0. Run it at a fault line, not at the end
+
+**A retro belongs at a natural boundary** — a commit, a merge, a gate firing, a dispatch completing,
+a decision reversed. Not at the end of a long stretch of work, where it becomes an archaeology
+exercise.
+
+The difference is not tidiness, it is **cost and fidelity**:
+
+- **At a boundary**, the timeline is *readable*. What happened is still in front of you, the cause is
+  one small change, and the insight is nearly free.
+- **At the end**, the timeline has to be *reconstructed* — and reconstruction is both expensive and
+  lossy. You pay for it every time, and you can only ever see what survived. The thing that was
+  briefly confusing and then got fixed leaves no trace, and that was usually the finding.
+
+Which gives commit size a second job nobody advertises: **it is the sampling rate of your own
+learning.** A stretch of work committed four times can be retro'd at four points, and each of those
+retros has to account for a quarter of everything. Committed twenty times, each one covers a twentieth
+and reads off the diff. Small commits are not only about review and revert — they are how often the
+system is *able* to notice something about itself.
+
+*(Measured here: a session that shipped ~3,000 lines in four commits — 15 files and 1,614 insertions
+in the largest, against a repository median of 7 files — had to reconstruct its whole timeline
+afterwards, and roughly half its build span was rework the gates reported against a surface too large
+to attribute cleanly. The first commit alone contained six independently-shippable things.)*
+
+The `commit` records in the run ledger exist for this: the boundary is written down as it happens, so
+a later retro reads rather than reconstructs. `harness-log --report` shows the trend.
+
 ## 1. Take the incident (don't hunt for one)
 
 ```bash

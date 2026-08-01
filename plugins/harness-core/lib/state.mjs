@@ -10,6 +10,9 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
+/** The six dimensions this harness measures. One list, because two lists silently disagree. */
+export const GATES = ["arch", "dupe", "dead", "spec-gap", "clone", "incident"];
+
 /** Read a JSON file under `root`, or null. Budgets are routinely absent; that is data, not an error. */
 export function readJson(root, path) {
   try {

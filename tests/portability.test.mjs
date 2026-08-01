@@ -11,7 +11,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
+import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -59,6 +59,45 @@ test("arch-scan reads sourceDir from the descriptor and catches an over-budget f
     assert.match(out, /huge\.ts/, "the report must name the offending file in lib/");
     // Proves it scanned lib/ rather than finding nothing: a missing dir cannot produce this finding.
     assert.match(out, /small\.ts/, "the small file in lib/ must also have been measured");
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("--accept refuses a raise with no real reason, and records one that has it", () => {
+  // Planted violation, in the direction that matters: the failure mode of a raise command is that it
+  // makes raising EASY. A budget that can be raised without a recorded reason converts the ratchet
+  // into decoration, so the reason requirement is the gate and is what gets tested first.
+  const root = makeRepo({ "lib/big.ts": `export const x = 1;\n${"// filler\n".repeat(60)}` });
+  writeFileSync(join(root, "arch-budget.json"), JSON.stringify({ "lib/big.ts": 10 }));
+  try {
+    const lazy = runGate("harness-arch-scan", root, ["--accept", "wip"]);
+    assert.equal(lazy.code, 2, "a one-word reason must be refused");
+    assert.match(lazy.out, /needs a REASON/);
+    assert.equal(JSON.parse(readFileSync(join(root, "arch-budget.json"), "utf8"))["lib/big.ts"], 10, "and must not have written");
+
+    const why = "received a cohesive extraction out of the scanner modules and is their natural home";
+    const ok = runGate("harness-arch-scan", root, ["--accept", why]);
+    assert.equal(ok.code, 0, ok.out);
+    const after = JSON.parse(readFileSync(join(root, "arch-budget.json"), "utf8"));
+    assert.ok(after["lib/big.ts"] > 10, "the over-budget file is raised to its real size");
+    const recorded = Object.entries(after).find(([k]) => k.startsWith("_why_"));
+    assert.ok(recorded, "the reason must be recorded beside the number, not discarded");
+    assert.match(recorded[1], /10 → \d+/, "and must carry the delta, so a reader can judge the raise");
+    assert.equal(runGate("harness-arch-scan", root).code, 0, "the gate is green afterwards");
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("--accept raises nothing when nothing is over budget", () => {
+  // The other half of the rail: a raise command that runs on a clean repo would let someone bank
+  // headroom in advance, which is a ratchet running backwards with extra steps.
+  const root = makeRepo({ "lib/small.ts": "export const y = 2;\n" });
+  try {
+    const { code, out } = runGate("harness-arch-scan", root, ["--accept", "a perfectly good and sufficiently long reason for a raise"]);
+    assert.equal(code, 2, "there is no raise to accept");
+    assert.match(out, /Nothing is over budget/);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
@@ -141,6 +180,139 @@ test("defaults apply when no descriptor is present", () => {
     const { code, out } = runGate("harness-arch-scan", root);
     assert.equal(code, 1, "with no descriptor the harness must fall back to src/ and still work");
     assert.match(out, /huge\.ts/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+/**
+ * A scratch repository laid out as `lib/` + `spec/`, on a branch, with a local roster.
+ *
+ * Zoning is the one gate whose planted violation has to be planted TWICE, in opposite directions. A
+ * table with `src/` hardcoded refuses `lib/thing.ts` to a builder — which looks exactly like the gate
+ * working. Only the second case, where a builder must be PERMITTED, can tell those apart.
+ */
+function makeZonedRepo(principals) {
+  const root = makeRepo(
+    {
+      // Not scenery: without it the scratch repo TRACKS .harness/, which the preflight now refuses.
+      // The fixture has to look like a real adopter's repo, or it tests a state nobody is ever in.
+      ".gitignore": ".harness/\n",
+      "lib/base.ts": "export const base = 1;\n",
+      "spec/.keep": "",
+      "documentation/.keep": "",
+      ".harness/roster.json": JSON.stringify(principals),
+    },
+    { sourceDir: "lib", testDir: "spec", docsDir: "documentation", specSuffix: ".test.ts" },
+  );
+  const git = (...a) => execFileSync("git", a, { cwd: root, stdio: "pipe", encoding: "utf8" });
+  git("init", "-q", "-b", "main");
+  git("config", "user.email", "probe@example.com");
+  git("config", "user.name", "probe");
+  git("add", "-A");
+  git("commit", "-qm", "init");
+  git("checkout", "-qb", "work");
+  return root;
+}
+
+const ROSTER = [
+  { id: "scribe", kind: "human", tier: "contributor" },
+  { id: "smith", kind: "human", tier: "builder" },
+];
+
+test("zoning refuses a contributor reaching into the descriptor's sourceDir", () => {
+  const root = makeZonedRepo(ROSTER);
+  try {
+    writeFileSync(join(root, "lib/thing.ts"), "export const thing = 1;\n");
+    const { code, out } = runGate("harness-preflight", root, ["--as", "scribe"]);
+    assert.equal(code, 1, "a contributor writing source must be refused");
+    assert.match(out, /lib\/thing\.ts/, "the refusal must name the planted file, in lib/ not src/");
+    assert.match(out, /contributor radius/, "and must say which radius was exceeded");
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("zoning permits a builder in the SAME directory — proving the radius was derived, not guessed", () => {
+  // The negative control. A hardcoded `src/` table refuses lib/ to everyone and would pass the case
+  // above for entirely the wrong reason; this is the assertion it cannot survive.
+  const root = makeZonedRepo(ROSTER);
+  try {
+    writeFileSync(join(root, "lib/thing.ts"), "export const thing = 1;\n");
+    const { code, out } = runGate("harness-preflight", root, ["--as", "smith"]);
+    assert.equal(code, 0, `a builder writing lib/ must pass under this descriptor:\n${out}`);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("zoning honours the descriptor's testDir and docsDir for a contributor", () => {
+  const root = makeZonedRepo(ROSTER);
+  try {
+    writeFileSync(join(root, "spec/thing.test.ts"), "// spec\n");
+    writeFileSync(join(root, "documentation/guide.md"), "# guide\n");
+    const { code, out } = runGate("harness-preflight", root, ["--as", "scribe"]);
+    assert.equal(code, 0, `spec/ and documentation/ are inside the contributor radius here:\n${out}`);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("zoning fails CLOSED for a principal the roster does not know", () => {
+  const root = makeZonedRepo(ROSTER);
+  try {
+    writeFileSync(join(root, "documentation/guide.md"), "# guide\n");
+    const { code, out } = runGate("harness-preflight", root, ["--as", "stranger"]);
+    assert.equal(code, 1, "an unknown principal must be refused, never waved through");
+    assert.match(out, /nothing is permitted/, "and the message must state the rule rather than imply it");
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("the preflight refuses a roster that has been force-added into the index", () => {
+  // The planted violation for the hole that was live: `.gitignore` kept `.harness/` out of commits
+  // by convention, and a convention is not a gate. `git add -f` walks past it, an agent walks past
+  // it, and GitHub's web editor — the one interface /onboard tells a new contributor to use — never
+  // consults it at all. The roster names real people and their email addresses.
+  const root = makeZonedRepo(ROSTER);
+  try {
+    execFileSync("git", ["add", "-f", ".harness/roster.json"], { cwd: root, stdio: "pipe" });
+    const { code, out } = runGate("harness-preflight", root);
+    assert.equal(code, 1, "a tracked roster must be refused by the preflight, not only by .gitignore");
+    assert.match(out, /\.harness\/roster\.json/, "the refusal must name the file");
+    assert.match(out, /names real people/, "and must say why, since the reason is the whole point");
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("an untracked .harness/ is not a violation — the gate catches publishing, not existing", () => {
+  // The negative control. Live coordination state is present in every working repository; a gate
+  // that fired on its mere existence would be refused into uselessness on the first run.
+  const root = makeZonedRepo(ROSTER);
+  try {
+    writeFileSync(join(root, "documentation/guide.md"), "# guide\n");
+    const { code, out } = runGate("harness-preflight", root);
+    assert.equal(code, 0, `an untracked roster must not trip the gate:\n${out}`);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("standing reports the zoning table under a non-default layout and never invents a roster", () => {
+  const root = makeRepo({ "harness.json": JSON.stringify({ sourceDir: "lib", testDir: "spec", docsDir: "documentation" }) });
+  try {
+    const zoned = runGate("harness-standing", root, ["--zoning"]);
+    assert.equal(zoned.code, 0);
+    assert.match(zoned.out, /source lib\//, "the table must print the layout actually in use");
+    assert.match(zoned.out, /specs spec\//);
+
+    // No roster is the normal case: it must read as silence, not as a pass and not as a failure.
+    const report = runGate("harness-standing", root);
+    assert.equal(report.code, 0, "a repo with no roster must exit 0");
+    assert.match(report.out, /No roster/);
+    assert.doesNotMatch(report.out, /visitor\s+\d/, "it must not invent principals to report on");
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

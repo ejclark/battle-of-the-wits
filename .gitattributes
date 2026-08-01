@@ -3,3 +3,8 @@
 # The bin/ launchers must stay executable and LF-terminated on every platform — a CRLF shebang
 # fails with a confusing "bad interpreter" error.
 plugins/harness-gates/bin/* text eol=lf
+
+# The run ledger is append-only. With a normal merge driver, two branches that each appended
+# conflict on every concurrent write — which is how a metrics file gets deleted by the first
+# person in a hurry. Union keeps both sides' lines.
+*.jsonl merge=union

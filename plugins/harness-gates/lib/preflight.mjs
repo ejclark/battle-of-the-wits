@@ -3,6 +3,7 @@
 //
 //   harness-preflight                  # check the working tree against the base branch
 //   harness-preflight --agent <id>     # also require the diff to stay inside claimed territory
+//   harness-preflight --as <id>        # also require the diff to stay inside a principal's zoning
 //   harness-preflight --base <ref>     # compare against something other than the default branch
 //
 // "PRs only, never touch workflow files or credentials" as prose stops a careful reader. An
@@ -19,10 +20,20 @@
 //   4. WORKING ON THE DEFAULT BRANCH. Committing straight to main skips review, the whole mechanism.
 //
 // With --agent it also enforces territory: a claim nobody checks is a comment.
+//
+// With --as it enforces ZONING — the radius a named principal may write in. Territory and zoning are
+// different questions and both are needed: territory is "is anyone else working here right now",
+// zoning is "is this person allowed to work here at all". An athlete answers the first because its
+// behaviour is fixed by a contract; a human answers the second because theirs is not.
+//
+// Both are INTERSECTIONS with the four refusals above, never exemptions from them. Nothing a caller
+// can pass on the command line widens what this tool permits — the only directions available are
+// "as strict" and "stricter". A flag that unlocked something would make every refusal here advisory.
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { changedFiles, currentBranch, defaultBranch } from "./gitscope.mjs";
+import { zoningViolations } from "./principals.mjs";
 
 const REPO = process.cwd();
 
@@ -68,6 +79,7 @@ function claimedPaths(agent) {
 
 const argv = process.argv.slice(2);
 const agent = argv.includes("--agent") ? argv[argv.indexOf("--agent") + 1] : null;
+const principalId = argv.includes("--as") ? argv[argv.indexOf("--as") + 1] : null;
 const fallback = defaultBranch(REPO);
 const base = argv.includes("--base") ? argv[argv.indexOf("--base") + 1] : fallback.ref;
 const defaultName = argv.includes("--base") ? base.replace(/^origin\//, "") : fallback.name;
@@ -107,12 +119,46 @@ if (agent) {
   }
 }
 
+// 6 — zoning, when a principal is named. Fails closed on an unknown one: see `zoningViolations`.
+if (principalId) violations.push(...zoningViolations(REPO, principalId, touched));
+
+// 7 — .harness/ must never become tracked. THE HOLE THIS CLOSES WAS LIVE.
+//
+// `.harness/` holds the claims registry and the ROSTER, and the roster names real people and their
+// email addresses. `principals.mjs` says plainly that publishing it is "a disclosure no revert
+// undoes — same irreversibility as a leaked credential", and the preflight refuses `.env` for exactly
+// that reason while permitting this. The only thing standing in the way was a `.gitignore` line, and
+// **a .gitignore is not a gate**: it does not stop `git add -f`, it does not stop an agent, and it
+// does not stop GitHub's web editor, which commits through the API and never consults it — while
+// being the one interface `/onboard` tells a new contributor to use.
+//
+// Asked of git DIRECTLY rather than of the diff, because `changedFiles` filters `.harness/` out
+// before anything sees it (correctly — counting live coordination state would fail every athlete's
+// own territory check). That filter is why the four refusals above could never have caught this: the
+// dangerous file was removed from the evidence on its way in.
+try {
+  const tracked = git(["ls-files", "--", ".harness/"]).split("\n").filter(Boolean);
+  for (const f of tracked) {
+    violations.push(`${f} — .harness/ is local coordination state and names real people; committing it publishes them`);
+  }
+} catch {
+  /* no such path, or not a repository — nothing tracked is the answer either way */
+}
+
+const who = principalId ?? agent ?? "this change";
 if (violations.length) {
-  console.error("\n✗ PREFLIGHT REFUSED — this change reaches further than an athlete may:\n");
+  console.error(`\n✗ PREFLIGHT REFUSED — ${who} reached further than the safe radius:\n`);
   for (const v of violations) console.error(`    ${v}`);
   console.error(`
   These are not style preferences. Each one is either irreversible, or it disables the
-  mechanism that makes autonomy safe. Hand the change to a human rather than working around it.
+  mechanism that makes autonomy safe.
+
+  What to do — pick the one that matches:
+    · A file listed above does not belong in this change → drop it, and re-run.
+    · It DOES belong, and you are not the right person to land it → say so and hand it over.
+      That is the designed outcome, not a failure, and nobody has to justify hitting this.
+    · The radius itself looks wrong → that is a real finding worth raising. Raise it; do not
+      route around it. A rail that gets quietly bypassed once is a rail nobody can trust again.
 `);
   process.exit(1);
 }

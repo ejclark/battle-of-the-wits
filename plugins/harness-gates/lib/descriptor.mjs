@@ -34,6 +34,13 @@ const DEFAULTS = {
   sourceExt: ".ts",
   specExempt: [],
   exclude: [],
+  // Read by the zoning table in `principals.mjs`, which decides what a contributor tier may write.
+  // Added in the change that added the reader, per this file's own rule that a descriptor key
+  // nothing reads is a promise the harness does not keep.
+  docsDir: "docs",
+  ideasFile: "docs/IDEAS.md",
+  // The run ledger — append-only JSONL of what this system measured about itself. Repo state.
+  metricsFile: "docs/metrics.jsonl",
 };
 
 /** The target repo's capability descriptor, merged over the defaults. Missing file = defaults. */

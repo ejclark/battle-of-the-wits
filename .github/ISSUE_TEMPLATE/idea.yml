@@ -1,0 +1,48 @@
+name: I think something should exist
+description: A feature, a tool, a document — anything that is not here yet. The first question is the one that matters.
+title: "idea: "
+labels: ["idea"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Ideas are welcome from anyone, at any level of detail. There is no bar to clear before
+        suggesting something.
+
+        The first question below is the one this project actually decides on, so it is worth a
+        moment — and if you cannot answer it, that is useful information rather than a reason not
+        to file.
+  - type: textarea
+    id: unlocks
+    attributes:
+      label: What would this let someone DO that they cannot do today?
+      description: >-
+        The thing we look for is a new **capability**, not a better version of an existing one.
+        "Lets a contributor see what changed since they last looked" is a capability. "Makes it
+        faster / cleaner / simpler" is an improvement — still welcome, just say so plainly rather
+        than stretching for a capability that is not there. **A straight "I am not sure, it just
+        felt wrong" is a fine answer** and belongs in the snag form instead, which is no smaller a
+        contribution.
+      placeholder: e.g. someone could tell whether the checks passed without knowing what any of them do
+    validations:
+      required: true
+  - type: textarea
+    id: origin
+    attributes:
+      label: What made you think of it?
+      description: >-
+        The moment behind the idea, which is often worth more than the idea. What were you doing
+        when this occurred to you?
+      placeholder: e.g. I was staring at a red X and could not tell if I had broken something
+    validations:
+      required: true
+  - type: textarea
+    id: after
+    attributes:
+      label: How would we know it worked? (optional)
+      description: >-
+        Something we could actually look at afterwards and check. A rough answer beats a precise
+        one that nobody can verify — and "I don't know how you'd measure that" is a real answer.
+      placeholder: e.g. nobody has to ask what a red check means again
+    validations:
+      required: false

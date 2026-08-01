@@ -1,0 +1,239 @@
+# Borrowed theory, and where it actually stands
+
+Known patterns are the cheapest available head start. Somebody already ran the experiment, somebody
+already paid for the mistake, and starting from their answer beats starting from nothing almost every
+time.
+
+**But borrowed theory arrives as an assumption wearing the clothes of a fact**, and this project has
+a rule about that: every gate here checks the code, and nothing checked the beliefs the code was
+designed around. A wrong assumption survives review comfortably, because it is never the thing under
+review.
+
+So theory is admitted here as a **hypothesis with a test attached**, never as a citation.
+
+## The one admission rule
+
+> **No entry without a falsifier.** If you cannot say what observation would make the claim wrong
+> *here*, it is not a theory, it is a quote — and a wall of quotes accelerates nothing.
+
+This is the same rule the metaphor catalog runs on, for the same reason: the breaking point is what
+makes it load-bearing. `tests/theories.test.mjs` enforces it, so an entry that skips the falsifier
+fails the suite rather than quietly joining the furniture.
+
+## Why "shifted" is the interesting column
+
+The naive expectation is that old theory either holds or breaks. In practice the useful finding is
+almost always neither: **the claim survives and its mechanism moves.** Brooks's law still describes
+something real, but the coordination cost it is really about does not scale the same way when most of
+the added capacity is not human. The recommendation that falls out is different even though the
+observation is intact.
+
+That is where the leverage is. A theory that plainly broke is easy and rare. A theory quietly running
+on a mechanism that no longer applies is invisible, load-bearing, and everywhere.
+
+| Status | Means |
+|---|---|
+| `untested` | Imported. Nothing here has checked it. Honest default. |
+| `holds` | Tested against this repository's own evidence and survived. |
+| `shifted` | The observation still holds; the **mechanism or magnitude** moved, so the advice changed. |
+| `inverted` | The recommendation is now wrong in this context. |
+| `unstated` | Cannot be tested as phrased. Needs restating before it is worth anything. |
+
+Run `/theorist` on any entry to move it. Moving one is a normal contribution.
+
+---
+
+## The register
+
+### Software engineering
+
+**Brooks's law — adding people to a late project makes it later.** · `shifted`
+*Falsifier:* a period where capacity was added and throughput rose without a matching rise in
+coordination cost.
+The mechanism is communication overhead growing as n². The observation stands, but the overhead is
+paid per *communicating pair*, and delegating to an agent does not create the same pair — briefing
+costs something, being briefed costs the human nothing further, and the agent does not need to be
+kept in sync with the other agents. The claim was never really about headcount; it was about
+coordination, and that is what changed.
+*Evidence:* this project is built almost entirely by delegation and has not paid the predicted cost.
+*Not yet ruled out:* the cost may simply have moved to review, which would make it the same law with
+a new bottleneck rather than a weakened one. That is the test worth running next.
+
+**Small batches ship faster and safer.** · `shifted`
+*Falsifier:* a large change that merged cleanly and quickly, or a small one that cost more than a
+large one because it sat.
+Right about the failure, wrong about the cause. A two-week pull request is not expensive because it
+is large — it is expensive because `main` moved underneath it. The cost is **divergence over time**,
+and the two come apart: 900 lines merged within the hour carries almost no risk, 40 lines open nine
+days carries plenty. So the thing to minimise is age against the rate the base is moving, not diff
+size. *See idea 39.*
+
+**Broken windows — visible disorder invites more disorder.** · `shifted`
+*Falsifier:* debt growing at the same rate in a district with a frozen budget as in one without; or
+a broken window that persisted while being fully discoverable and cheap to fix.
+The original mechanism is **social**: disorder signals that nobody is watching, so norms erode and
+people stop caring. That mechanism assumes the cost of fixing a window is high enough that caring is
+what decides it. When the fix is close to free, caring stops being the variable — so a window that
+stays broken is no longer evidence of eroded norms. **It is evidence that nobody could find it.**
+So the diagnosis inverts. A broken window is now a *discoverability* signal, not a motivation one,
+and the things it actually indicates are orphaned code, a surface nothing links to, and debt that no
+scanner is scoped to see. Treating it as a norms problem points you at the people; treating it as an
+accessibility problem points you at the index.
+*Evidence:* every window found in this repository so far was invisible rather than ignored —
+`dead-scan` reading a knip key knip does not emit and printing a confident zero for months; `runnerUp`
+emitted by four scanners with no consumer; `docs/README.md` linked from nothing; a CONTRIBUTING task
+that stayed stale because no test looked at it. Not one of them survived because somebody decided not
+to bother.
+*Still untested:* the ratchet itself is a bet on the ORIGINAL reading — that a frozen budget slows
+debt growth. The budgets and their history are committed, so the test is available and nobody has run
+it.
+
+**Conway's law — systems mirror their organisation's communication structure.** · `untested`
+*Falsifier:* module seams falling somewhere other than the seams between the people who write them.
+Usually asserted, rarely shown. This repo derives a structural model *and* a principal model, so it
+holds the raw material for actual evidence rather than assertion. *See idea 1.*
+
+**The Three Ways — flow, feedback, continual learning.** · `shifted`
+*Falsifier:* a period where producing was the bottleneck rather than verifying.
+Flow assumed producing was expensive and verifying cheap. AI inverted the ratio, so optimising flow
+now means optimising *verification*, and the second way — feedback — carries the weight the first one
+used to.
+*Evidence:* this repository's own shape. Nine of its modules are scanners and six are gates; nothing
+here optimises the writing of code, because writing it was never the part that was slow. The
+planted-violation rule exists for the same reason — a test that only proves code ran is worthless
+when producing code is the cheap half.
+
+### Architecture and process
+
+**Code review catches defects.** · `shifted`
+*Falsifier:* a period where writing the change, not reviewing it, was what the work waited on.
+Review was quality control on an artifact that was **expensive to produce and therefore rare**. Both
+halves moved: producing is now cheap, so review is no longer sampling a trickle — it is the
+constraint, and the only step still gated on a human reading. The advice that follows is not "review
+harder." It is that anything a machine can check must be checked by a machine, so review spends
+itself on the judgment that cannot be mechanised.
+*Evidence:* this repository's entire shape. Its gates exist to move checks out of review, and its
+one honest bottleneck all session has been verification rather than production.
+
+**DRY — extract on the third occurrence.** · `shifted`
+*Falsifier:* duplicated code that never diverged and cost nothing over its lifetime.
+The threshold was calibrated on **typing cost**: three copies meant writing it three times and
+fixing it three times. Typing is now free, which deletes half the argument and leaves the real one
+standing alone — **divergence**. So the question is no longer "how many copies" but "can these copies
+drift?" Duplication that cannot diverge is cheap; two copies of a rule that can is expensive at n=2.
+*Evidence:* `_why_dupe_scan` records six copies of a preamble defended on a rationale that turned out
+false, and the six had already drifted. The count was never the problem.
+
+**Write less documentation, because it goes stale.** · `inverted`
+*Falsifier:* a documentation set whose maintenance cost exceeded the cost of the confusion it
+prevented.
+Advice built on writing being expensive and staleness being unavoidable. Writing is now nearly free,
+so the entire remaining cost is staleness — and staleness is a **testable property**, not a law of
+nature. The recommendation flips: write more, and pin it. Minimising prose to avoid drift is
+optimising the cheap half.
+*Evidence:* `tests/onramp.test.mjs`. The on-ramp told a newcomer to do work that was already done;
+the fix was not less prose but a test that fails when a task is completed.
+
+**Test-first, for the design pressure.** · `shifted`
+*Falsifier:* a generated implementation whose weaknesses the test suite caught anyway.
+The classic mechanism is that writing the test first makes you feel the API before you commit to it —
+design pressure applied to a human. When a generator writes the implementation, that pressure lands
+somewhere else entirely: the test stops being a design instrument and becomes the **specification**,
+and a weak specification now yields weak code directly rather than merely unverified code. The stakes
+went up, not down.
+*Evidence:* the planted-violation rule exists for exactly this. A test asserting only `exit 0` passed
+against four simultaneous cold-start defects.
+
+**Bus factor — knowledge trapped in someone's head.** · `shifted`
+*Falsifier:* knowledge that survived a context boundary without having been written down.
+The risk was a person leaving, which is rare, visible, and gives notice. The sharper version now is
+knowledge living in a **session**, which ends constantly, silently, and without notice. Same remedy —
+write it down — at a completely different cadence, and against a deadline nobody announces.
+*Evidence:* this repo's `_why_` keys, `LESSONS.md` and `JOURNAL.md` all exist because the reasoning
+behind a decision does not survive the context it was made in.
+
+**Maximise utilisation — idle capacity is waste.** · `shifted`
+*Falsifier:* a fully-loaded system that absorbed an urgent late arrival without delaying anything
+already in flight.
+Queueing theory has always said the opposite of the intuition: as utilisation approaches 100%, wait
+time goes to infinity, so a line run at full tilt has *no* capacity for the unplanned. Kitchens solve
+this with a **short-order station** — a cook deliberately not committed to the main service, held for
+the late pivot and the order that must jump the queue. Idle by design, and the reason the line does
+not stall.
+**What moved is that the standby no longer has to idle.** Reserve capacity used to mean paying
+someone to wait; spawning a fresh agent is close to free and close to instant, so the slack can be
+held as *unclaimed concurrency* rather than as a parked worker. The principle survives intact and its
+cost went to nearly zero — which makes refusing to reserve it much harder to justify than it used to
+be.
+*Evidence:* this session, from the other side. Eight-plus mid-turn arrivals landed while work was in
+flight, and every one of them was **folded into whatever was already running** rather than handled on
+arrival — which is precisely the symptom of a line with no short-order station. Nothing was dropped,
+but each arrival waited on an unrelated task to reach a stopping point, and the person who sent it
+had no way to tell whether it had been seen.
+*Still untested here:* `fleet.mjs` caps concurrency at a number nobody derived, and nothing reserves
+a slot for an interrupt. Whether a held-back slot actually lowers end-to-end latency on this workload
+is unmeasured. *Pairs with idea 35.*
+
+### Incentives and game theory
+
+**Goodhart's law — a measure that becomes a target stops being a good measure.** · `holds`
+*Falsifier:* a budget that was gamed by writing worse code that scored better.
+Confirmed by design rather than by accident: every budget here is a metric under target pressure, and
+the defence is structural — budgets ratchet **down only**, so the only way to move one is to genuinely
+improve. A raise requires a written reason and is recorded. The law held; the counter-design is what
+makes the metric survivable.
+
+**Repeated games sustain cooperation that one-shot games do not.** · `untested`
+*Falsifier:* a contributor whose standing rose while their merged work got worse.
+The standing model is a repeated game with a public history — the classic setup for cooperation
+without enforcement. Whether earned influence actually tracks contribution quality, rather than
+volume or recency, is unmeasured. *Pairs with the aggregation trap in `CONTRIBUTORS.md`.*
+
+**Principal–agent: delegation costs you fidelity to your intent.** · `shifted`
+*Falsifier:* delegated work that diverged from intent in a way no gate could have caught.
+The classic problem is misaligned incentives. An agent has none, so the loss is not motivational — it
+is **specification loss**, which is a different failure with a different fix: gates and planted
+violations rather than monitoring and incentives. Same shaped problem, entirely different remedy.
+*Evidence:* `_why_bootstrap_mjs_219_232` records the same defect shipping twice — a verify script
+running `tsc` against a config that does not exist. Nobody's incentives were misaligned at any point;
+the intent "write a verify that works" simply never survived contact with a repository shaped
+differently. No amount of monitoring would have found it; a negative control did.
+
+### Classical
+
+**Theory of Constraints — improvement anywhere but the constraint is an illusion.** · `holds`
+*Falsifier:* a local optimisation away from the constraint that raised total throughput.
+Load-bearing throughout `DECIDING.md` and repeatedly useful in practice — most visibly when
+reviewing eight branches serially was subordinating a non-constraint, and five of them could land in
+parallel because they could not reach the surface that mattered.
+*The subtlety worth keeping:* constraint succession is not a queue. The next constraint is not known
+until the current one moves, so planning two moves ahead is planning against a guess.
+
+**Chesterton's fence — do not remove what you do not understand.** · `holds`
+*Falsifier:* a removal that improved things and whose reason turned out not to matter.
+The `_why_` keys in `arch-budget.json` are this claim implemented: each records why a fence is where
+it is, specifically so a later reader can decide rather than guess.
+*Evidence:* `_why_dupe_scan` is the case that proves it. An earlier comment defended six copies of a
+preamble on a rationale that turned out to be **false**, and the replacement says so explicitly —
+precisely so a future maintainer who trims it back does not re-import the same mistake. The fence had
+a bad reason, and finding that out required the reason to have been written down.
+
+**Hyrum's law — every observable behaviour will be depended on.** · `untested`
+*Falsifier:* changing an undocumented output shape and nothing breaking.
+Directly relevant and unexamined: the gates emit JSON that athletes parse, and `runnerUp` was emitted
+by four scanners with zero consumers — the inverse case. Whether anything depends on the shapes
+nobody documented is unknown.
+
+---
+
+## Adding one
+
+Cheap, and a genuinely useful contribution:
+
+1. State the claim in one sentence, in the form its original author would recognise.
+2. **State the falsifier** — what would have to be observed *here* for it to be wrong. Required.
+3. Set the status to `untested` unless you actually ran something.
+4. If you moved a status, say what the evidence was. A status change with no evidence is an opinion
+   with a table cell.
+
+**Do not add a theory because it is famous.** Add it because you are about to rely on it.

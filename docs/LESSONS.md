@@ -536,3 +536,46 @@ Prevention ranks, best first:
   because taste is not inferable from an in-degree count.
 - **SIDE QUESTS:** worth checking other places the system produces a *recommendation* where it could
   produce an *outcome*. A recommendation is the polite shape and it is not always the useful one.
+
+### The generative half of a 26-agent run produced nothing that shipped
+- **SHA:** `06f3795`   **DATE:** 2026-08-01   **STATUS:** closed
+- **SIGNAL:** the first-launched design workflow reported 45 minutes in, *after* all four commits had
+  landed, and its synthesis opened with "the architecture is already built and it is good." Detection
+  lag was the whole run: nothing could have told me sooner, because the only evidence that the
+  design fan-out was redundant was the fan-out finishing.
+- **ROOT CAUSE:** capacity was aimed at a non-constraint. Three workflows, 26 agents and 2.85M tokens
+  were spent, and the split of what shipped is stark: **the design half was rejected wholesale** (all
+  three independent designs were discarded by their own synthesis in favour of what had been built
+  inline) while **the adversarial half paid for the entire run** — a live PII hole where `.harness/`
+  was protected only by a `.gitignore` that GitHub's web editor never reads, a closed-schema fix, a
+  log-aggregation leak, and a doc claiming a scanner no plugin ships. Generation was never the
+  bottleneck; there was enough context in-session to design faster than a 45-minute fan-out could
+  report. Verification was the bottleneck, and it was the only mode that produced value.
+  The run therefore violated the doctrine it was writing: `DECIDING.md` §3 states that AI made
+  producing cheap and left verifying exactly as expensive, and 2.85M tokens went into producing.
+- **PREVENTION:** doctrine — `COACHES.md` gains the rule that a subagent fan-out is pointed at
+  *verification of a working draft*, never at generation of a design the session can already write.
+  Deliberately not a gate: nothing can mechanically tell a redundant design fan-out from a needed
+  one, and a gate that guessed would refuse the case that matters.
+- **SIDE QUESTS:** the second bottleneck was rework from late feedback — eight distinct gates fired
+  *after* writing was finished, forcing ten budget round-trips, and roughly half the 29-minute build
+  span was that loop. Banked as #13. Also `harness-arch-scan --accept`, below.
+
+### Recording a justified budget raise was hand-edited JSON, four times in one session
+- **SHA:** `06f3795`   **DATE:** 2026-08-01   **STATUS:** closed
+- **SIGNAL:** the fourth hand-rolled Python round-trip to raise a budget, one of which was silently
+  wrong for a cycle because the scanner writes its violation block to stderr and the script read
+  stdout. A procedure that has to be re-derived each time will eventually be re-derived incorrectly.
+- **ROOT CAUSE:** the ratchet had a codified path in one direction only. `--update` lowers; raising —
+  which the doctrine explicitly permits when a module *receives* a well-placed extraction — had no
+  command, so the only route was editing the budget file by hand. That is both toil and a hole: the
+  JSON accepts a silent raise with no reason attached, which is exactly the thing the `_why_` keys
+  exist to prevent and nothing enforced.
+- **PREVENTION:** script — `harness-arch-scan --accept "<reason>"`. It raises **only** files actually
+  over budget, **only** to their current size, **requires** a reason of real length, and records it
+  as a `_why_` key beside the deltas. It cannot lower anything, so the two directions stay separate
+  commands. Strictly safer than the hand-edit it replaces: removing toil and adding a rail in the
+  same change is the shape to look for, and a convenience that weakened a gate would have been a
+  bypass with better ergonomics rather than a toil-killer.
+- **SIDE QUESTS:** `--accept` exists only for the arch gate; dupe and clone still hand-edit. Left
+  deliberately — one recurrence each so far, and the rule of three is not met.

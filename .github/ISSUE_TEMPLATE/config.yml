@@ -1,0 +1,11 @@
+# Blank issues stay ON deliberately.
+#
+# A form is scaffolding for someone who does not yet know what shape a report takes. Forcing it on
+# someone who does — or on someone whose thing genuinely fits neither form — converts a thirty-second
+# report into an argument with a text box, and the report that does not get filed is the one nobody
+# ever learns about. The forms are the easy path, not the only one.
+blank_issues_enabled: true
+contact_links:
+  - name: Not sure which of these it is?
+    url: https://github.com/ejclark/dungeon-crawler/blob/main/CONTRIBUTING.md
+    about: Pick either one, or open a blank issue and say it however it comes out. Nobody is checking that you filed it in the right place.

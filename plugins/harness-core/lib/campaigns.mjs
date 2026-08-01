@@ -7,6 +7,7 @@
 // **Bosses are grouped by the capability they unlock together**, not by which scanner found them, so
 // the reward is honest rather than a label glued on afterwards. Prerequisites are real: decomposing
 // what nothing asserts on is the dangerous order, so verification gates the structural campaign.
+import { theCrossing } from "./crossing.mjs";
 import { drawingBoard } from "./ideas.mjs";
 import { bossList, unlitDimensions } from "./state.mjs";
 
@@ -74,6 +75,13 @@ function campaigns(root) {
   // when there is none — at which point it is the answer.
   const board = drawingBoard(root);
   if (board) built[built.length ? "push" : "unshift"](board);
+
+  // THE CROSSING — the only campaign about the repository's PEOPLE rather than its code. It leads
+  // when present, ahead of even an unlit dimension, and that placement is an argument rather than a
+  // preference: a contributor mid-onboarding is a person waiting, and a person waiting decays in a
+  // way a budget does not. Debt keeps. Someone deciding whether they are wanted here does not.
+  const crossing = theCrossing(root);
+  if (crossing) built.unshift(crossing);
 
   return built;
 }

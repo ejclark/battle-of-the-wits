@@ -8,6 +8,11 @@ node_modules/
 # Runtime coordination state — live territory claims, never committed.
 .harness/
 
+# Isolated worktrees for parallel agent runs. Same class as .harness/: transient coordination
+# state, never a change. Each one is a git worktree — a checkout inside the checkout — so
+# committing it would nest a repository in its own history.
+.claude/worktrees/
+
 # harness-map output — a READ surface, regenerate it any time
 dungeon-map.html
 city.html

@@ -43,7 +43,7 @@ const EXPECTED = [
   ".husky/pre-push",
   ".github/workflows/pipeline.yml",
   ".github/pull_request_template.md",
-  "tests/arch/gates.spec.ts",
+  "tests/arch/gates.test.mjs",
   "docs/LESSONS.md",
 ];
 
@@ -72,7 +72,11 @@ test("a real run lands the whole process", () => {
       assert.equal(existsSync(join(root, f)), true, `${f} should have been written`);
     }
     const pkg = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
-    assert.equal(pkg.scripts.verify, "npm run typecheck && npm run lint && npm test");
+    // This scratch repo has no tsconfig.json, so verify must NOT invoke tsc. The previous
+    // expectation here asserted the defect: a verify that died on TS5058, on the adopter's very
+    // first run, for a file they do not have. The tsconfig case is asserted separately below.
+    assert.equal(pkg.scripts.verify, "npm run lint && npm test");
+    assert.equal(pkg.scripts.typecheck, undefined, "no typecheck script without its config");
     assert.equal(pkg.scripts["arch:scan"], "harness-arch-scan");
     assert.ok(pkg.devDependencies["@biomejs/biome"], "biome must be added as a dev dependency");
     assert.equal(pkg.name, "probe", "existing package.json fields must survive");
@@ -96,7 +100,7 @@ test("it never clobbers a file the repo already has", () => {
     // An existing script is a decision; the merge must not overwrite it.
     const pkg = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
     assert.equal(pkg.scripts.lint, "my-own-linter", "an existing script must win over the template");
-    assert.ok(pkg.scripts.typecheck, "scripts the repo lacks are still added");
+    assert.ok(pkg.scripts.verify, "scripts the repo lacks are still added");
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
@@ -149,7 +153,7 @@ test("the gate spec it writes invokes the harness binaries, not local script pat
   const root = makeRepo();
   try {
     run(root);
-    const spec = readFileSync(join(root, "tests/arch/gates.spec.ts"), "utf8");
+    const spec = readFileSync(join(root, "tests/arch/gates.test.mjs"), "utf8");
     assert.match(spec, /harness-arch-scan/);
     assert.doesNotMatch(spec, /scripts\/arch-scan\.mjs/, "must not reference the origin repo's layout");
   } finally {
@@ -167,7 +171,7 @@ test("gate wiring follows the descriptor's testDir", () => {
     // Both halves come from the descriptor: `testDir` decides WHERE, and `specSuffix` decides
     // whether the repo's own test command will ever collect the file.
     assert.equal(existsSync(join(root, "spec/arch/gates.test.ts")), true, "should honor testDir and specSuffix");
-    assert.equal(existsSync(join(root, "tests/arch/gates.spec.ts")), false, "must not use the defaults");
+    assert.equal(existsSync(join(root, "tests/arch/gates.test.mjs")), false, "must not use the defaults");
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
@@ -476,6 +480,23 @@ test("a CommonJS package gets .mjs, because ESM cannot live in its .js", () => {
   try {
     run(root);
     assert.equal(existsSync(join(root, "spec/arch/gates.test.mjs")), true);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("a repo WITH a tsconfig.json still gets its typecheck — the negative control", () => {
+  // Without this, the assertion above passes for the wrong reason: a bootstrap that never wrote a
+  // typecheck at all would satisfy it, and would silently weaken every TypeScript adopter.
+  const root = makeRepo({
+    "package.json": '{"name":"probe","version":"0.0.0"}\n',
+    "tsconfig.json": '{"compilerOptions":{"strict":true}}\n',
+  });
+  try {
+    run(root);
+    const pkg = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
+    assert.equal(pkg.scripts.typecheck, "tsc -p tsconfig.json --noEmit");
+    assert.match(pkg.scripts.verify, /npm run typecheck/);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

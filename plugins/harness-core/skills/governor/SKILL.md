@@ -43,9 +43,17 @@ earned after the policy proves out over reps.
    `refactor: governed cycle <n> — <rep summaries>`, and **enable auto-merge (SQUASH) AT OPEN** if —
    and only if — every rep in the batch is a class the merge-policy table allows. Arming auto-merge
    after CI has gone green is too late: GitHub refuses it on an already-clean PR. One disallowed rep
-   means the whole PR waits for human review, or ship that rep separately. Batching halves CI runs,
-   release entries, and API calls — the measured constraints. Isolate a rep in its own PR only when
-   independent revert matters more than the savings.
+   means the whole PR waits for human review, or ship that rep separately.
+
+   **The batching rationale has lost a leg, so weigh it fresh.** It rested on three costs — CI runs,
+   release entries, and API calls. The API leg was the heaviest and it has largely lifted: this
+   repository is PUBLIC, which changes the rate-limit picture substantially. Two lighter legs remain.
+   Meanwhile the case for SMALLER pull requests has strengthened on evidence: a commit is the
+   boundary at which a retro can read its timeline instead of reconstructing it, a gate failure
+   against a small surface is attributable and against a large one is not, and independent revert is
+   worth more when several reps land together. **Prefer more, smaller PRs unless CI minutes are
+   actually binding** — and check that they are rather than assuming, because that is the leg most
+   likely to be quoted out of habit.
    On a failure report: surface it verbatim to the human head coach; do not retry in-cycle.
 7. **RELEASE.** `harness-dispatch --release <athlete>` for every athlete, green or not. **Not
    optional, and not conditional on success** — territory still held after a cycle silently serialises

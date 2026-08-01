@@ -36,9 +36,24 @@ const declared = JSON.parse(readFileSync(join(REPO_ROOT, "package.json"), "utf8"
   .replace(/^https?:\/\/github\.com\//, "");
 const originSlug = () => truth ?? declared;
 
+/**
+ * Every file that is part of THIS repository's state.
+ *
+ * `.claude/worktrees/` is excluded, and the reason is not tidiness. A parallel agent run checks out
+ * OTHER COMMITS into worktrees under it — the governor's feast mode is built on exactly this — and a
+ * test that walks the repo root then starts asserting about files from a different point in history.
+ * It happened on the first real fleet run: a worktree at an older commit still carried the
+ * repository's PREVIOUS NAME in its CHANGELOG, and the rename gate failed against a file that is not
+ * part of this working tree at all.
+ *
+ * The class is worth naming, because it will recur: **a whole-repo assertion is only true of the
+ * repo, and a worktree is not the repo.** Any future test that walks from the root inherits this.
+ */
+const TRANSIENT = new Set(["node_modules", ".git", "worktrees"]);
+
 function walk(dir, acc = []) {
   for (const e of readdirSync(dir, { withFileTypes: true })) {
-    if (e.name === "node_modules" || e.name === ".git") continue;
+    if (TRANSIENT.has(e.name)) continue;
     const p = join(dir, e.name);
     if (e.isDirectory()) walk(p, acc);
     else if (/\.(md|mjs|json|ts)$/.test(e.name)) acc.push(p);

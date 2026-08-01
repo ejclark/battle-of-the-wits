@@ -1,0 +1,37 @@
+#!/usr/bin/env sh
+# Record the commit as a BOUNDARY in the run ledger.
+#
+# A commit is the natural fault line of this system: the smallest point at which a piece of work is
+# finished, verified and nameable. That makes it the right place to sample, and it makes commit size
+# the SAMPLING RATE OF YOUR OWN LEARNING — a run committed four times can only ever be retro'd four
+# times, and every one of those retros has to reconstruct what happened instead of reading it.
+#
+# So this exists to make the boundary cheap and automatic. Nothing here judges the commit; it records
+# its shape, and the trend is the finding.
+#
+# THREE RULES, and all three are about not being in the way:
+#   · It must NEVER fail. The commit has already happened — a post-commit hook that errors can only
+#     alarm someone about something they cannot undo, and a hook people dread is a hook people remove.
+#   · It must NO-OP CLEANLY where `harness-log` does not exist. It ships with harness-core; the
+#     command ships with harness-gates, and an adopter may install one without the other.
+#   · It records WHAT, never WHO. Same rule as the ledger it writes to: a per-person commit-size log
+#     is a different artefact with a different ethics.
+command -v harness-log >/dev/null 2>&1 || exit 0
+
+# `--shortstat` prints e.g. " 3 files changed, 41 insertions(+), 2 deletions(-)". Each number is
+# pulled by its own label rather than by position, because the clauses are OMITTED when zero — a
+# commit that only adds has no deletions clause, and a positional parse silently reads the wrong
+# field on exactly the commits that are most common.
+shortstat=$(git show --shortstat --format= HEAD 2>/dev/null | tail -1)
+[ -z "$shortstat" ] && exit 0
+
+files=$(printf '%s' "$shortstat" | grep -oE '[0-9]+ file' | grep -oE '^[0-9]+')
+ins=$(printf '%s' "$shortstat" | grep -oE '[0-9]+ insertion' | grep -oE '^[0-9]+')
+del=$(printf '%s' "$shortstat" | grep -oE '[0-9]+ deletion' | grep -oE '^[0-9]+')
+
+harness-log --event commit \
+  --files "${files:-0}" \
+  --insertions "${ins:-0}" \
+  --deletions "${del:-0}" >/dev/null 2>&1
+
+exit 0

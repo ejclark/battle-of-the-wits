@@ -87,7 +87,7 @@ if (gi.wrote) wrote.push(gi.wrote);
 if (gi.skipped) skipped.push(gi.skipped);
 
 // ── git hooks (husky) ──────────────────────────────────────────────────────────
-for (const hook of ["pre-commit", "commit-msg", "pre-push"]) {
+for (const hook of ["pre-commit", "commit-msg", "pre-push", "post-commit"]) {
   put(`.husky/${hook}`, tpl(`husky/${hook}`), { exec: true });
 }
 
@@ -116,7 +116,10 @@ if (cs.skipped) skipped.push(cs.skipped);
 // ── package.json: merged, never replaced ───────────────────────────────────────
 // These two tables are the harness's OPINIONS and belong here; merge.mjs owns only the mechanism of
 // folding them in without trampling what the repo already decided.
-const SCRIPTS = scriptsFor(descriptor);
+// Repo STATE, not just the descriptor: a `.ts` project with no tsconfig.json must not be handed a
+// verify that runs tsc against a file it does not have.
+const HAS_TSCONFIG = existsSync(join(ROOT, "tsconfig.json"));
+const SCRIPTS = scriptsFor(descriptor, { hasTsconfig: HAS_TSCONFIG });
 
 const DEV_DEPS = {
   "@biomejs/biome": "^2.5.6",
@@ -155,9 +158,27 @@ if (pkgChanges.missing) {
     console.log(`      devDependencies:  ${pkgChanges.devDependencies.join(", ")}`);
 }
 
+// The ONE key this tool overwrites, so it is never a surprise found later in a diff.
+if (pkgChanges.replaced?.length) {
+  console.log(`\n  ⚠ replaced \`scripts.test\` — it held \`npm init\`'s placeholder, which fails on purpose.
+      Left alone it would have made your first \`npm run verify\` red for something you did not do,
+      and it would have been read as a test runner that is not there. It is now \`node --test\`.
+      If you meant to keep the placeholder, put it back — nothing else here depends on it.`);
+}
+
 console.log(`
   Test runner detected: ${gateSpec.template.includes("test.mjs") ? "node --test" : "describe/it/expect"}  → wrote ${gateSpec.name}
 `);
+
+// Silently dropping the typecheck would be the other failure — a verify that passes because it
+// stopped checking. Say it, and say what turns it back on.
+if ((descriptor.sourceExt ?? ".ts") === ".ts" && !HAS_TSCONFIG) {
+  console.log(`  ⚠ TypeScript sources but no tsconfig.json — \`verify\` was written WITHOUT a typecheck
+      step, because a script that runs \`tsc -p tsconfig.json\` against a file you do not have fails
+      on your very first run, for something you did not do. Add a tsconfig.json and re-run with
+      --force to pick the typecheck back up.
+`);
+}
 
 console.log(`
   What this imposes — these are opinions, not laws. Disagree deliberately:
@@ -187,6 +208,29 @@ if (auto) {
 } else {
   console.log(render(plan(detect(ROOT))));
   console.log("  Re-run `harness-bootstrap --plan` to see where you are, or --auto to run the rest.\n");
+}
+
+// NOT A GIT REPOSITORY — say so, because most of what was just written cannot function without one.
+//
+// This wrote `.husky/` hooks, a `.gitignore` and a `.github/workflows/` pipeline into a directory
+// with no `.git` at all, and exited 0. Every file landed; none of the protection did. The hooks
+// cannot fire because there is nothing to hook, the workflow cannot run because there is no remote,
+// and the adopter has a directory that looks fully equipped and enforces nothing.
+//
+// That is the false green this project exists to prevent, produced by its own bootstrap: a
+// confident report about work that did not happen. The fix is not to refuse — the files are real and
+// keeping them is correct — it is to stop claiming an outcome that is not there.
+if (!dryRun && wrote.length && !existsSync(join(ROOT, ".git"))) {
+  console.log(`  ⚠ THIS IS NOT A GIT REPOSITORY YET, so the files above are written but inert.
+
+      The git hooks cannot fire — there is nothing to hook. The pipeline cannot run — there is
+      no remote to run it. Nothing here is enforcing anything until that changes:
+
+          git init -b main
+
+      Then re-run \`harness-bootstrap --auto\`, which is the point at which the hooks install and
+      the sequence can actually be completed.
+`);
 }
 
 if (!dryRun && wrote.length) {

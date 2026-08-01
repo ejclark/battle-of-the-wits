@@ -79,3 +79,23 @@ test("every gate gets a script whatever the language", () => {
     }
   }
 });
+
+test("TypeScript with NO tsconfig omits the typecheck rather than writing a verify that fails", () => {
+  // The planted violation, and it shipped twice. Reading `sourceExt` fixed the LANGUAGE guess and
+  // left the toolchain guess in place: a repo can hold .ts files with no tsconfig.json, and the
+  // adopter's first `npm run verify` then died on TS5058 for a file they do not have, in a script
+  // the harness had just written them.
+  const s = scriptsFor({ sourceExt: ".ts" }, { hasTsconfig: false });
+  assert.equal(s.typecheck, undefined, "no typecheck script may be written without its config");
+  assert.doesNotMatch(s.verify, /typecheck/, "and verify must not invoke one");
+  assert.match(s.verify, /npm run lint/, "the checks that CAN run must still run");
+  assert.match(s.verify, /npm test/);
+});
+
+test("TypeScript WITH a tsconfig still typechecks — the negative control", () => {
+  // Without this, the case above passes for the wrong reason: a scriptsFor that never emitted a
+  // typecheck at all would satisfy it, and would silently weaken every TypeScript adopter.
+  const s = scriptsFor({ sourceExt: ".ts" }, { hasTsconfig: true });
+  assert.equal(s.typecheck, "tsc -p tsconfig.json --noEmit");
+  assert.match(s.verify, /npm run typecheck/);
+});
