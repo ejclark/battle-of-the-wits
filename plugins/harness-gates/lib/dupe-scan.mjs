@@ -47,7 +47,11 @@ const EXCLUDED = (f) => (DESC.exclude ?? []).some((p) => rel(f).startsWith(p));
 // duplication debt. We match top-level `function`/`const`/`class` declarations (exported or not).
 // A same name in two files isn't *proof* of a pasted implementation — the drill judges that — but it's
 // the cheap, high-recall signal. IGNORE holds conventional per-file names that are legitimately separate.
-const IGNORE = new Set(["main"]); // each script's own entrypoint, not shared code
+// Per-CLI entrypoint scaffolding, not shared code: nine standalone PATH executables each parse argv
+// and resolve their own root because they must not import across that boundary. Renaming them one at
+// a time was the gate distorting the codebase. Narrow on purpose — domain names (budget, DESC) stay
+// caught.
+const IGNORE = new Set(["main", "argv", "args", "ROOT"]);
 const defRe = /^(?:export\s+)?(?:async\s+)?(?:function|const|class)\s+([A-Za-z_$][\w$]*)/gm;
 const defs = new Map(); // name → Set(file)
 for (const f of walk(SRC)) {
