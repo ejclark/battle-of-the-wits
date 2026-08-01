@@ -4,6 +4,23 @@ Every athlete runs inside this. It is one document rather than a paragraph repea
 definition, because four copies of a protocol drift — and a protocol that has quietly drifted is
 worse than none, since each athlete then believes a different set of rules.
 
+## 0 · Take the target — the `--candidate` contract
+
+Every athlete's first command is `harness-<gate>-scan --candidate`, and it is a **machine
+interface**, not a report. It promises exactly three things, from every gate, every time:
+
+1. **Exit 0.** Even when the gate cannot measure. "I have nothing for you" is an answer.
+2. **Exactly one JSON object on stdout.** Diagnostics go to stderr, so `... --candidate | jq` is
+   always safe.
+3. **A `candidate` key** that is an object or `null` — never a bare string, never absent.
+
+`null` means *no target*: stand down and release your slot. It never means the command failed.
+
+This is written down because nothing downstream is defensive. An athlete is a language model
+following an instruction file, not code with a try/catch — a stray log line on stdout kills it on
+its first command. `harness-incident-scan --candidate` did exactly that whenever it had no token or
+no network, which offline is always, and no athlete had ever been dispatched to find out.
+
 ## 1 · Acquire, before touching anything
 
 ```shell

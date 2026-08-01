@@ -22,9 +22,12 @@ missing it the likely outcome."
 ## 1. Take the incident (don't hunt for one)
 
 ```bash
-harness-incident-scan --candidate     # oldest failed run on main with no lesson
+harness-incident-scan --candidate     # {"candidate": <oldest unlearned run>|null, "debt": n}
 harness-incident-scan                 # the full unlearned list
 ```
+
+`--candidate` always emits one JSON object, even with no token and no network — `candidate: null`
+means there is nothing to retro from CI, not that the command failed.
 
 Or take the one in front of you: a red gate, a reverted commit, a bug Eric found, a surprise in
 production. One incident per pass.

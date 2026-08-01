@@ -44,9 +44,8 @@ const files = walkFiles(SRC, isSource)
   .sort((a, b) => b.lines - a.lines);
 const budget = readBudget(ROOT, "arch", {});
 
-// --candidate: emit the single highest-leverage split target as JSON for the decomposer agent.
-// Score = how far over budget (or how far above the watch line) × a cohesion penalty for many
-// exports. Detection is machine-readable so the loop needs no human to pick the next target.
+// --candidate: the highest-leverage split target as JSON for the decomposer. Score = how far over
+// budget (or above the watch line) × a cohesion penalty for many exports.
 if (process.argv.includes("--candidate")) {
   const scored = files
     .map((x) => {
@@ -59,7 +58,8 @@ if (process.argv.includes("--candidate")) {
     .filter((x) => x.score > 0)
     .sort((a, b) => b.score - a.score);
   const top = scored[0] ?? null;
-  console.log(JSON.stringify({ candidate: top, runnerUp: scored[1] ?? null }, null, 2));
+  const debt = files.filter((x) => x.lines > (budget[x.file] ?? DEFAULT_CAP)).length;
+  console.log(JSON.stringify({ candidate: top, runnerUp: scored[1] ?? null, debt }, null, 2));
   process.exit(0);
 }
 
