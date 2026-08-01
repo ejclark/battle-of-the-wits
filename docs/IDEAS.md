@@ -376,6 +376,48 @@ harness doing, in someone else's repository and with their credentials, the exac
 everyone from doing in their own. Chrome does not have write access to your build system. Pairs with
 #29. _(src: Claude · while: checking the update path against the evergreen claim)_
 
+**31. Token burn: setup is nearly free; the CONTEXT SURFACE is the cost — and it is measurable today.**
+Measured rather than guessed. `harness-bootstrap --auto` is deterministic Node and **calls no model
+at all**, so day-one setup costs approximately zero tokens. The token cost of "setting up the
+harness" is entirely the conversation around it, which the harness cannot see.
+What it CAN see, and what actually matters, is the **context surface** — what a session must read to
+act correctly:
+| | tokens (~4 bytes/tok) |
+|---|---|
+| `CLAUDE.md`, loaded every session | ~1,400 |
+| doctrine (8 docs) | ~32,200 |
+| drills (13) | ~26,000 |
+| agent definitions (8) | ~9,300 |
+| **ceiling, if something read everything** | **~75,000** |
+The ceiling is alarming and misleading: nothing loads all of it. A realistic session is `CLAUDE.md` +
+one drill + the doc that drill cites ≈ **11,000 tokens**, which is comfortable on a Pro plan. But the
+biggest single items are worth knowing — `onboard/SKILL.md` ~7.7k, `CONTRIBUTORS.md` ~7.1k,
+`COACHES.md` ~6.9k — because a drill that cites three docs is a 25k session before any work happens.
+**The actionable rule this suggests: a drill should cite at most one doctrine document.** Cheap to
+check, and it bounds the surface without shortening anything.
+_(src: Eric · while: "we should capture token burn when customers setup our dungeon crawler harness")_
+
+**32. The claim that this harness LOWERS token consumption has never been measured.**
+`COACHES.md` already asserts the mechanism — *"a model-in-the-loop procedure costs tokens every time;
+a script is a one-time build cost, then ~free per run forever"* — and like the flywheel claim (#18)
+it is stated as fact and checked by nothing. It is also the claim that decides whether a $20 plan can
+run this, so it is worth more than most things in this log.
+**Falsifiable form:** *tokens per merged change falls after adoption, and keeps falling as loops get
+codified.* Two things must be right or the number lies. **Normalise per merged change**, not per
+week, or a quiet fortnight reads as an improvement. And **separate the one-time cost from the
+recurring one** — adoption is a spike, and averaging it into the steady state hides both.
+**The capture primitive already exists and needs no new mechanism**: `harness-log --event setup
+--tokens N` works today, because the ledger takes arbitrary fields. What is missing is the EMITTER,
+and it can only be the Claude session — the harness has no visibility into its own token cost. That
+is the whole gap, and it is one instruction in a drill, not a system.
+**On the 50–100x figure**: that is enthusiasm rather than a measurement, and it should be held to a
+measurement's standard before it is repeated anywhere a customer can read it. The honest version is
+that nobody knows the multiple yet, one adopter is about to generate the first data point, and a
+number published before it is measured is the thing this project refuses everywhere else.
+Pairs with #15 — a database becomes right at a stateable, unanswerable query, and this is finally a
+**stateable** one; it is just not unanswerable, because JSONL plus `jq` covers it for years.
+_(src: Eric · while: "ideally, our harness lowers the token consumption")_
+
 ### Side quests (surfaced by Claude while working — proposals to prune)
 
 **3. Humans do not claim territory; athletes do.**
