@@ -7,8 +7,8 @@
 // The rule both functions follow: **what the repo already decided always wins.** An existing script,
 // an existing ignore rule, an existing dependency pin — those are decisions someone made, and a tool
 // that silently overwrites them is worse than a tool that does nothing.
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 
 /**
  * Fold the harness's ignore rules into an existing .gitignore, or write one.
@@ -65,4 +65,36 @@ export function mergePackageJson(root, { scripts, devDependencies }, { dryRun = 
     writeFileSync(path, `${JSON.stringify(pkg, null, 2)}\n`);
   }
   return { missing: false, ...added };
+}
+
+/**
+ * Fold the harness status line into `.claude/settings.json`.
+ *
+ * Same rule as the two above, and the reason it belongs here rather than in the bootstrap's own
+ * body: `settings.json` is a file the project owns and that carries HOOKS, which are code execution.
+ * Rewriting it wholesale would be the single most destructive thing this tool could do — so the
+ * merge reads, sets one key, and writes back, leaving everything else byte-for-byte.
+ *
+ * The status line is written into the PROJECT's `.claude/` rather than shipped as a plugin file
+ * because a plugin's own settings.json accepts only `agent` and `subagentStatusLine`, never the
+ * main `statusLine`.
+ */
+export function mergeClaudeSettings(root, { dryRun = false, force = false } = {}) {
+  const path = join(root, ".claude/settings.json");
+  const settings = (() => {
+    try {
+      return JSON.parse(readFileSync(path, "utf8"));
+    } catch {
+      return {};
+    }
+  })();
+  if (settings.statusLine !== undefined && !force) {
+    return { skipped: ".claude/settings.json \u2192 statusLine (already set)" };
+  }
+  settings.statusLine = { type: "command", command: "node .claude/harness-statusline.mjs" };
+  if (!dryRun) {
+    mkdirSync(dirname(path), { recursive: true });
+    writeFileSync(path, `${JSON.stringify(settings, null, 2)}\n`);
+  }
+  return { wrote: ".claude/settings.json \u2192 statusLine" };
 }

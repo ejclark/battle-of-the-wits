@@ -19,8 +19,9 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync, chmodSync } from "n
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { renderJscpd, renderKnip } from "./configs.mjs";
-import { detect, plan, render } from "./phases.mjs";
-import { mergeGitignore, mergePackageJson } from "./merge.mjs";
+import { detect, gateSpecFor } from "./detect.mjs";
+import { plan, render } from "./phases.mjs";
+import { mergeClaudeSettings, mergeGitignore, mergePackageJson } from "./merge.mjs";
 
 const ROOT = process.cwd();
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -95,22 +96,7 @@ put(".github/workflows/pipeline.yml", tpl("github/workflows/harness.yml"));
 put(".github/pull_request_template.md", tpl("github/pull_request_template.md"));
 
 // ── gate wiring: the gates run inside the test suite, not as extra CI steps ─────
-// WHICH gate spec, and under WHICH filename, is decided by the repo's own test runner. Getting it
-// wrong is the worst failure this bootstrap can have: a gate file the runner never discovers reports
-// nothing, the suite stays green, and the repo believes it is guarded when it is not.
-// `node --test` provides `test()` but NOT `expect`, and globs *.test.mjs; Vitest/Rstest/Jest provide
-// describe/it/expect and glob *.spec.ts.
-const testScript = (() => {
-  try {
-    return JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8")).scripts?.test ?? "";
-  } catch {
-    return "";
-  }
-})();
-const usesNodeTest = /\bnode\s+--test\b/.test(testScript);
-const gateSpec = usesNodeTest
-  ? { template: "specs/gates.test.mjs", name: "gates.test.mjs" }
-  : { template: "specs/gates.spec.ts", name: "gates.spec.ts" };
+const gateSpec = gateSpecFor(ROOT);
 put(`${descriptor.testDir ?? "tests"}/arch/${gateSpec.name}`, tpl(gateSpec.template));
 
 // ── the lessons ledger ─────────────────────────────────────────────────────────
@@ -123,24 +109,9 @@ put("docs/LESSONS.md", tpl("common/docs/LESSONS.md"));
 put(".claude/harness-statusline.mjs", tpl("claude/harness-statusline.mjs"), { exec: true });
 
 // Merge the statusLine into .claude/settings.json without trampling existing hooks or keys.
-const settingsPath = join(ROOT, ".claude/settings.json");
-const settings = (() => {
-  try {
-    return JSON.parse(readFileSync(settingsPath, "utf8"));
-  } catch {
-    return {};
-  }
-})();
-if (settings.statusLine === undefined || force) {
-  settings.statusLine = { type: "command", command: "node .claude/harness-statusline.mjs" };
-  if (!dryRun) {
-    mkdirSync(dirname(settingsPath), { recursive: true });
-    writeFileSync(settingsPath, `${JSON.stringify(settings, null, 2)}\n`);
-  }
-  wrote.push(".claude/settings.json → statusLine");
-} else {
-  skipped.push(".claude/settings.json → statusLine (already set)");
-}
+const cs = mergeClaudeSettings(ROOT, { dryRun, force });
+if (cs.wrote) wrote.push(cs.wrote);
+if (cs.skipped) skipped.push(cs.skipped);
 
 // ── package.json: merged, never replaced ───────────────────────────────────────
 // These two tables are the harness's OPINIONS and belong here; merge.mjs owns only the mechanism of
@@ -198,7 +169,7 @@ if (pkgChanges.missing) {
 }
 
 console.log(`
-  Test runner detected: ${usesNodeTest ? "node --test  → wrote gates.test.mjs" : "describe/it/expect  → wrote gates.spec.ts"}
+  Test runner detected: ${gateSpec.name === "gates.test.mjs" ? "node --test  → wrote gates.test.mjs" : "describe/it/expect  → wrote gates.spec.ts"}
 `);
 
 console.log(`
