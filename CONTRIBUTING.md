@@ -147,8 +147,8 @@ Real, checked against the repository today, and sized for a first pass. Take any
 all three and follow your own snag — the loop is better than the list.
 
 **1 · There is no glossary, and the words are everywhere.** *(best first task)*
-Counted just now in the docs a newcomer reads: **gate** appears 165 times, **athlete** 39,
-**preflight** 17, **ratchet** 9 — and not one of them is defined anywhere a newcomer would look.
+**gate** appears over 300 times across the docs a newcomer reads, **athlete** over 70, **preflight**
+and **ratchet** over 30 each — and not one of them is defined anywhere a newcomer would look.
 Create `docs/GLOSSARY.md` and define the ones **you** had to guess at, in the words you would have
 wanted. Leave out the ones you already understood.
 
@@ -156,13 +156,18 @@ You are the right person for this and it is not a beginner's consolation task �
 written by someone who did not know the words**, and everyone else here lost that ability months ago.
 Ten terms is a complete first version.
 
-**2 · Two documents nobody can find.** `docs/JOURNAL.md` and `docs/LESSONS.md` exist and nothing
-anywhere links to them. Add a line pointing at each from wherever *you* would have expected to find
-them — and if the answer is "I would not have looked for these at all", that is worth saying instead.
+**2 · A document nobody can reach.** `docs/README.md` is the index of where all the doctrine lives,
+and **nothing links to it** — not this page, not the README, not any doc in the folder it indexes.
+Add a line pointing at it from wherever *you* would have expected to find it — and if the answer is
+"I would not have looked for an index at all", that is worth saying instead.
 
-**3 · The longest paragraph on this page is 833 characters.** Several here are walls. Break up the
-ones that made you slow down — and only those, because a paragraph you read easily is fine as it is
-and shortening it costs clarity for nothing.
+**3 · The README still has walls.** Five of its paragraphs run past 300 characters, the longest 383.
+Break up the ones that made you slow down — and only those, because a paragraph you read easily is
+fine as it is and shortening it costs clarity for nothing.
+
+Each of these three is pinned by `tests/onramp.test.mjs`, which fails the moment one is *done*. That
+is deliberate: the task list you are reading went stale once already, and sent someone at work that
+was finished. Now the suite catches it before you do.
 
 ## Optional, and entirely yours: a GitHub profile
 
