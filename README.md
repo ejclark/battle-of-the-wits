@@ -103,6 +103,16 @@ property of the download and not a mistake you made.
 
 </details>
 
+<details>
+<summary><b>First one through on an untested setup? Patch forward instead of reporting.</b></summary>
+
+The normal shape — hit a wall, report it, wait, try again — costs a round trip per defect and finds
+about two a day. [`PATCH-FORWARD.md`](plugins/harness-core/templates/starter/PATCH-FORWARD.md) is the
+other shape: **fix them as you go, and the fixes arrive as one pull request at the end.** It tells the
+session to say whose fault each failure was, keep the record as it works, and refuse to guess.
+
+</details>
+
 **Contributing here instead?** [`CONTRIBUTING.md`](CONTRIBUTING.md) takes you from nothing to a
 merged change entirely on github.com — no install, no terminal, no git. **If anything above did not
 work for you, start there**: it is a complete path, not a consolation prize.
