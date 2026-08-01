@@ -4,3 +4,6 @@ node_modules/
 
 # Release artifacts — semantic-release writes CHANGELOG.md and commits it itself.
 .semrel/
+
+# Runtime coordination state — live territory claims, never committed.
+.harness/

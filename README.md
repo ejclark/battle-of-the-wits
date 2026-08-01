@@ -58,6 +58,7 @@ Works in any repository, in any language, with no configuration.
 | `harness-clone-scan` | Copy-pasted blocks |
 | `harness-incident-scan` | Incidents with no banked lesson |
 | `harness-ship` | Land a verified branch as a PR the resource-cheap way |
+| `harness-claim` | **Territory claims** — an athlete registers the paths it holds; overlapping dispatch is refused. The rail that lets agents run in parallel without colliding. |
 
 Plus the drills that correct what the gates find (`/harness-gates:decompose`,
 `/harness-gates:dedupe`, `/harness-gates:ship`) and the background athletes that run them
