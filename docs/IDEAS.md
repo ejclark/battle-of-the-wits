@@ -235,6 +235,29 @@ would report nothing. The trigger is a handful of landed changes and a real ques
 the first week is getting easier. Pairs with #14. _(src: Eric · while: "establish some iteration
 loops and tighten them")_
 
+**21. Evergreen propagation is mostly a non-problem for a web-UI contributor — check before building.**
+The worry is that people who do not know git will drift onto stale copies. For someone working in
+GitHub's web editor that does not happen: the pencil-edit branches from **current main at click
+time**, with no local clone to go stale and nothing to pull. The staleness that IS real is narrower —
+an **open PR** while main moves — and GitHub already ships the fix as a button, plus a branch-
+protection setting requiring up-to-date branches before merge. Both are owner-side settings, not code.
+Where propagation genuinely needs a mechanism is the two cases nobody was asking about: **local
+checkouts** (ours) and **adopters' installed plugin versions**, which are SHA-tracked through the
+marketplace and updated with `/plugin update`. Worth writing down mainly as a caution: the obvious
+diagnosis pointed at the contributor, and the actual gap was somewhere else entirely. _(src: Eric ·
+while: "include triggers to propagate evergreen updates — self healing patterns")_
+
+**22. A wiki would be a second store, and it would drift.**
+Raised as a feedback surface alongside issues and projects. Issues earn their place immediately —
+they are the lowest-friction report a non-technical contributor can file, needing no branch, no
+checks, nothing to get right. A wiki does not, and the reason is the rule this project already runs
+on: **one source per idea.** Wiki pages live outside the repository, are not reviewed, are not
+covered by any gate, and cannot be checked by the tests that keep `docs/` honest — so within a month
+the wiki and the docs disagree and nobody knows which is current. The harness has a whole suite
+devoted to preventing exactly that in code. Revisit only for content that genuinely does not belong
+in the repository and needs no verification. Meeting notes, maybe. Not procedure, and not anything a
+gate could check. _(src: Eric · while: "onboarding is associated with github issues, wikis, projects")_
+
 ### Side quests (surfaced by Claude while working — proposals to prune)
 
 **3. Humans do not claim territory; athletes do.**

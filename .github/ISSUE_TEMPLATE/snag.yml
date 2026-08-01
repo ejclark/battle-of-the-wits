@@ -1,0 +1,55 @@
+name: Something confused me, or did not work
+description: The most useful report anyone can file here. No git, no branch, no pull request — just this.
+title: "snag: "
+labels: ["snag"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **This is the highest-value thing you can send us**, and it needs nothing but this form.
+
+        Somewhere you had to stop and re-read, or click twice, or ask — that spot is a real defect in
+        the writing or the tooling. The people who built this cannot find those, because they already
+        know how it works. You can only find them once, and only for about a week.
+
+        Three questions. Two minutes. Nothing here is a test.
+  - type: textarea
+    id: doing
+    attributes:
+      label: What were you trying to do?
+      placeholder: e.g. follow the setup steps in CONTRIBUTING.md for the first time
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect to happen?
+      description: Even if it turns out you expected the wrong thing — *especially* then. An expectation that did not match is the finding.
+      placeholder: e.g. I thought "verify" meant somebody checks it, not that I run something
+    validations:
+      required: true
+  - type: textarea
+    id: happened
+    attributes:
+      label: What actually happened?
+      placeholder: e.g. I read it three times and still could not tell whether I was supposed to do anything
+    validations:
+      required: true
+  - type: input
+    id: where
+    attributes:
+      label: Where? (optional)
+      description: A file name, a page, or a link. Rough is fine — "somewhere in the contributing page" is enough to find it.
+    validations:
+      required: false
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Anything you think should be done about it? (optional, and the least important box on this form)
+      description: >-
+        Genuinely optional. What you SAW above is the valuable part — it stays true even if the cause
+        turns out to be something else entirely. A suggested fix is one of several possible answers,
+        and we would rather hear the problem and work the answer out together. Leave this blank
+        without a second thought.
+    validations:
+      required: false

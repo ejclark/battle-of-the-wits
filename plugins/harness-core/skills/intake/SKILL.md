@@ -107,8 +107,15 @@ costs more than any pretext ever will.
 
 ## 4 · Bank it
 
-Append the observation to the idea log (`docs/IDEAS.md` by default — `harness-standing --zoning`
-prints the layout this repository actually uses), in the log's own entry form, with attribution:
+**If it arrived as an issue, it is already banked** — that is what the issue tracker is for, and
+re-typing it into a file buys nothing. Curate it into the idea log only when it becomes something the
+backlog should rank: a recurring theme, or an observation another idea starts pointing at. **An issue
+is the front door; the idea log is the shelf.** Getting that backwards is how a two-minute report
+turns into a pull request nobody files.
+
+When it does belong on the shelf, append it to the idea log (`docs/IDEAS.md` by default —
+`harness-standing --zoning` prints the layout this repository actually uses), in the log's own entry
+form, with attribution:
 
 ```markdown
 **41. The run summary does not say whether anything failed.**

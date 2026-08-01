@@ -86,11 +86,15 @@ first few times, and fix it in the same pull request.
 
 Your account is enough for all of these. Nothing here requires anyone to grant you anything first.
 
-| | Where |
-|---|---|
-| Anything you found confusing on this page | this file |
-| A sentence in the README or any doc | `README.md`, `docs/` |
-| An idea worth remembering | `docs/IDEAS.md` |
+| | Where | Costs |
+|---|---|---|
+| **Report anything at all** — confusing, broken, missing | the **Issues** tab | one text box |
+| Anything you found confusing on this page | this file | a pull request |
+| A sentence in the README or any doc | `README.md`, `docs/` | a pull request |
+
+**Start with an issue when in doubt.** It is the cheapest thing you can do here and it needs no git
+at all — no branch, no checks, nothing that can go red. A report costs you two minutes and is worth
+more to us than most changes.
 
 If a change of yours is merged and you would like more room later, that is a conversation with the
 owner — it is never automatic, and it is never a score.
@@ -114,8 +118,9 @@ the writing. Nobody who already understands it can find those. You can only find
 - **It is prose** — a confusing sentence, a missing definition, a dead link, a step that assumes
   something it never said. **Fix it.** That is inside what you can change.
 - **It is not prose** — it is code, or a rule you disagree with, or something you cannot judge.
-  **Log it** in `docs/IDEAS.md`, one entry, in your own words: *what you were doing, what you
-  expected, what happened.* Then move on.
+  **Open an issue.** Not a pull request: an issue is one text box, no branch, no checks, nothing to
+  get right. Use the *"Something confused me"* form — it asks three questions and takes two minutes.
+  Then move on.
 
 Logging is not the consolation prize. An observation nobody had is worth more than a typo fixed, and
 moving on is what keeps the loop turning. **Getting stuck on something you cannot fix is the only way
