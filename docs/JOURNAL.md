@@ -497,3 +497,64 @@ stricter, it makes it slower — and the wait is where people quietly stop verif
 `.claude/hooks/skynet-tdd-postedit.sh`, valuation math in `src/domain/portfolio.ts`, risk in
 `src/engine/guards.ts`, a directory tree that is one specific app's. An adopter reads it as doctrine
 about their own repo. That is a genuine finding and a bigger job than this dungeon — the next one.
+
+---
+
+## 2026-08-01 (night, seventh) · The Borrowed Map
+
+Banked at the end of the last dungeon, and worse on a full read than it looked.
+
+`ENGINEERING.md` ships inside `harness-core` — an adopter installs the plugin and gets it on disk as
+**doctrine about their own repository**. What it actually described was one specific application:
+hooks named `skynet-tdd-postedit.sh`, valuation math in `src/domain/portfolio.ts`, risk in
+`src/engine/guards.ts`, a `personas/` directory, an Alpaca adapter, an entire section weighing Redux
+Toolkit for a dashboard nobody else has. Three of its relative links pointed at files that exist in
+exactly one repository on earth.
+
+### Promotion by relocation
+
+The doc was written as the engineering standard **of** an application and later promoted to portable
+doctrine **by moving it**. That changes where a file lives and nothing about what it claims.
+
+It is a tidy general shape, and it is not obvious in the moment: moving an artifact into a portable
+home does not make it portable. The useful question is what the moved thing *claims*, not where it
+now sits. Every rule here was stated through one project's nouns, so an adopter could not tell which
+parts were the rule and which were that project's illustration of it — and illustrations read as
+instructions when you do not yet know the difference.
+
+### What the rewrite kept, and what it cut
+
+Kept, because they are genuinely portable and were only *phrased* locally: ADRs gated on
+reversibility rather than size; strict-compiler-as-first-test; TDD/BDD with the "never assert
+internals" rule; EARS with its mechanical mapping to specs; DRY-as-one-owner-per-concept;
+no-junk-drawer decomposition; interfaces at the boundary; and the whole change-communication
+section, which was already written for a general reader.
+
+Cut, because they are one application's decisions and belong in that application's repo (where they
+still live): the stack table, the Redux deliberation, the component-library plan, and the
+`OrderIntent`/broker examples.
+
+Two rules gained something in translation. **Interfaces at the boundary** now carries its practical
+test — *if swapping a vendor means editing files that have nothing to do with that vendor, the
+boundary is in the wrong place.* And **DRY** now states what the duplication gate cannot do: it can
+be argued out of a finding as easily as into one, which is the lesson from The Mirror Halls, now
+written where the next reader will meet it.
+
+### The mechanical half is now a gate
+
+Dead links were the part a machine can own: every relative link in a shipped doc must resolve inside
+the plugin that ships it. Absolute URLs pass, because pointing at something outside the plugin is
+exactly what a URL is for — and a repository-only doc is outside the plugin by definition.
+
+Third category gate in this repository, and the third one to catch something on its first run.
+
+### A merge conflict, and the reason for it
+
+`#23` went `mergeable_state: dirty` and never ran CI — it was cut from `main` while `#22` was still
+in flight, and both appended to `JOURNAL.md`. Resolved by keeping both entries in the order the
+dungeons actually happened, which is the only sane resolution for an append-only file.
+
+The real fix is sequencing: cut each dungeon's branch from `main` *after* the previous one merges.
+That has been the pattern all night and it worked six times; the one departure produced the one
+conflict. Worth stating plainly because the temptation to parallelise is strongest exactly when
+things are going well.

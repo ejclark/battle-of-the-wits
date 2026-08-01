@@ -121,7 +121,8 @@ The method that closes the agnosticism gap. It is domain-agnostic in *form* but 
 5. **Compound** — the brand system is living; refinements flow back into `BRAND.md` so identity
    deepens over time (this is the same principle as "exquisite detail is a scalable process").
 
-Skynet Capital is a **worked example** of BCP output — see [`BRAND.md`](BRAND.md). The protocol was
+Skynet Capital is a **worked example** of BCP output — see its
+[`BRAND.md`](https://github.com/ejclark/skynet-capital/blob/main/docs/BRAND.md). The protocol was
 run by instinct there; this section extracts the method so the next repo can run it deliberately.
 
 ### Handoff to a structural mapper (e.g. Graphify)
@@ -139,13 +140,14 @@ no identity layer. BCP is the complementary layer, and it *consumes* that map:
 So the division is clean: the mapper answers *"what are the structural hubs?"*; BCP answers *"what is
 the identity, which hubs carry it, and how do we keep it cohesive?"* — and the operating model applies
 both. The concrete contract (what BCP reads from the map, the mapping rules, the flow) is specified in
-[`BCP-GRAPHIFY.md`](BCP-GRAPHIFY.md).
+[`BCP-GRAPHIFY.md`](https://github.com/ejclark/skynet-capital/blob/main/docs/BCP-GRAPHIFY.md).
 
 ---
 
 ## Templates
 
-Fill every `<placeholder>`. These mirror this repo's own [`BRAND.md`](BRAND.md), `CLAUDE.md`, and
+Fill every `<placeholder>`. These mirror the worked example's
+[`BRAND.md`](https://github.com/ejclark/skynet-capital/blob/main/docs/BRAND.md), `CLAUDE.md`, and
 `docs/IDEAS.md`.
 
 ### `BRAND.md` (template)

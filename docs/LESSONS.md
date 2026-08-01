@@ -251,3 +251,20 @@ Prevention ranks, best first:
 - **SIDE QUESTS:** a verification step that exists only in CI turns a typo into a commit-push-wait
   cycle, and the wait is where people quietly stop verifying. Worth auditing the CI workflow for any
   other step the local command cannot reproduce.
+### The shipped doctrine described a different repository
+- **SHA:** `n/a`   **DATE:** 2026-08-01   **STATUS:** closed
+- **SIGNAL:** found while fixing stale command paths — `ENGINEERING.md` ships inside `harness-core`,
+  and its "Automated enforcement" section named `.claude/hooks/skynet-tdd-postedit.sh` and edits
+  "under `skynet-capital/`". Reading further: valuation math in `src/domain/portfolio.ts`, risk in
+  `src/engine/guards.ts`, a `personas/` directory, an Alpaca adapter, a Redux decision about a
+  dashboard that does not exist for anyone else, and three relative links to files no install has.
+- **ROOT CAUSE:** the doc was written as the engineering standard OF one application and later
+  promoted to portable doctrine by moving it, which changes where a file lives and nothing about
+  what it claims. Every rule in it was stated through one project's nouns, so an adopter reads
+  authoritative-sounding instructions about modules they do not have — and cannot tell which parts
+  are the rule and which are that project's illustration of it.
+- **PREVENTION:** gate — every relative link in a shipped doc must resolve inside the plugin that
+  ships it (dead links were the mechanical half of the problem and are now impossible). The prose
+  half was rewritten so each rule states the principle and any example is marked as an example.
+- **SIDE QUESTS:** promotion-by-relocation is the general shape: moving an artifact into a portable
+  home does not make it portable. Ask what the moved thing *claims*, not just where it now sits.

@@ -142,3 +142,32 @@ test("no shipped file tells the reader to run something they do not have", () =>
   }
   assert.deepEqual(offences, [], `shipped instructions naming paths an adopter does not have:\n  ${offences.join("\n  ")}`);
 });
+
+// A relative link in a shipped doc must resolve inside the plugin that ships it.
+//
+// `ENGINEERING.md` shipped with links to `adr/README.md`, `../.github/pull_request_template.md`, and
+// `LIVING-UNIVERSE.md` — three files that exist in the repository the harness grew in and in no
+// install anywhere. A dead link in a doc is invisible until someone follows it, and the someone is
+// usually an adopter deciding whether this thing is serious.
+//
+// Same category shape as the ${CLAUDE_PLUGIN_ROOT} gate above: every relative reference, in every
+// shipped file, must resolve where it is shipped. Absolute URLs are fine — they are the correct way
+// to point at something outside the plugin, which is exactly what a repository-only doc is.
+test("every relative link in a shipped doc resolves inside its plugin", () => {
+  const dead = [];
+  for (const { root, file } of shippedFiles()) {
+    if (!file.endsWith(".md")) continue;
+    for (const m of readFileSync(file, "utf8").matchAll(/\]\(([^)#\s]+)(?:#[^)]*)?\)/g)) {
+      const target = m[1];
+      if (/^(https?:|mailto:|\/)/.test(target)) continue; // absolute is the right way out
+      if (existsSync(join(dirname(file), target))) continue;
+      dead.push(`${file.slice(root.length - 12)} → ${target}`);
+    }
+  }
+  assert.deepEqual(
+    dead,
+    [],
+    `shipped docs link to files an install does not have:\n  ${dead.join("\n  ")}\n\n` +
+      "Point at an absolute URL, or say the thing inline. A doc that ships must stand alone.",
+  );
+});
