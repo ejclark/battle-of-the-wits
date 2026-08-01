@@ -68,11 +68,25 @@ and the two come apart: 900 lines merged within the hour carries almost no risk,
 days carries plenty. So the thing to minimise is age against the rate the base is moving, not diff
 size. *See idea 39.*
 
-**Broken windows — visible disorder invites more disorder.** · `untested`
-*Falsifier:* debt growing at the same rate in a district with a frozen budget as in one without.
-The entire ratchet is a bet on this claim, which makes it the most load-bearing untested belief in
-the repository. The budgets and their history are committed, so the test is available and nobody has
-run it.
+**Broken windows — visible disorder invites more disorder.** · `shifted`
+*Falsifier:* debt growing at the same rate in a district with a frozen budget as in one without; or
+a broken window that persisted while being fully discoverable and cheap to fix.
+The original mechanism is **social**: disorder signals that nobody is watching, so norms erode and
+people stop caring. That mechanism assumes the cost of fixing a window is high enough that caring is
+what decides it. When the fix is close to free, caring stops being the variable — so a window that
+stays broken is no longer evidence of eroded norms. **It is evidence that nobody could find it.**
+So the diagnosis inverts. A broken window is now a *discoverability* signal, not a motivation one,
+and the things it actually indicates are orphaned code, a surface nothing links to, and debt that no
+scanner is scoped to see. Treating it as a norms problem points you at the people; treating it as an
+accessibility problem points you at the index.
+*Evidence:* every window found in this repository so far was invisible rather than ignored —
+`dead-scan` reading a knip key knip does not emit and printing a confident zero for months; `runnerUp`
+emitted by four scanners with no consumer; `docs/README.md` linked from nothing; a CONTRIBUTING task
+that stayed stale because no test looked at it. Not one of them survived because somebody decided not
+to bother.
+*Still untested:* the ratchet itself is a bet on the ORIGINAL reading — that a frozen budget slows
+debt growth. The budgets and their history are committed, so the test is available and nobody has run
+it.
 
 **Conway's law — systems mirror their organisation's communication structure.** · `untested`
 *Falsifier:* module seams falling somewhere other than the seams between the people who write them.
