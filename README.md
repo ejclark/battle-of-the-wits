@@ -40,7 +40,7 @@ Works in any repository, in any language, with no configuration.
 
 | Drill | What it does |
 |---|---|
-| `/harness-core:dungeon` | **The dominant persona.** Where you are, the bosses, the locked loot, the fog — read from measured state. `--new` forges a fresh crawl from this repo's actual debt. |
+| `/harness-core:dungeon` | **The dominant persona.** Where you are, the bosses, the locked loot, the fog — read from measured state. `--today` answers *what should I build?* with campaigns that each state what clearing them buys; `--new` lists the raw encounters. |
 | `harness-map` | Renders the ADR history as a **dungeon map** — cleared rooms, bosses standing, unlit regions — to a standalone HTML file. |
 | `/harness-core:bootstrap` | The one-shot — drops the entire process (CI, commits, releases, lint, hooks, gate wiring, ledger) into a repository. Never clobbers; declares what it imposes. |
 | `/harness-core:ears` | Turns a vague request into EARS-format requirements and scaffolds the matching specs. The upstream half of the BDD loop. |

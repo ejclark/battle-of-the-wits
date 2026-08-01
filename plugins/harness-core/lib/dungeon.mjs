@@ -28,6 +28,7 @@ import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { detect, plan } from "./phases.mjs";
 import { forge } from "./forge.mjs";
+import { renderCampaigns } from "./campaigns.mjs";
 import { bossList, readJson } from "./state.mjs";
 
 const ROOT = process.cwd();
@@ -148,6 +149,10 @@ export function render() {
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   // `--new` forges a dungeon from measured debt; the default view is the adoption crawl.
-  const wantsNew = process.argv.includes("--new") || process.argv.includes("--forge");
-  console.log(wantsNew ? forge(process.cwd()) : render());
+  // --today answers "what dungeons should I build?" with coherent campaigns; --new lists the raw
+  // encounters behind them; bare shows where you are in the adoption crawl.
+  const argv = process.argv;
+  if (argv.includes("--today") || argv.includes("--campaigns")) console.log(renderCampaigns(process.cwd()));
+  else if (argv.includes("--new") || argv.includes("--forge")) console.log(forge(process.cwd()));
+  else console.log(render());
 }

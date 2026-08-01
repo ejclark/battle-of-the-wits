@@ -5,9 +5,22 @@ description: The dungeon crawler — the harness's dominant persona. Shows where
 # The Dungeon
 
 ```shell
+harness-dungeon --today  # "what dungeons should I build?" — campaigns with a payoff each
+harness-dungeon --new    # the raw encounters behind them
 harness-dungeon          # where you are in the adoption crawl
-harness-dungeon --new    # forge a NEW dungeon from this repo's measured debt
 ```
+
+**`--today` is the one to reach for when asked what to work on.** It groups the standing bosses into
+coherent **campaigns**, each with a single value statement, because a flat list of findings tells you
+what is wrong and leaves you to work out what any of it *buys*.
+
+The grouping axis matters: dungeons group by **the capability clearing them unlocks**, never by which
+scanner reported the finding. Duplication and clones come from different gates and share a dungeon,
+because clearing both buys one thing. That is what keeps the reward statement honest instead of a
+label glued on afterwards.
+
+Prerequisites are real: **The Proving Grounds gates The Foundry**, because decomposing what nothing
+asserts on is the dangerous order — and the warning belongs on the dungeon, where the choice is made.
 
 `--new` is the choose-your-own-adventure surface. It reads the committed budgets and builds a crawl
 this repository has actually earned — real bosses, real fog, and a **hand of three genuinely
