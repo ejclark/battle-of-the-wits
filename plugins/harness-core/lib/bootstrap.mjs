@@ -189,6 +189,29 @@ if (auto) {
   console.log("  Re-run `harness-bootstrap --plan` to see where you are, or --auto to run the rest.\n");
 }
 
+// NOT A GIT REPOSITORY — say so, because most of what was just written cannot function without one.
+//
+// This wrote `.husky/` hooks, a `.gitignore` and a `.github/workflows/` pipeline into a directory
+// with no `.git` at all, and exited 0. Every file landed; none of the protection did. The hooks
+// cannot fire because there is nothing to hook, the workflow cannot run because there is no remote,
+// and the adopter has a directory that looks fully equipped and enforces nothing.
+//
+// That is the false green this project exists to prevent, produced by its own bootstrap: a
+// confident report about work that did not happen. The fix is not to refuse — the files are real and
+// keeping them is correct — it is to stop claiming an outcome that is not there.
+if (!dryRun && wrote.length && !existsSync(join(ROOT, ".git"))) {
+  console.log(`  ⚠ THIS IS NOT A GIT REPOSITORY YET, so the files above are written but inert.
+
+      The git hooks cannot fire — there is nothing to hook. The pipeline cannot run — there is
+      no remote to run it. Nothing here is enforcing anything until that changes:
+
+          git init -b main
+
+      Then re-run \`harness-bootstrap --auto\`, which is the point at which the hooks install and
+      the sequence can actually be completed.
+`);
+}
+
 if (!dryRun && wrote.length) {
   console.log("  Review every file before committing — especially .github/workflows/, which changes");
   console.log("  what runs with your repository's credentials.\n");
