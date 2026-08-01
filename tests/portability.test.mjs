@@ -146,6 +146,106 @@ test("defaults apply when no descriptor is present", () => {
   }
 });
 
+/**
+ * A scratch repository laid out as `lib/` + `spec/`, on a branch, with a local roster.
+ *
+ * Zoning is the one gate whose planted violation has to be planted TWICE, in opposite directions. A
+ * table with `src/` hardcoded refuses `lib/thing.ts` to a builder — which looks exactly like the gate
+ * working. Only the second case, where a builder must be PERMITTED, can tell those apart.
+ */
+function makeZonedRepo(principals) {
+  const root = makeRepo(
+    {
+      "lib/base.ts": "export const base = 1;\n",
+      "spec/.keep": "",
+      "documentation/.keep": "",
+      ".harness/roster.json": JSON.stringify(principals),
+    },
+    { sourceDir: "lib", testDir: "spec", docsDir: "documentation", specSuffix: ".test.ts" },
+  );
+  const git = (...a) => execFileSync("git", a, { cwd: root, stdio: "pipe", encoding: "utf8" });
+  git("init", "-q", "-b", "main");
+  git("config", "user.email", "probe@example.com");
+  git("config", "user.name", "probe");
+  git("add", "-A");
+  git("commit", "-qm", "init");
+  git("checkout", "-qb", "work");
+  return root;
+}
+
+const ROSTER = [
+  { id: "scribe", kind: "human", tier: "contributor" },
+  { id: "smith", kind: "human", tier: "builder" },
+];
+
+test("zoning refuses a contributor reaching into the descriptor's sourceDir", () => {
+  const root = makeZonedRepo(ROSTER);
+  try {
+    writeFileSync(join(root, "lib/thing.ts"), "export const thing = 1;\n");
+    const { code, out } = runGate("harness-preflight", root, ["--as", "scribe"]);
+    assert.equal(code, 1, "a contributor writing source must be refused");
+    assert.match(out, /lib\/thing\.ts/, "the refusal must name the planted file, in lib/ not src/");
+    assert.match(out, /contributor radius/, "and must say which radius was exceeded");
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("zoning permits a builder in the SAME directory — proving the radius was derived, not guessed", () => {
+  // The negative control. A hardcoded `src/` table refuses lib/ to everyone and would pass the case
+  // above for entirely the wrong reason; this is the assertion it cannot survive.
+  const root = makeZonedRepo(ROSTER);
+  try {
+    writeFileSync(join(root, "lib/thing.ts"), "export const thing = 1;\n");
+    const { code, out } = runGate("harness-preflight", root, ["--as", "smith"]);
+    assert.equal(code, 0, `a builder writing lib/ must pass under this descriptor:\n${out}`);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("zoning honours the descriptor's testDir and docsDir for a contributor", () => {
+  const root = makeZonedRepo(ROSTER);
+  try {
+    writeFileSync(join(root, "spec/thing.test.ts"), "// spec\n");
+    writeFileSync(join(root, "documentation/guide.md"), "# guide\n");
+    const { code, out } = runGate("harness-preflight", root, ["--as", "scribe"]);
+    assert.equal(code, 0, `spec/ and documentation/ are inside the contributor radius here:\n${out}`);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("zoning fails CLOSED for a principal the roster does not know", () => {
+  const root = makeZonedRepo(ROSTER);
+  try {
+    writeFileSync(join(root, "documentation/guide.md"), "# guide\n");
+    const { code, out } = runGate("harness-preflight", root, ["--as", "stranger"]);
+    assert.equal(code, 1, "an unknown principal must be refused, never waved through");
+    assert.match(out, /nothing is permitted/, "and the message must state the rule rather than imply it");
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("standing reports the zoning table under a non-default layout and never invents a roster", () => {
+  const root = makeRepo({ "harness.json": JSON.stringify({ sourceDir: "lib", testDir: "spec", docsDir: "documentation" }) });
+  try {
+    const zoned = runGate("harness-standing", root, ["--zoning"]);
+    assert.equal(zoned.code, 0);
+    assert.match(zoned.out, /source lib\//, "the table must print the layout actually in use");
+    assert.match(zoned.out, /specs spec\//);
+
+    // No roster is the normal case: it must read as silence, not as a pass and not as a failure.
+    const report = runGate("harness-standing", root);
+    assert.equal(report.code, 0, "a repo with no roster must exit 0");
+    assert.match(report.out, /No roster/);
+    assert.doesNotMatch(report.out, /visitor\s+\d/, "it must not invent principals to report on");
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("every gate is executable and survives a repo with nothing to scan", () => {
   // Not a correctness test — a crash test. A gate pointed at an empty repo must exit cleanly
   // rather than throwing ENOENT, because that is what a fresh adopter's first run looks like.

@@ -36,6 +36,8 @@ A conventional TypeScript project needs no file at all; the defaults below alrea
 | `specSuffix` | `".spec.ts"` | Suffix identifying a spec file, used to pair specs to sources. |
 | `specExempt` | `[]` | Paths with no honest unit assertion available (CLI mains, fixture data, GPU-bound render code). Defaults to empty on purpose — an exemption the adopter didn't ask for is a silently lowered bar. |
 | `exclude` | `[]` | Path prefixes that are **not first-party source**: fixtures, generated output, templates. Measuring a template inflates every number and reports two deliberate variants of one file as duplication. |
+| `docsDir` | `"docs"` | Root of the prose tree. Read by the zoning table to decide what a contributor tier may write. |
+| `ideasFile` | `"docs/IDEAS.md"` | The durable idea log. Read by the zoning table, and by the drawing-board campaign that ranks banked ideas. |
 | `fleet.maxConcurrent` | `3` | How many athletes may run at once. The cap exists because parallel work stops paying once *review* capacity binds — more agents past that point just produce more PRs competing for the same attention. |
 | `fleet.tokenCeiling` | `null` | Total tokens the fleet may burn before new starts are refused. `null` means no ceiling — the harness must not invent a limit the repo never asked for. |
 | `persona` | `"dungeon"` | The active harness persona shown in the status line: `dungeon` · `coach` · `orchestra` · `corporate` · `startup` · `senate`. |

@@ -123,6 +123,43 @@ determined the organism**. Porting a system with gaps means the destination sile
 you get something that runs but is not the thing you meant. That is the sharpest argument for the
 capability descriptor, and it is why every default in it is documented rather than inferred.
 
+### The rope team
+**From:** alpinism — the roped party, belays, and protection placed on lead.
+**Generated:** the whole shape of admitting a human to a system built for processes. The leader
+places protection *for the people following*, which is what a gate is; a fall is arrested by the
+protection rather than by anyone's reflexes, which is why zoning is enforced and not advised; and
+*never climb above your last piece of protection* becomes **never hand someone work whose mistakes
+the gates cannot catch** — the single rule that decides what a new contributor is given first.
+**Predicts:** that roping in a second person *slows the leader before it speeds the party*, because
+acclimatisation is real and a rope team moves at the pace of its slowest member. That is
+counterintuitive against the reason people add contributors, it contradicts the premise this work
+started from, and it is the prediction most worth checking.
+**Breaks when:** it suggests the follower's risk is always arrestable. A rope catches a fall; nothing
+catches a published credential or a leaked confidence. The irreversible class has no belay, which is
+exactly why it is refused to every principal rather than granted to trusted ones — and it is the
+place where reasoning from the metaphor produces a confident, wrong answer.
+
+### The crossing — a mountain range and an ocean
+**From:** two expedition traditions that are peers in difficulty and opposites in structure.
+**Generated:** a way to sort monumental work that the reversible/irreversible distinction alone does
+not give you. **A mountain crossing is arduous but retreat is always available** — you can see where
+you are, and turning back is a decision you may make at any point. **An ocean crossing has a point of
+no return**; past it the only way out is through, provisioning had to be complete before departure,
+and navigation is dead reckoning without landmarks. Small green PRs, squash-merge and revert are
+mountain discipline: optimise for retreat. Credentials, published packages, sent mail and anything
+outward-facing are ocean discipline: optimise for provisioning, because there is no retreat to
+optimise.
+**Predicts:** something non-obvious and checkable — that **caution differs in kind, not degree,
+between the two.** More care on a mountain buys better retreat options. More care mid-ocean buys
+almost nothing; all of it had to be spent before leaving harbour. So a process that responds to risk
+by "being more careful" is applying mountain discipline to an ocean problem, and will feel diligent
+while changing nothing. That is a real, recognisable failure and this framing names it.
+**Breaks when:** it implies every significant undertaking is one or the other. Most work is a day
+hike, and dressing an afternoon's refactor as an expedition is how a team acquires ceremony. It also
+breaks at the destination: expeditions have a far shore and a summit, and software has neither — so
+*arrival* is the part of both source domains with nothing to map onto, and the surplus structure
+there should be left unspent rather than forced.
+
 ## Using this
 
 Before a metaphor is allowed to generate a mechanism, answer the five questions in writing. If it
