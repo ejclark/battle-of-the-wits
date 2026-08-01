@@ -180,6 +180,36 @@ breaks at the destination: expeditions have a far shore and a summit, and softwa
 *arrival* is the part of both source domains with nothing to map onto, and the surplus structure
 there should be left unspent rather than forced.
 
+### The overworld
+**From:** the map layer above the dungeons in a role-playing game — regions, routes, keys, locked
+gates, fog of war, and towns you return to.
+**Generated:** the missing composition. This harness had dungeons (`campaigns.mjs`), unlit fog
+(`unlitDimensions`), a route already walked (`harness-map`), a picture of where the weight is
+(`harness-city`), and a class of change that unlocks a new capability (the expansion payoff test) —
+and **nothing that said how they relate or where any of it is going.** The overworld is that layer:
+*a dungeon is a coherent piece of work with one payoff; a key is the capability clearing it unlocks;
+a gate is a dungeon you cannot enter until you hold a key; fog is territory nobody has scouted.* The
+roadmap is not a separate artefact bolted on — **the overworld IS the roadmap**, and it is derived
+from the same committed state everything else here reads.
+**Predicts:** three things, all checkable and none obvious.
+(1) **Every item on a roadmap must name its prerequisite, and that prerequisite must be cleared or
+clearable.** An item with no route to it is not roadmap, it is a wish — and this makes the difference
+mechanical rather than a matter of taste.
+(2) **Fog is mandatory and must be drawn.** You cannot chart what you have not scouted, so an honest
+overworld has visible unknown regions. Most roadmaps hide their uncertainty behind a tidy list; this
+one is required to show it, which is the same refusal `unlitDimensions` already makes.
+(3) **The order you CAN do things is not the order you SHOULD** — sequence-breaking is legal and
+sometimes correct — so the roadmap must not render as a queue. A linear roadmap is a claim about
+dependencies that mostly are not there.
+**Breaks when:** it implies an **authored** world with a finish. An overworld was drawn by a designer
+who knew the whole map in advance and placed a final region; a codebase's territory is discovered,
+and there is no last dungeon. Asking "what is the endgame" imports a designer who does not exist, and
+the honest answer — *the map keeps growing* — is the one the source domain cannot give you.
+It breaks a second way on **fast travel**: in a game, somewhere you have been is somewhere you can
+return to instantly. In a system, revisiting a subsystem after six months costs close to full price
+again, because context decays and the person who returns is not the person who left. Reasoning from
+fast travel produces plans that assume re-entry is free, and re-entry is where estimates die.
+
 ## Using this
 
 Before a metaphor is allowed to generate a mechanism, answer the five questions in writing. If it
