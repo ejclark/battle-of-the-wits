@@ -48,6 +48,11 @@ function reachedPaths() {
 // built anything, and installing it into their repo would be the wrong verb entirely.
 const HANDED_OVER = ["starter/FIRST-APP.md"];
 
+// The starter app is written by `harness-starter`, not by the bootstrap — adopting the harness into
+// an existing repository must never drop a to-do app into it. Reached by a different command is
+// still reached; the rule is that nothing ships unreachable.
+const WRITTEN_BY_STARTER = (rel) => rel.startsWith("starter/todo/");
+
 test("every shipped template is reached by the bootstrap", () => {
   // A template nothing writes is dead weight that ships, and knip cannot see it here.
   const reached = reachedPaths();
@@ -59,7 +64,8 @@ test("every shipped template is reached by the bootstrap", () => {
         // lib — `gateSpecFor` picks between two spec templates and hands the choice to `tpl()`.
         !reached.some((r) => (r.prefix ? rel.startsWith(r.path) : rel === r.path)) &&
         !libSources.includes(`"${rel}"`) &&
-        !HANDED_OVER.includes(rel),
+        !HANDED_OVER.includes(rel) &&
+        !WRITTEN_BY_STARTER(rel),
     );
   assert.deepEqual(
     orphans,
@@ -95,6 +101,11 @@ test("a hand-over template is still pointed at by something a reader will meet",
     const leaf = rel.split("/").pop();
     assert.ok(pointers.includes(leaf), `${rel} is exempt from the bootstrap and nothing points at it either`);
   }
+
+  // The starter's exemption is only honest while something actually writes it. A directory nobody
+  // installs is the orphan the rule exists to catch, arriving through the door the exemption opened.
+  const starterLib = readFileSync(join(CORE, "lib/starter.mjs"), "utf8");
+  assert.match(starterLib, /templates\/starter\/todo/, "nothing writes the starter app — its exemption is now a hole");
 });
 
 test("no template names a path the harness does not ship", () => {
