@@ -366,3 +366,23 @@ Prevention ranks, best first:
   doctrine is optional — and it teaches them that on day one, which is the only day they are paying
   full attention. Third instance this week of "two correct mechanisms that deadlock when composed",
   and the first where the harness composed the deadlock with itself.
+
+### The most-executed artifact the harness ships was the least measured
+- **SHA:** `n/a`   **DATE:** 2026-08-01   **STATUS:** closed
+- **SIGNAL:** none. Found by continuing the audit — the status line runs on every render in an
+  adopter's editor and no test had ever executed it.
+- **ROOT CAUSE:** it lives in `templates/`, which the gates deliberately exclude from measurement,
+  because a template is not this project's code. That exclusion is right for the scanners and wrong
+  as an excuse: "not measured" was being read as "fine". Running it surfaced two defects. Its depth
+  indicator can only ever reach 3, because phases 4 and 5 are repository *settings* a file-reading
+  row cannot see — so a fully adopted repo displayed `depth 3/5` forever and read as permanently
+  unfinished. And `readFileSync(0)` on a TTY reads until EOF, which is a HANG rather than a throw:
+  the one failure its careful try/catch could not save it from, and the one that freezes the row
+  instead of hiding it.
+- **PREVENTION:** gate — eight cases: no row where the harness is not adopted, persona selection and
+  fallback, depth at each observable phase, the ceiling message, a malformed descriptor, and nothing
+  on stderr. The ceiling now names the wall (`rest is repo settings`) instead of implying more code
+  work, and stdin is only read when something is piped.
+- **SIDE QUESTS:** an exclusion is a statement about *who measures*, never about whether something
+  matters. Worth checking anything else excluded on principle — fixtures, generated output — for the
+  same silent promotion from "out of scope" to "assumed fine".

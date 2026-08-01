@@ -30,6 +30,8 @@ const PERSONAS = {
 };
 
 const CHAMBERS = ["The Threshold", "The Scrying Pool", "The Frozen Vault", "The Warden's Gate", "The Throne"];
+const PHASES = 5; // the full ladder in lib/phases.mjs
+const LOCAL_MAX = 3; // the deepest phase observable from files alone
 
 // Dim grey, then the accent teal that means "machine/system" brand-wide.
 const DIM = "\x1b[38;5;244m";
@@ -37,6 +39,10 @@ const ACCENT = "\x1b[38;5;79m";
 const RESET = "\x1b[0m";
 
 function readStdin() {
+  // Only when something is actually piped in. `readFileSync(0)` on a TTY reads until EOF, which is a
+  // HANG rather than a throw — the one failure the try/catch below cannot save you from, and the one
+  // that would freeze the row instead of hiding it.
+  if (process.stdin.isTTY) return {};
   try {
     return JSON.parse(readFileSync(0, "utf8"));
   } catch {
@@ -72,7 +78,12 @@ function main() {
   if (depth === 2 && allFrozen) depth = 3;
 
   const chamber = CHAMBERS[depth] ?? "cleared";
-  return `${DIM}${persona.icon} ${persona.label}${RESET}${DIM} · depth ${ACCENT}${depth}${DIM}/5 · ${chamber}${RESET}`;
+  // Phases 4 (require `verify` on the default branch) and 5 (auto-merge) are REPOSITORY SETTINGS.
+  // A row that reads files cannot see them, so a fully-adopted repo would otherwise sit at "3/5"
+  // forever and read as permanently unfinished. Say which wall you have hit instead of implying
+  // there is more work in the code.
+  const ceiling = depth === LOCAL_MAX ? `${DIM} · rest is repo settings${RESET}` : "";
+  return `${DIM}${persona.icon} ${persona.label}${RESET}${DIM} · depth ${ACCENT}${depth}${DIM}/${PHASES} · ${chamber}${RESET}${ceiling}`;
 }
 
 try {
