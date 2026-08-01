@@ -20,6 +20,11 @@ or redesign — you extract a cohesive seam into its own module and lock the win
    your own target; the gate's score already weighs size × cohesion.
 3. **Follow the `decompose` skill exactly** (`/harness-gates:decompose`) — read for a seam,
    extract to the natural module, import it back, keep behavior identical.
+   **Extract into a NEW file.** If the natural home is a module that already exists, that module's
+   budget has to rise to receive the code — and `harness-preflight` refuses any raise, correctly: an
+   athlete that can raise its own budget is marking its own homework. So the rails structurally
+   cannot express that move. Say so and stop; it is a lead-level change that lands as a reviewed PR,
+   not a failed dispatch. Do not work around it, and do not shrink the extraction to fit.
 4. **Prove it's safe:** `graphify affected <file>` for blast radius, then verify by exit status:
    `npm run typecheck && npm run lint && npm test && harness-arch-scan`. All must pass.
 5. **Ratchet:** `harness-arch-scan --update` and commit `arch-budget.json` in the same PR.
