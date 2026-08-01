@@ -211,6 +211,20 @@ came here to make.
 
 ---
 
+## Two repositories, and which to start in
+
+This one is the **harness** — the process itself, and it is mostly prose. That makes it the better
+first landing: a change here is a sentence, the checks are fast, and being confused by it is a
+contribution rather than a gap.
+
+[`skynet-capital`](https://github.com/ejclark/skynet-capital) is the **system the harness grew inside**
+— a real application, with real domain logic, where the same gates run against code rather than
+paragraphs. It is the more interesting problem and the steeper one. Go there when the loop here has
+stopped feeling like mechanics, which for most people is somewhere around the fifth change.
+
+Neither is a prerequisite for the other. If the application work is what you actually came for, start
+there and treat this page as the reference.
+
 ## When you want to build something of your own
 
 You will, and the answer is yes — the same harness that runs this repository installs into yours in

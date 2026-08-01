@@ -565,6 +565,36 @@ planting a violation the raw tool would report and requiring the gate to report 
 _(src: Eric · while: "we should install documentation packages where available… feels like a
 negligible tax with high payout")_
 
+**42. An admin panel is two different things, and only one of them should exist.**
+Asked directly: does the owner need an admin panel? Split the question, because the two halves have
+opposite answers.
+**The read half — yes, and it is already banked as #37.** Seeing state across projects, progress over
+time, what each adopted repo looks like: that is a dashboard, it is genuinely missing, and
+`cartography.mjs` is already half of it.
+**The write half — no, and building it would violate the rule the project is named around.** A panel
+that changes how the harness behaves is a control surface, and every control on it is a decision the
+system declined to make from evidence. Worse, the decisions actually worth an owner's attention are
+the irreversible ones — workflows, credentials, tier promotions — and those are refused to *every*
+principal including the owner, on purpose. A panel would be a button for exactly the class of action
+that must not have a button.
+So the useful shape is a **read surface with links out to GitHub**, not an admin console. Anything
+that needs changing gets changed where changes are reviewable.
+_(src: Eric · while: "would it make sense for me to have an admin panel?")_
+
+**43. The demo app's customisation surface is where the preference/backlog rule gets its first real
+test.** The starter to-do app (#36) will immediately attract "can it also…", and every one of those
+is the fork `DECIDING.md §7` now describes: a preference with no right answer, or a feature request
+with an unfound one. This is a good first test of that rule precisely because the pressure to ship
+settings is highest where the user is a beginner and saying no feels unkind.
+The mechanism that makes saying no cheap is already built: `harness-report` composes a complete,
+prefilled GitHub issue from local files at zero token cost. **The starter app should carry the same
+affordance** — an in-app "this should do X" that produces a filable issue rather than a setting. That
+turns every customisation impulse into signal instead of surface, and it teaches the loop this whole
+project runs on to somebody on their first day, using their own idea as the example.
+Watch for the failure: an app whose settings screen grows faster than its features is a backlog that
+got shipped instead of written down. _(src: Eric · while: "whatever we allow them to customize should
+be managed as preferences or routed through backlog as feature requests")_
+
 ### Side quests (surfaced by Claude while working — proposals to prune)
 
 **3. Humans do not claim territory; athletes do.**

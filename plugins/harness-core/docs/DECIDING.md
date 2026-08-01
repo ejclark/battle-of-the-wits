@@ -362,7 +362,37 @@ Stated now so the capture is pointed somewhere rather than hoarded:
 - **Time-to-first-merge per contributor cohort** — the falsifiable criterion in `CONTRIBUTORS.md` is
   currently unmeasurable for want of exactly this.
 
-## 7 · When nothing here tells you what to do
+## 7 · Preference, or backlog — the fork every customisation request arrives at
+
+Someone wants the thing to behave differently. There are exactly two honest destinations, and picking
+the wrong one is how a small system acquires a large permanent surface.
+
+> **A preference is a choice with no right answer.** Two users can want opposite things and both be
+> correct — a colour, a name, a sort order. Nothing is being deferred; there is genuinely nothing to
+> decide.
+>
+> **A feature request is a choice with a right answer nobody has found yet.** File it. The disagreement
+> is evidence the question is still open, and an issue is where an open question belongs.
+
+**The default is the issue, and the burden of proof is on the preference.** That ordering matters
+because the incentives run the other way: shipping a setting *feels* like serving the user and is
+usually the cheaper way to avoid deciding. What it actually does is convert one unanswered question
+into a permanent maintenance cost, a permanent test matrix, and a permanent excuse not to answer it.
+
+This is the same claim as *a control surface is a decision the system failed to make*, arriving from
+the user's side rather than the maintainer's.
+
+Two tests that resolve nearly every case:
+
+1. **Would you ship the opposite default and still be right?** If yes, preference. If you would be
+   embarrassed by one of the two, you have a right answer and you are avoiding it.
+2. **Can evidence settle it?** If a measurement could tell you which is better, it is not a
+   preference — it is an unmeasured feature request, and the issue should say what would settle it.
+
+And the case that looks like a preference and is not: **"make it configurable so we don't have to
+argue."** That is the disagreement being filed under furniture. Have the argument, or write the issue.
+
+## 8 · When nothing here tells you what to do
 
 Ask, in this order:
 
