@@ -501,3 +501,22 @@ Prevention ranks, best first:
   plumbing and must never share their conclusions.** Escaping and argument parsing are plumbing;
   "what counts as a big file" is a conclusion, and a rung that decides that for itself has stopped
   being a view of the repository and become an opinion about it.
+
+### The tool that answers "what should I build?" could only propose cleaning
+- **SHA:** `n/a`   **DATE:** 2026-08-01   **STATUS:** closed
+- **SIGNAL:** Eric asked what the next dungeon was. `harness-dungeon --today` answered with two
+  low-urgency tidying campaigns, because every gate was green and tidying was the only thing it could
+  see. A correct answer to a narrower question than the one asked.
+- **ROOT CAUSE:** the forge reads budgets and unlit dimensions — both measures of DEBT. The command's
+  own prompt is "what dungeons should I build today?", and it had no input capable of proposing a
+  build. Meanwhile 45 banked ideas sat in `docs/IDEAS.md`, which nothing read. A backlog nothing
+  reads is not a backlog, it is a diary.
+- **PREVENTION:** script — `ideas.mjs` parses the log into a graph and offers The Drawing Board
+  alongside the debt campaigns, with placement DERIVED (debt first when it exists, ideas first when
+  everything is green). Two rules keep it honest: nothing is invented — a proposal is a human's idea
+  quoted back — and the one derived signal, how many other ideas reference this one, is stated as a
+  proxy for load-bearing rather than as a verdict.
+- **SIDE QUESTS:** in-degree turned out to be a genuinely useful signal on the real log — the
+  most-referenced idea was one neither of us would have named from memory. Worth watching whether it
+  stays useful as the log grows, or degenerates into "whatever was written first has had longest to
+  accumulate mentions", which is a bias the count cannot see.

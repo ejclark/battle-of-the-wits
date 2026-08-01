@@ -1,18 +1,13 @@
 // CAMPAIGNS — group the standing bosses into coherent dungeons, each with one payoff.
 //
-// The forge lists encounters. A flat list is a backlog wearing a costume: it tells you what is wrong
-// and leaves you to work out what any of it BUYS. A campaign is the answer to "what should I build
-// today?" — a small set of fights that belong together, with a single value statement for finishing
-// them, so the decision is about outcomes rather than items.
+// A flat list is a backlog wearing a costume: it says what is wrong and leaves you to work out what
+// any of it BUYS. A campaign is the answer to "what should I build today?" — fights that belong
+// together, with one value statement for finishing them, so the decision is about outcomes.
 //
-// The grouping axis is deliberate: **bosses are grouped by the capability they unlock together**, not
-// by which scanner found them. Two findings from different gates belong in the same dungeon when
-// clearing both buys one thing; two findings from the same gate belong apart when they don't. That is
-// what makes the reward statement honest rather than a label glued on afterwards.
-//
-// Prerequisites are real, not flavour. Decomposing code that nothing asserts on is the dangerous
-// order, so the verification campaign gates the structural one — stated on the dungeon, where the
-// decision is actually made.
+// **Bosses are grouped by the capability they unlock together**, not by which scanner found them, so
+// the reward is honest rather than a label glued on afterwards. Prerequisites are real: decomposing
+// what nothing asserts on is the dangerous order, so verification gates the structural campaign.
+import { drawingBoard } from "./ideas.mjs";
 import { bossList, unlitDimensions } from "./state.mjs";
 
 /** Each dungeon claims the boss kinds it can resolve. Order here is presentation order. */
@@ -60,8 +55,7 @@ function campaigns(root) {
     };
   }).filter((d) => d.encounters.length > 0);
 
-  // The unmapped is only a dungeon when there is genuinely something unlit. It is offered FIRST when
-  // present, because fighting in the dark is how you pick the wrong fight.
+  // Unlit dimensions lead when present: fighting in the dark is how you pick the wrong fight.
   if (dark.length) {
     built.unshift({
       id: "the-unmapped",
@@ -75,6 +69,12 @@ function campaigns(root) {
     });
   }
 
+  // THE DRAWING BOARD — the only campaign proposing a BUILD rather than a cleanup, because budgets
+  // are all this command otherwise reads. Placement is DERIVED: debt first, and this leads only
+  // when there is none — at which point it is the answer.
+  const board = drawingBoard(root);
+  if (board) built[built.length ? "push" : "unshift"](board);
+
   return built;
 }
 
@@ -86,8 +86,8 @@ export function renderCampaigns(root, name) {
   L.push("");
 
   if (!found.length) {
-    L.push("  None. Every dimension is measured and every budget is met.");
-    L.push("  The honest move is to lower a budget on purpose, or go build something new.");
+    L.push("  None. Every dimension is measured, every budget is met, and nothing is banked.");
+    L.push("  The honest move is to lower a budget on purpose, or go write an idea down.");
     L.push("");
     return L.join("\n");
   }
