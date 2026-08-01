@@ -58,6 +58,7 @@ Works in any repository, in any language, with no configuration.
 | `harness-clone-scan` | Copy-pasted blocks |
 | `harness-incident-scan` | Incidents with no banked lesson |
 | `harness-ship` | Land a verified branch as a PR the resource-cheap way |
+| `harness-fleet` | **WIP cap, kill switch, token ceiling** — what makes "tokens to burn" safe to act on. |
 | `harness-preflight` | **Blast-radius refusal** — workflow files, credentials, raised budgets, work on the default branch, and edits outside claimed territory. Turns doctrine into a gate. |
 | `harness-claim` | **Territory claims** — an athlete registers the paths it holds; overlapping dispatch is refused. The rail that lets agents run in parallel without colliding. |
 
