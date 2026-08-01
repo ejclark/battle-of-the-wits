@@ -371,6 +371,21 @@ Then, once something of theirs has landed:
   (`${CLAUDE_PLUGIN_ROOT}/skills/intake/SKILL.md`), which keeps the observation and drops the
   prescription.
 
+Then hand them **the loop**, which is the section of `CONTRIBUTING.md` that answers the question they
+will actually have tomorrow — *what do I work on now?*
+
+> **Read something → hit a snag → fix it or log it → ship it → read the next thing.**
+
+Say the two things that make it work, because neither is obvious. **Step two supplies itself**: at
+their current level of knowledge, reading anything in the project produces work automatically, so
+they never need a queue or permission. And **logging is a real exit, not a failure** — when the snag
+is not prose, one entry in the idea log and moving on is the correct move. Getting stuck on something
+they cannot fix is the only way to actually fail at this.
+
+Then watch for the thing that matters more than any individual change: **the loop getting shorter.**
+The first pass is mostly mechanics and takes an hour; by the fifth it should be ten minutes. If that
+drop is not happening, the finding is about the system, not the person — chase it.
+
 Then do the second one. The path is known now and the ceremony is over, which was the point.
 
 ---

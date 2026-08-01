@@ -97,6 +97,68 @@ owner — it is never automatic, and it is never a score.
 
 ---
 
+## Finding a rhythm — the loop
+
+The hardest question when you are new is not *how do I change a file*. It is **what should I even
+work on?** Here is the answer, and it never runs out:
+
+> **Read something → hit a snag → fix it or log it → ship it → read the next thing.**
+
+That is the whole loop. What makes it work is that **step two supplies itself.** You do not need a
+queue, a ticket, or permission — reading anything in this project at your current level of knowledge
+*produces* work, automatically, because every place you have to stop and re-read is a real defect in
+the writing. Nobody who already understands it can find those. You can only find them once.
+
+**Step three has two exits and both are correct:**
+
+- **It is prose** — a confusing sentence, a missing definition, a dead link, a step that assumes
+  something it never said. **Fix it.** That is inside what you can change.
+- **It is not prose** — it is code, or a rule you disagree with, or something you cannot judge.
+  **Log it** in `docs/IDEAS.md`, one entry, in your own words: *what you were doing, what you
+  expected, what happened.* Then move on.
+
+Logging is not the consolation prize. An observation nobody had is worth more than a typo fixed, and
+moving on is what keeps the loop turning. **Getting stuck on something you cannot fix is the only way
+to actually fail at this.**
+
+### The loop should get faster, and you will feel it
+
+Your first pass will take most of an hour, and almost all of it is mechanics — where the pencil icon
+is, what the title format wants, waiting on checks. That is not you being slow, it is the fixed cost
+of doing anything the first time.
+
+By the fifth pass the mechanics disappear and the loop is ten minutes: notice, edit, propose, done.
+**That drop is the whole point of the first week**, and it is worth watching for, because it is the
+moment the tool stops being in the way and the work becomes the work.
+
+If a loop is *not* getting shorter, something is wrong with the system and not with you. Say so —
+that is the most valuable report on this page.
+
+---
+
+## Three things that genuinely need doing right now
+
+Real, checked against the repository today, and sized for a first pass. Take any of them, or ignore
+all three and follow your own snag — the loop is better than the list.
+
+**1 · There is no glossary, and the words are everywhere.** *(best first task)*
+Counted just now in the docs a newcomer reads: **gate** appears 165 times, **athlete** 39,
+**preflight** 17, **ratchet** 9 — and not one of them is defined anywhere a newcomer would look.
+Create `docs/GLOSSARY.md` and define the ones **you** had to guess at, in the words you would have
+wanted. Leave out the ones you already understood.
+
+You are the right person for this and it is not a beginner's consolation task — **it has to be
+written by someone who did not know the words**, and everyone else here lost that ability months ago.
+Ten terms is a complete first version.
+
+**2 · Two documents nobody can find.** `docs/JOURNAL.md` and `docs/LESSONS.md` exist and nothing
+anywhere links to them. Add a line pointing at each from wherever *you* would have expected to find
+them — and if the answer is "I would not have looked for these at all", that is worth saying instead.
+
+**3 · The longest paragraph on this page is 833 characters.** Several here are walls. Break up the
+ones that made you slow down — and only those, because a paragraph you read easily is fine as it is
+and shortening it costs clarity for nothing.
+
 ## Optional, and entirely yours: a GitHub profile
 
 GitHub reserves one repository per account for this — a public repo named **exactly your username**,

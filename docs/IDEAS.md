@@ -219,6 +219,22 @@ formalisation rather than a rewrite. Pairs with #2. _(src: Eric · while: "githu
 scale of one project/dimension… updating GitHub profile is another source to abstract and house
 context")_
 
+**20. Measure the LOOP, never the looper.**
+A contributor's cycle time — first edit to merged — is the sharpest available read on how much
+friction the system imposes, and the commit boundaries in the ledger already carry the raw material.
+It is also one field away from a per-person performance metric, which is the artefact this project
+has refused to build all along.
+The resolution is the one already applied to `reverted` in the standing table: **diagnostic in a
+single view, comparative in a table.** Someone seeing their own loop shorten is being handed
+information they can act on and a reason to keep going; the same numbers side by side are a
+leaderboard, and there is nothing to act on in learning that someone else's loop is shorter. So if
+this is ever built: shown to the person it describes, never aggregated across people, and the ledger
+keeps its no-actor rule by storing the interval without the identity.
+**Not built now**, and the reason is the standing one: no contributor has a first commit yet, so it
+would report nothing. The trigger is a handful of landed changes and a real question about whether
+the first week is getting easier. Pairs with #14. _(src: Eric · while: "establish some iteration
+loops and tighten them")_
+
 ### Side quests (surfaced by Claude while working — proposals to prune)
 
 **3. Humans do not claim territory; athletes do.**
