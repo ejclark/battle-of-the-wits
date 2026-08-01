@@ -5,8 +5,15 @@ description: The dungeon crawler — the harness's dominant persona. Shows where
 # The Dungeon
 
 ```shell
-harness-dungeon
+harness-dungeon          # where you are in the adoption crawl
+harness-dungeon --new    # forge a NEW dungeon from this repo's measured debt
 ```
+
+`--new` is the choose-your-own-adventure surface. It reads the committed budgets and builds a crawl
+this repository has actually earned — real bosses, real fog, and a **hand of three genuinely
+different next moves** rather than a ranked backlog. A ranked list is someone else's decision handed
+over for rubber-stamping; a hand is a decision you make. Picking one changes what the next hand
+holds.
 
 The dominant persona for this harness. A dungeon crawler's opening question is **where am I, what
 kills me, and what do I need before the boss** — which is a better first question for structural debt

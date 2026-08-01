@@ -118,3 +118,87 @@ test("it renders in a directory with nothing at all rather than crashing", () =>
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+// ── the forge ──────────────────────────────────────────────────────────────────
+const forgeRun = (cwd) =>
+  execFileSync(BIN, ["--new"], { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+
+test("the forge invents nothing — every encounter traces to a committed budget", () => {
+  const root = makeRepo({
+    "package.json": "{}\n",
+    "arch-budget.json": '{"src/colossus.ts":2400,"src/mid.ts":600,"src/small.ts":80}',
+    "dupe-budget.json": '{"duplicateDefs":12}',
+  });
+  try {
+    const out = forgeRun(root);
+    assert.match(out, /src\/colossus\.ts/, "the biggest file must be named, not described vaguely");
+    assert.match(out, /2400 lines/);
+    assert.match(out, /12 duplicated definitions/);
+    // Nothing may be offered that no budget supports.
+    assert.doesNotMatch(out, /copy-pasted blocks/, "no clone budget means no clone encounter");
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("unmeasured dimensions become unlit encounters, never silence", () => {
+  const root = makeRepo({ "package.json": "{}\n", "arch-budget.json": '{"a.ts":100}' });
+  try {
+    const out = forgeRun(root);
+    const unlit = out.slice(out.indexOf("UNLIT"));
+    assert.match(unlit, /dead code/);
+    assert.match(unlit, /duplication/);
+    assert.match(unlit, /harness-dupe-scan --update/, "each unlit dimension must carry its fix");
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("the hand offers distinct characters, not a ranked list", () => {
+  const root = makeRepo({
+    "package.json": "{}\n",
+    "arch-budget.json": '{"a.ts":2000,"b.ts":900,"c.ts":400}',
+  });
+  try {
+    const out = forgeRun(root);
+    const hand = out.slice(out.indexOf("YOUR MOVE"));
+    assert.match(hand, /biggest threat/);
+    assert.match(hand, /quickest win/);
+    assert.match(hand, /Light the dark/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("the spec gap is marked as a prerequisite for the big decomposition", () => {
+  // Decomposing what nothing asserts on is the dangerous order — the forge has to say so.
+  const root = makeRepo({
+    "package.json": "{}\n",
+    "arch-budget.json": '{"big.ts":1500}',
+    "spec-gap-budget.json": '{"untested":9}',
+  });
+  try {
+    const out = forgeRun(root);
+    assert.match(out, /fight this BEFORE The Colossus/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("a clean, fully-measured repo says so instead of inventing a fight", () => {
+  const root = makeRepo({
+    "package.json": "{}\n",
+    "arch-budget.json": "{}",
+    "dupe-budget.json": '{"duplicateDefs":0}',
+    "dead-budget.json": "{}",
+    "spec-gap-budget.json": '{"untested":0}',
+    "clone-budget.json": '{"clones":0}',
+    "docs/LESSONS.md": "# Lessons\n",
+  });
+  try {
+    const out = forgeRun(root);
+    assert.match(out, /nothing here to fight/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
