@@ -93,13 +93,28 @@ export function mergeClaudeSettings(root, { dryRun = false, force = false } = {}
       return {};
     }
   })();
-  if (settings.statusLine !== undefined && !force) {
-    return { skipped: ".claude/settings.json \u2192 statusLine (already set)" };
+  // The freshness check rides in as a SessionStart hook rather than a separate file: it is the one
+  // question a contributor cannot answer for themselves \u2014 a stale checkout looks exactly like a
+  // current one \u2014 and asking it anywhere later than session start is asking it after the work.
+  // Appended, never replacing: `hooks` is code execution the project owns.
+  const already = JSON.stringify(settings.hooks?.SessionStart ?? []).includes("harness-freshness");
+  if (!already) {
+    settings.hooks ??= {};
+    settings.hooks.SessionStart = [...(settings.hooks.SessionStart ?? []), { hooks: [{ type: "command", command: "harness-freshness" }] }];
   }
-  settings.statusLine = { type: "command", command: "node .claude/harness-statusline.mjs" };
-  if (!dryRun) {
+
+  const keepStatusLine = settings.statusLine !== undefined && !force;
+  if (!keepStatusLine) settings.statusLine = { type: "command", command: "node .claude/harness-statusline.mjs" };
+
+  // ONE write, after both decisions. An early return here dropped the hook on the floor for every
+  // repo that already had a status line \u2014 the exact repos that had adopted furthest.
+  if (!dryRun && !(keepStatusLine && already)) {
     mkdirSync(dirname(path), { recursive: true });
     writeFileSync(path, `${JSON.stringify(settings, null, 2)}\n`);
   }
-  return { wrote: ".claude/settings.json \u2192 statusLine" };
+  const added = [keepStatusLine ? null : "statusLine", already ? null : "SessionStart freshness hook"].filter(Boolean);
+  return {
+    ...(added.length ? { wrote: `.claude/settings.json \u2192 ${added.join(" + ")}` } : {}),
+    ...(keepStatusLine ? { skipped: ".claude/settings.json \u2192 statusLine (already set)" } : {}),
+  };
 }

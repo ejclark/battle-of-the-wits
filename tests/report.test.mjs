@@ -134,3 +134,53 @@ test("a repository with nothing set up still produces a filable report", () => {
   assert.match(issueBody(r), /not frozen/);
   assert.match(issueUrl(r), /^https:\/\/github\.com\/ejclark\/dungeon-crawler\/issues\/new\?/);
 });
+
+// ── freshness: the two clocks, and staying silent ──────────────────────────────
+
+test("freshness says nothing when current and one line when behind", async () => {
+  const { freshness, freshnessLine } = await import("../plugins/harness-gates/lib/freshness.mjs");
+
+  // A hook that prints "up to date" every session has taught everyone to skip its output by the
+  // third day — which is the day it finally matters. Silence is the design, not an omission.
+  assert.equal(freshnessLine({ stale: false, behind: 0 }), "");
+
+  // Two clocks. Reporting one is WORSE than reporting neither: it produces confidence about a
+  // question it did not ask.
+  const inside = freshnessLine({ stale: true, behind: 3, branch: "main", sameClock: true });
+  assert.match(inside, /3 commits behind/);
+  assert.match(inside, /updates both/, "inside the marketplace repo the clocks collapse — say so");
+
+  const outside = freshnessLine({ stale: true, behind: 1, branch: "trunk", sameClock: false });
+  assert.match(outside, /1 commit behind/, "singular, because a report nobody reads twice must read right once");
+  assert.match(outside, /plugin update/, "elsewhere the plugin clock is separate and must be named");
+
+  // Cannot measure is not the same as up to date. A fresh clone with no upstream deserves the
+  // honest answer, not a green one.
+  const bare = mkdtempSync(join(tmpdir(), "nogit-"));
+  const f = freshness(bare);
+  assert.equal(f.behind, null);
+  assert.notEqual(f.behind, 0, "no repository must never read as zero commits behind");
+  assert.equal(freshnessLine(f), "");
+});
+
+test("the freshness hook survives a repo that already set a status line", async () => {
+  // The regression this had on its first write: an early return for "statusLine already set" meant
+  // the hook was added to the object and never persisted — so the repos that had adopted FURTHEST
+  // were the ones that silently got nothing.
+  const { mergeClaudeSettings } = await import("../plugins/harness-core/lib/merge.mjs");
+  const root = mkdtempSync(join(tmpdir(), "settings-"));
+  mkdirSync(join(root, ".claude"), { recursive: true });
+  writeFileSync(join(root, ".claude/settings.json"), JSON.stringify({ statusLine: { type: "command", command: "mine" }, hooks: { SessionStart: [{ hooks: [{ type: "command", command: "theirs" }] }] } }));
+
+  const r = mergeClaudeSettings(root, {});
+  const after = JSON.parse(readFileSync(join(root, ".claude/settings.json"), "utf8"));
+  assert.equal(after.statusLine.command, "mine", "their status line is a decision and must survive");
+  assert.equal(JSON.stringify(after.hooks.SessionStart).includes("theirs"), true, "their hook must survive — hooks are code execution the project owns");
+  assert.equal(JSON.stringify(after.hooks.SessionStart).includes("harness-freshness"), true, "the freshness hook was dropped on the floor");
+  assert.match(r.wrote, /freshness/);
+
+  // Idempotent: running twice must not stack the hook.
+  mergeClaudeSettings(root, {});
+  const twice = JSON.parse(readFileSync(join(root, ".claude/settings.json"), "utf8"));
+  assert.equal(JSON.stringify(twice.hooks.SessionStart).split("harness-freshness").length - 1, 1);
+});
