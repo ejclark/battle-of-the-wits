@@ -51,7 +51,7 @@ const HANDED_OVER = ["starter/FIRST-APP.md"];
 // The starter app is written by `harness-starter`, not by the bootstrap — adopting the harness into
 // an existing repository must never drop a to-do app into it. Reached by a different command is
 // still reached; the rule is that nothing ships unreachable.
-const WRITTEN_BY_STARTER = (rel) => rel.startsWith("starter/todo/");
+const WRITTEN_BY_STARTER = (rel) => rel.startsWith("starter/todo/") || rel.startsWith("starter/hello/");
 
 test("every shipped template is reached by the bootstrap", () => {
   // A template nothing writes is dead weight that ships, and knip cannot see it here.
@@ -105,7 +105,9 @@ test("a hand-over template is still pointed at by something a reader will meet",
   // The starter's exemption is only honest while something actually writes it. A directory nobody
   // installs is the orphan the rule exists to catch, arriving through the door the exemption opened.
   const starterLib = readFileSync(join(CORE, "lib/starter.mjs"), "utf8");
-  assert.match(starterLib, /templates\/starter\/todo/, "nothing writes the starter app — its exemption is now a hole");
+  for (const kind of ["hello", "todo"]) {
+    assert.match(starterLib, new RegExp(`templates/starter/${kind}`), `nothing writes the ${kind} starter — its exemption is now a hole`);
+  }
 });
 
 test("no template names a path the harness does not ship", () => {

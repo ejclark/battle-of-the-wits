@@ -1,0 +1,15 @@
+/* Every value in here is an opinion, and none of them is right. Change one, reload, see what
+   happened. That loop — change, reload, look — is the entire job, and it never gets more
+   complicated than this. */
+:root { --ink: #16181a; --paper: #fcfbf7; --accent: #b4552d; }
+body.night { --ink: #eceae4; --paper: #14161a; --accent: #e2a361; }
+
+body { font: 18px/1.6 ui-serif, Georgia, serif; color: var(--ink); background: var(--paper);
+       max-width: 40rem; margin: 3rem auto; padding: 0 1.25rem; transition: background .3s, color .3s; }
+h1 { font-size: clamp(2rem, 7vw, 3.2rem); line-height: 1.05; margin: 0 0 .4em; }
+button { font: inherit; font-size: .95rem; padding: .5rem 1rem; border: 1px solid var(--ink);
+         border-radius: 999px; background: transparent; color: inherit; cursor: pointer; }
+button:hover { background: var(--accent); border-color: var(--accent); color: var(--paper); }
+canvas { display: block; width: 100%; height: auto; margin: 2rem 0 .75rem; border-radius: 8px; }
+.hint { font-size: .85rem; opacity: .7; }
+code { font-family: ui-monospace, Menlo, monospace; font-size: .9em; }
