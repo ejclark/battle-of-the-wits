@@ -188,6 +188,45 @@ test("every harness-* command named in a shipped doc is a launcher that exists",
   );
 });
 
+// The repository's OWN contributor-facing files must not name commands it does not have.
+//
+// The gate above covers `plugins/**` — what an adopter receives. It does not cover `.github/` or the
+// root, which is where a NEW CONTRIBUTOR actually starts: the pull-request template is the first
+// procedural text a first-timer reads, and it told everyone to run
+// `node scripts/sync-versions.mjs --check`, a file that has never existed in this repository. The
+// shipped template says `npm run verify` and is correct; the local copy drifted and nothing looked.
+//
+// That is the same defect class as the shipped-command gate, one directory over, and the reason it
+// survived is instructive: the scanner was scoped to the artefact we distribute rather than to the
+// artefact we hand people. A stale command in a PR template is worse than one in a plugin doc — the
+// reader is at their least confident and most likely to conclude the failure is theirs.
+test("no contributor-facing file at the repo root names a command this repo does not have", () => {
+  const scripts = new Set(Object.keys(JSON.parse(readFileSync(join(REPO, "package.json"), "utf8")).scripts ?? {}));
+  const docs = [
+    ...readdirSync(REPO).filter((f) => f.endsWith(".md")).map((f) => join(REPO, f)),
+    ...(existsSync(join(REPO, ".github"))
+      ? readdirSync(join(REPO, ".github")).filter((f) => f.endsWith(".md")).map((f) => join(REPO, ".github", f))
+      : []),
+  ];
+
+  const broken = [];
+  for (const file of docs) {
+    const body = readFileSync(file, "utf8");
+    for (const m of body.matchAll(/node\s+(scripts\/[\w.-]+\.mjs)/g)) {
+      if (!existsSync(join(REPO, m[1]))) broken.push(`${file.replace(REPO, ".")}: node ${m[1]} — no such file`);
+    }
+    for (const m of body.matchAll(/`npm run ([\w:-]+)`/g)) {
+      if (!scripts.has(m[1])) broken.push(`${file.replace(REPO, ".")}: npm run ${m[1]} — not in package.json`);
+    }
+  }
+  assert.deepEqual(
+    [...new Set(broken)],
+    [],
+    `contributor-facing docs name commands that do not exist:\n  ${[...new Set(broken)].join("\n  ")}\n\n` +
+      "The reader of these is usually new and will assume the failure is theirs.",
+  );
+});
+
 // A relative link in a shipped doc must resolve inside the plugin that ships it.
 //
 // `ENGINEERING.md` shipped with links to `adr/README.md`, `../.github/pull_request_template.md`, and
