@@ -544,3 +544,50 @@ sanity-check anyway.
 **The tell that this rule is being broken:** you are relaying commands through a third person. If the
 owner is copying instructions to a contributor, the instructions are aimed at the wrong reader.
 
+## Coordination, once there is more than one of you
+
+Two humans and a fleet of agents is where a project stops being able to hold its plan in one person's
+head. The failure is not disagreement — it is **two people doing the same work and finding out at
+merge time**, which costs both of them and teaches them to ask permission first.
+
+The fix here is deliberately not a new system. **GitHub already has the coordination layer**, and it
+has the property that matters: it is visible without asking anyone.
+
+> **The bank is unbounded. The issue list is the ordered set. Assignment is the claim.**
+
+- **`docs/IDEAS.md` is the bank** — unbounded, unordered, and nobody works from it directly. An entry
+  there is intent recorded, not work scheduled. It is allowed to be a mess; that is what a bank is
+  for, and pruning it is a different job from doing any of it.
+- **An issue is a promotion out of the bank** — someone decided this one is ready and said what
+  "done" means. Only the issue list is small enough to be a plan, and it should be kept small enough
+  to read in a minute.
+- **Assigning yourself is the claim**, and it is the whole collision protocol. Not because assignment
+  is powerful — it is one click and anybody can undo it — but because it is **checkable without
+  interrupting a person**, which is the only property a claim actually needs.
+
+**Claim before you build, not after.** Thirty seconds of assigning yourself is the entire cost of
+never discovering at merge time that somebody else spent an afternoon on the same thing.
+
+### Why athletes claim territory and humans do not
+
+`harness-claim` exists and humans should not use it. An athlete's claim is a **path lock** — it has
+to be, because two processes editing one file produce a conflict no review can catch. A human's claim
+is a **statement of intent**, and those are different objects: intent is coarse ("I am doing the
+incidents view"), revisable, and worth broadcasting; a path lock is precise, blocking, and worth
+nothing to somebody who can simply say what they are doing.
+
+Applying the athlete mechanism to people would serialise them on files they were never going to
+collide over, and would still miss the collision that actually happens — two people solving the same
+problem in two different files.
+
+### Decomposition is the owner's job, and it is the constraint
+
+The bank grows faster than anything gets built, which is correct — capture is cheap and should be.
+But an entry only becomes work when somebody turns it into a thing with a stated outcome, and **that
+translation is where a plan is actually made.** It cannot be delegated to whoever is free, because
+someone who did not make the decision is guessing at what it meant, and a backlog turned into a game
+of telephone is worse than an empty one.
+
+The measurable version, so it does not stay an opinion: **if contributors are idle while the bank is
+full, the constraint is decomposition** — not capacity, not motivation, and adding either will make
+it worse.

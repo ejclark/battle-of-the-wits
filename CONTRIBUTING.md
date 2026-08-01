@@ -250,6 +250,54 @@ came here to make.
 
 ---
 
+## Ask anything, and what can get built without waiting
+
+**Ask your Claude session about this project directly.** The doctrine, the reasoning, the incidents
+and the arguments behind most decisions are committed here, so a question like *"why do budgets only
+go down?"* or *"what happens if a gate can't measure something?"* has a real answer in the repository
+rather than a guess. If it does not, **that gap is a finding** and worth reporting.
+
+### The honest bit about influence
+
+**Right now your influence over direction is limited**, and you should know that rather than discover
+it. Not because of anything to do with you — the collaboration model for this project genuinely does
+not exist yet, and inventing one around a single contributor would be inventing it wrong. It will get
+built, and being here early is how you end up shaping it.
+
+**Limited influence is not the same as limited usefulness**, and the difference is most of what
+matters day to day. A great deal can be built without anyone waiting on Eric, because the reasoning
+is already written down and the work is reversible. That is where to aim.
+
+### What can be built right now, without asking anyone
+
+Where the context is established and the change is reversible, **your session can just build it.**
+The rails catch mistakes and a squash-merge undoes them, so the expensive part of being wrong has
+already been paid for.
+
+**The local application is the best place to aim**, and it is deliberate advice rather than a
+consolation. Run `harness-serve` and open it. Everything it shows is derived from data already in the
+repository — gates, budgets, the run ledger, the structural model — so a new view is *reading*
+something that exists, never inventing a source. It is new, so there is no legacy to break; it is
+read-only, so nothing it does is dangerous; and it is visual, so you see whether it worked
+immediately.
+
+Things there that are genuinely missing, and each is one view:
+
+- **Incidents over time.** `docs/LESSONS.md` records every failure with its prevention. Nothing shows
+  them as a sequence.
+- **What a budget looked like a month ago.** Every budget file is committed, so the history is in git
+  and nothing reads it.
+- **Which gate fires most.** The run ledger has the records; no view counts them.
+- **A file's story.** Pick any source file: its budget, its history, what `_why_` says about it.
+
+Pick one. Build it. If it works, open a pull request.
+
+**What still waits for Eric**, and will keep waiting: anything touching `.github/workflows/`,
+credentials, or permissions; and anything that is a *taste* call — product direction, naming, what
+the thing should feel like. Those are not gated on trust. They are gated on being irreversible or on
+being somebody's judgment to make, and both of those would be true on your hundredth change as much
+as your first.
+
 ## Two repositories, and which to start in
 
 This one is the **harness** — the process itself, and it is mostly prose. That makes it the better
