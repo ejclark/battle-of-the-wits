@@ -1,0 +1,7 @@
+{
+  "sourceDir": "src",
+  "testDir": "tests",
+  "sourceExt": ".ts",
+  "specSuffix": ".spec.ts",
+  "specExempt": []
+}

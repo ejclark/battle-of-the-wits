@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/intent-log.mjs 2>/dev/null || true",
+            "async": true
+          }
+        ]
+      }
+    ]
+  }
+}

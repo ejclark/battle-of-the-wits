@@ -1,0 +1,101 @@
+name: Pipeline
+
+# One workflow, two mutually-exclusive jobs, so no runner-minute is ever spent twice:
+#   • verify  (pull_request only) — commitlint + typecheck + lint + test, on ONE runner.
+#   • release (push to main only) — semantic-release, with NO re-verify: branch protection
+#     requires `verify` before merge, so the merged commit is already validated.
+#
+# The quality gates are NOT separate steps here on purpose — they run inside `npm test` via
+# tests/arch/gates.spec.ts, so they cost nothing extra and cannot be skipped independently.
+#
+# Rationing (runner minutes are metered):
+#   - docs-only PRs still run `verify` but skip the heavy steps, so the required check reports
+#     green in seconds. Do NOT paths-ignore '**.md': a required check that never runs leaves
+#     docs PRs stuck "waiting for status" forever.
+#   - draft PRs don't run.
+#   - main pushes skip verify entirely.
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
+concurrency:
+  group: pipeline-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  verify:
+    name: verify
+    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.draft == false }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0            # commitlint needs the PR commit range
+
+      - name: Set up Node
+        uses: actions/setup-node@v5
+        with:
+          node-version-file: '.nvmrc'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Detect non-docs changes
+        id: changes
+        run: |
+          if git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} \
+               | grep -qvE '\.md$'; then
+            echo "code=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "code=false" >> "$GITHUB_OUTPUT"
+            echo "docs-only PR — skipping typecheck/lint/test; verify still reports green."
+          fi
+
+      - name: Commit lint
+        run: npx commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose
+
+      - name: Typecheck
+        if: steps.changes.outputs.code == 'true'
+        run: npm run typecheck
+
+      - name: Lint
+        if: steps.changes.outputs.code == 'true'
+        run: npm run lint
+
+      # Runs the suite AND the architecture gates (tests/arch/gates.spec.ts).
+      - name: Test
+        if: steps.changes.outputs.code == 'true'
+        run: npm test
+
+  release:
+    name: release
+    # Merged commits are already verified, so this path only ships.
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Set up Node
+        uses: actions/setup-node@v5
+        with:
+          node-version-file: '.nvmrc'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Semantic Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx semantic-release

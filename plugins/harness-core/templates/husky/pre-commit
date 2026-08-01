@@ -1,0 +1,5 @@
+# Auto-format staged files so biome format drift can't be committed (retro: PR #111 lint slip).
+files=$(git diff --cached --name-only --diff-filter=ACMR)
+[ -z "$files" ] && exit 0
+./node_modules/.bin/biome format --write --no-errors-on-unmatched $files 2>/dev/null
+git add $files
