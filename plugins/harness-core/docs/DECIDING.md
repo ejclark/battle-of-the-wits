@@ -272,6 +272,57 @@ that — which is the migration path, and it is free. Two design decisions carry
   door: individually innocuous entries accreting into a profile nobody decided to publish. The schema
   is the defence — you cannot query a column that does not exist.
 
+### Measurement taxes the system — and the tax is set by where it attaches
+
+Observation is never free, so it has to be priced. Measured here rather than assumed, on the
+commit-boundary hook: **58 ms per commit**, of which **26 ms is bare interpreter startup**, and **89
+bytes per record** — 713 KB a year, 7 MB a decade at twenty commits a day.
+
+Negligible. But the number on its own means nothing, because the *same 58 ms* costs this:
+
+| Attached to | Cost per working day | |
+|---|---|---|
+| a commit (~20/day) | 1.2 s | free |
+| a gate run (~10 per commit) | 11.6 s | noticeable |
+| a scanner invocation | 7.0 s | noticeable |
+| **a file scanned** (~4,800/day) | **278 s** | **fatal — nobody keeps it on** |
+
+Identical code, four and a half minutes a day apart, and the only variable is the attachment point.
+So the rule is not "measure less". It is:
+
+> **Attach measurement to BOUNDARIES, not to units of work.**
+
+Which is the same answer the retro drill reaches from a completely different direction — a boundary
+is where the timeline can be *read* instead of reconstructed. Two independent arguments, cost and
+fidelity, landing on one rule is the strongest signal available that the rule is real.
+
+**And the compute tax is the small one.** The expensive tax is behavioural: a measured dimension
+becomes a target, and the system drifts toward the proxy. This project already states that in its
+sharpest form — *the moment the metric grants the power, the metric becomes the work* — and it
+generalises. Before adding a measurement, ask what someone would do to make the number look good, and
+whether you would be happy if they did.
+
+### Hard data outranks theory — about what it measured, and no further
+
+Correct, and worth stating precisely, because the imprecise version is how measurement gets misused:
+
+- **About what was measured**, hard data wins outright. A theory that contradicts an observation is
+  wrong, and this is why an afternoon spent computing something beats a week of arguing about it.
+- **About what was NOT measured**, theory is *better* — because at least a theory names its mechanism
+  and can be checked. An extrapolation from data names nothing.
+- **The dangerous class is hard data extrapolated.** It carries a theory's uncertainty and a
+  measurement's credibility, which is the worst pairing available. Six records showing commits
+  getting smaller is not a trend; it is a story about a few days wearing a number's clothes.
+
+Hence the honest failure mode to guard: not "we lack data" but **"we have data about the wrong
+thing"** — a proxy, measured precisely, reported confidently. `harness-log --report` therefore states
+its own sample size and refuses to describe a direction below one, which is the same posture every
+gate here takes toward a dimension it cannot measure.
+
+The practical version, when a number and an argument disagree: **check what the number actually
+measured first.** Most of the time it measured something adjacent to the claim, and the disagreement
+dissolves once that is named.
+
 ### When a database is the right answer
 
 Not never. The trigger is specific, and it is not a row count:
