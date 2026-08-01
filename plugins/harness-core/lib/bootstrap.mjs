@@ -85,7 +85,25 @@ const descriptor = (() => {
     return {};
   }
 })();
-put(`${descriptor.testDir ?? "tests"}/arch/gates.spec.ts`, tpl("specs/gates.spec.ts"));
+// WHICH gate spec, and under WHICH filename, is decided by the repo's own test runner. Getting this
+// wrong is the worst failure this bootstrap can have: a gate file the runner never discovers reports
+// nothing, the suite stays green, and the repo believes it is guarded when it is not. A gate that
+// cannot be seen is worse than no gate, because it buys false confidence.
+//
+// `node --test` provides `test()` from node:test but NOT `expect`, and typically globs a specific
+// filename pattern (*.test.mjs). Vitest/Rstest/Jest provide describe/it/expect and glob *.spec.ts.
+const testScript = (() => {
+  try {
+    return JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8")).scripts?.test ?? "";
+  } catch {
+    return "";
+  }
+})();
+const usesNodeTest = /\bnode\s+--test\b/.test(testScript);
+const gateSpec = usesNodeTest
+  ? { template: "specs/gates.test.mjs", name: "gates.test.mjs" }
+  : { template: "specs/gates.spec.ts", name: "gates.spec.ts" };
+put(`${descriptor.testDir ?? "tests"}/arch/${gateSpec.name}`, tpl(gateSpec.template));
 
 // ── the lessons ledger ─────────────────────────────────────────────────────────
 put("docs/LESSONS.md", tpl("common/docs/LESSONS.md"));
@@ -196,6 +214,10 @@ if (!existsSync(pkgPath)) {
 }
 
 console.log(`
+  Test runner detected: ${usesNodeTest ? "node --test  → wrote gates.test.mjs" : "describe/it/expect  → wrote gates.spec.ts"}
+`);
+
+console.log(`
   What this imposes — these are opinions, not laws. Disagree deliberately:
 
     · Conventional Commits, enforced by commitlint on every commit and in CI
@@ -206,8 +228,8 @@ console.log(`
       the release job with GH013.)
     · Biome for lint + format, with a pre-commit hook that formats staged files
     · pre-push runs the FULL local gate — CI is confirmation, not the first line of defense
-    · Quality gates run INSIDE the test suite (tests/arch/gates.spec.ts), so they cost no extra
-      CI minutes and cannot be skipped on their own
+    · Quality gates run INSIDE the test suite (${descriptor.testDir ?? "tests"}/arch/${gateSpec.name}),
+      so they cost no extra CI minutes and cannot be skipped on their own
     · Gates ratchet: they freeze today's debt and only ever lower the budget. A red gate is fixed
       at the finding, never by raising the number
 

@@ -290,3 +290,53 @@ test("the status line reports the persona and depth, and stays silent when unado
     rmSync(bare, { recursive: true, force: true });
   }
 });
+
+test("the gate spec matches the repo's test runner — node --test gets node:test", () => {
+  // The worst failure this bootstrap can have: a gate file the runner never discovers. It reports
+  // nothing, the suite stays green, and the repo believes it is guarded when it is not.
+  const root = makeRepo({
+    "package.json": '{"name":"probe","scripts":{"test":"node --test \\"tests/**/*.test.mjs\\""}}\n',
+  });
+  try {
+    const out = run(root);
+    assert.equal(existsSync(join(root, "tests/arch/gates.test.mjs")), true, "must match the *.test.mjs glob");
+    assert.equal(existsSync(join(root, "tests/arch/gates.spec.ts")), false, "the wrong flavor must not appear");
+    const spec = readFileSync(join(root, "tests/arch/gates.test.mjs"), "utf8");
+    assert.match(spec, /from "node:test"/);
+    assert.doesNotMatch(spec, /\bexpect\(/, "node --test provides no expect()");
+    assert.match(out, /node --test/, "the chosen flavor must be reported, never silent");
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("a describe/it/expect runner gets the .spec.ts flavor", () => {
+  const root = makeRepo({ "package.json": '{"name":"probe","scripts":{"test":"vitest run"}}\n' });
+  try {
+    run(root);
+    assert.equal(existsSync(join(root, "tests/arch/gates.spec.ts")), true);
+    assert.equal(existsSync(join(root, "tests/arch/gates.test.mjs")), false);
+    assert.match(readFileSync(join(root, "tests/arch/gates.spec.ts"), "utf8"), /describe\(/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("both gate flavors name every scanner — neither may quietly cover less", () => {
+  const scanners = ["arch", "dupe", "dead", "spec-gap", "clone", "incident"];
+  for (const [pkg, file] of [
+    ['{"name":"p","scripts":{"test":"node --test x"}}', "tests/arch/gates.test.mjs"],
+    ['{"name":"p","scripts":{"test":"vitest run"}}', "tests/arch/gates.spec.ts"],
+  ]) {
+    const root = makeRepo({ "package.json": `${pkg}\n` });
+    try {
+      run(root);
+      const body = readFileSync(join(root, file), "utf8");
+      for (const s of scanners) {
+        assert.match(body, new RegExp(`harness-${s}-scan`), `${file} omits harness-${s}-scan`);
+      }
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  }
+});

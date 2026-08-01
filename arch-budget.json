@@ -1,0 +1,12 @@
+{
+  "plugins/harness-core/lib/bootstrap.mjs": 247,
+  "plugins/harness-core/lib/detect.mjs": 59,
+  "plugins/harness-core/lib/dungeon.mjs": 175,
+  "plugins/harness-core/lib/phases.mjs": 123,
+  "plugins/harness-gates/lib/arch-scan.mjs": 143,
+  "plugins/harness-gates/lib/clone-scan.mjs": 107,
+  "plugins/harness-gates/lib/dead-scan.mjs": 116,
+  "plugins/harness-gates/lib/dupe-scan.mjs": 108,
+  "plugins/harness-gates/lib/incident-scan.mjs": 165,
+  "plugins/harness-gates/lib/spec-gap-scan.mjs": 133
+}

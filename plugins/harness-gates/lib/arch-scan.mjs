@@ -19,7 +19,7 @@ const ROOT = process.cwd();
 // the target repo root, never from an assumption about layout. Missing file =
 // the documented defaults, so a conventional repo needs no config at all.
 const DESC = (() => {
-  const d = { sourceDir: "src", testDir: "tests", specSuffix: ".spec.ts", sourceExt: ".ts" };
+  const d = { sourceDir: "src", testDir: "tests", specSuffix: ".spec.ts", sourceExt: ".ts", exclude: [] };
   try { Object.assign(d, JSON.parse(readFileSync(join(ROOT, "harness.json"), "utf8"))); } catch {}
   return d;
 })();
@@ -32,7 +32,7 @@ function walk(dir, acc = []) {
   for (const e of readdirSync(dir, { withFileTypes: true })) {
     const p = join(dir, e.name);
     if (e.isDirectory()) walk(p, acc);
-    else if (e.name.endsWith(".ts") && !e.name.endsWith(".d.ts")) acc.push(p);
+    else if (e.name.endsWith(DESC.sourceExt) && !e.name.endsWith(".d.ts")) acc.push(p);
   }
   return acc;
 }
@@ -51,6 +51,11 @@ const exportCount = (f) => {
   return decl + named;
 };
 const rel = (f) => relative(ROOT, f).split("\\").join("/");
+
+// Paths the repo declares are not first-party source — fixtures, generated output, and TEMPLATES.
+// A template is source-shaped but is not this project's code; measuring it inflates every number and
+// (worse) reports duplication between two deliberate variants of the same file as debt.
+const EXCLUDED = (f) => (DESC.exclude ?? []).some((p) => rel(f).startsWith(p));
 const sortKeys = (o) =>
   Object.fromEntries(
     Object.keys(o)
@@ -59,6 +64,7 @@ const sortKeys = (o) =>
   );
 
 const files = walk(SRC)
+  .filter((f) => !EXCLUDED(f))
   .map((f) => ({ file: rel(f), lines: lineCount(f), exports: exportCount(f) }))
   .sort((a, b) => b.lines - a.lines);
 const budget = existsSync(BUDGET_FILE) ? JSON.parse(readFileSync(BUDGET_FILE, "utf8")) : {};
@@ -102,7 +108,12 @@ for (const { file, lines } of files) {
 // Junk-drawer smell (docs/COACHES.md): a file named for what it ISN'T — utils/helpers/common/misc —
 // has no cohesion story and becomes a dumping ground. Blocked outright for new files (none exist
 // today, so there's nothing to grandfather). Name modules for the job they do.
-const JUNK = /(?:^|\/)(?:utils?|helpers?|common|misc|shared|stuff)\.ts$/i;
+// Extension comes from the descriptor: a junk drawer is a junk drawer in any language, and
+// hardcoding .ts made this check silently inert outside a TypeScript repo.
+const JUNK = new RegExp(
+  `(?:^|/)(?:utils?|helpers?|common|misc|shared|stuff)\\${DESC.sourceExt}$`,
+  "i",
+);
 const junk = files.filter((x) => JUNK.test(x.file));
 if (junk.length) {
   console.error("\n✗ junk-drawer file name(s) — name modules for the job they do:");

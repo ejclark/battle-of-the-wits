@@ -17,51 +17,6 @@
 // The phases group those steps by BLAST RADIUS, and each one earns the next: observe → freeze →
 // ratchet → autonomy. That progression is the same bet as gold-tier dependency automerge — you do
 // not hand a system autonomy first and hope; verification earns it.
-import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
-
-const BUDGETS = [
-  "arch-budget.json",
-  "dupe-budget.json",
-  "dead-budget.json",
-  "spec-gap-budget.json",
-  "clone-budget.json",
-];
-
-/** Look at the repo and work out what has actually been done, rather than asking. */
-export function detect(root) {
-  const has = (p) => existsSync(join(root, p));
-
-  const pkg = (() => {
-    try {
-      return JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
-    } catch {
-      return null;
-    }
-  })();
-
-  const descriptor = (() => {
-    try {
-      return JSON.parse(readFileSync(join(root, "harness.json"), "utf8"));
-    } catch {
-      return null;
-    }
-  })();
-
-  const testDir = descriptor?.testDir ?? "tests";
-
-  return {
-    filesWritten: has("harness.json") && has("biome.json") && has(".github/workflows/pipeline.yml"),
-    installed: has("node_modules"),
-    hooksLive: has(".husky/_"),
-    budgetsFrozen: BUDGETS.some((b) => has(b)),
-    budgetsAll: BUDGETS.filter((b) => has(b)),
-    budgetsMissing: BUDGETS.filter((b) => !has(b)),
-    gatesWired: has(join(testDir, "arch/gates.spec.ts")),
-    ledger: has("docs/LESSONS.md"),
-    hasVerify: Boolean(pkg?.scripts?.verify),
-  };
-}
 
 /**
  * The ordered progression. Each step carries WHY it sits where it does — a sequence without its
@@ -163,3 +118,5 @@ export function render(steps) {
   lines.push("");
   return lines.join("\n");
 }
+
+export { detect } from "./detect.mjs";

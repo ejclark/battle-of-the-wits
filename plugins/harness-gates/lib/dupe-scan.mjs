@@ -21,7 +21,7 @@ const ROOT = process.cwd();
 // the target repo root, never from an assumption about layout. Missing file =
 // the documented defaults, so a conventional repo needs no config at all.
 const DESC = (() => {
-  const d = { sourceDir: "src", testDir: "tests", specSuffix: ".spec.ts", sourceExt: ".ts" };
+  const d = { sourceDir: "src", testDir: "tests", specSuffix: ".spec.ts", sourceExt: ".ts", exclude: [] };
   try { Object.assign(d, JSON.parse(readFileSync(join(ROOT, "harness.json"), "utf8"))); } catch {}
   return d;
 })();
@@ -32,11 +32,16 @@ function walk(dir, acc = []) {
   for (const e of readdirSync(dir, { withFileTypes: true })) {
     const p = join(dir, e.name);
     if (e.isDirectory()) walk(p, acc);
-    else if (e.name.endsWith(".ts") && !e.name.endsWith(".d.ts")) acc.push(p);
+    else if (e.name.endsWith(DESC.sourceExt) && !e.name.endsWith(".d.ts")) acc.push(p);
   }
   return acc;
 }
 const rel = (f) => relative(ROOT, f).split("\\").join("/");
+
+// Paths the repo declares are not first-party source — fixtures, generated output, and TEMPLATES.
+// A template is source-shaped but is not this project's code; measuring it inflates every number and
+// (worse) reports duplication between two deliberate variants of the same file as debt.
+const EXCLUDED = (f) => (DESC.exclude ?? []).some((p) => rel(f).startsWith(p));
 
 // Map each top-level definition name → the set of files that define it. A name defined in ≥2 files is
 // duplication debt. We match top-level `function`/`const`/`class` declarations (exported or not).
@@ -46,6 +51,7 @@ const IGNORE = new Set(["main"]); // each script's own entrypoint, not shared co
 const defRe = /^(?:export\s+)?(?:async\s+)?(?:function|const|class)\s+([A-Za-z_$][\w$]*)/gm;
 const defs = new Map(); // name → Set(file)
 for (const f of walk(SRC)) {
+  if (EXCLUDED(f)) continue;
   const src = readFileSync(f, "utf8");
   for (const m of src.matchAll(defRe)) {
     const name = m[1];

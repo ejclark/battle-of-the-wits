@@ -4,5 +4,6 @@
   "testDir": "tests",
   "sourceExt": ".ts",
   "specSuffix": ".spec.ts",
-  "specExempt": []
+  "specExempt": [],
+  "exclude": []
 }

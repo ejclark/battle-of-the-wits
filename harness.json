@@ -1,0 +1,11 @@
+{
+  "persona": "dungeon",
+  "sourceDir": "plugins",
+  "testDir": "tests",
+  "sourceExt": ".mjs",
+  "specSuffix": ".test.mjs",
+  "specExempt": [],
+  "exclude": [
+    "plugins/harness-core/templates/"
+  ]
+}
