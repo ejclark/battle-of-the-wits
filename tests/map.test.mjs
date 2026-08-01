@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { test } from "node:test";
 import { mapDocument } from "../plugins/harness-core/lib/cartography.mjs";
-import { bin, makeRepo, runTool } from "./helpers.mjs";
+import { assertDocument, assertStandalone, bin, makeRepo, runTool } from "./helpers.mjs";
 
 // `harness-map` had never been run by anything. It worked — and wrote a file with no doctype, so
 // every browser opened it in QUIRKS MODE, where box-sizing and several inherited properties behave
@@ -28,18 +28,13 @@ test("the written file is a complete HTML document", () => {
   const r = runTool(bin("harness-core", "harness-map"), root, ["-o", out]);
   assert.equal(r.code, 0, r.out);
   const html = readFileSync(out, "utf8");
-  assert.match(html, /^<!doctype html>/i, "no doctype means quirks mode");
-  for (const tag of ["<html lang=", "<head>", "<meta charset=", "</head>", "<body>", "</body>", "</html>"]) {
-    assert.ok(html.includes(tag), `missing ${tag}`);
-  }
+  assertDocument(assert, html);
 });
 
 test("it is standalone — no external stylesheet, script, font, or image", () => {
   // The promise the doc makes: opens from disk, survives being emailed, renders under a strict CSP.
   const html = mapDocument(makeRepo({ "docs/adr/0001-storage.md": ADR }), "probe");
-  assert.doesNotMatch(html, /<link\b[^>]*rel=["']?stylesheet/i);
-  assert.doesNotMatch(html, /<script\b/i);
-  assert.doesNotMatch(html, /https?:\/\/[^"')\s]+\.(css|js|woff2?|png|jpg|svg)/i);
+  assertStandalone(assert, html);
 });
 
 test("a cleared room appears, escaped", () => {

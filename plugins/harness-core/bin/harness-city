@@ -1,0 +1,10 @@
+#!/bin/sh
+# Thin launcher: keeps a clean command name on PATH while the implementation stays
+# a proper .mjs module. Prefers CLAUDE_PLUGIN_ROOT when Claude Code sets it, and
+# falls back to resolving its own directory so a direct invocation still works.
+if [ -n "$CLAUDE_PLUGIN_ROOT" ] && [ -f "$CLAUDE_PLUGIN_ROOT/lib/city-cli.mjs" ]; then
+  exec node "$CLAUDE_PLUGIN_ROOT/lib/city-cli.mjs" "$@"
+fi
+unset CDPATH
+DIR=$(cd -- "$(dirname -- "$0")" && pwd -P)
+exec node "$DIR/../lib/city-cli.mjs" "$@"

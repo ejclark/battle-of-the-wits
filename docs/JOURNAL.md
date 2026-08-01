@@ -989,3 +989,71 @@ unused export, the spec gap counting the two untested files correctly, and the a
 its own branch. After the four fixes, the JavaScript repo's suite runs **seven gates, all green**.
 
 The claim in the README is now one repository closer to being a fact. It is still a claim.
+
+---
+
+## 2026-08-01 · The City — rung two of the visual ladder
+
+Eric asked for a progressive skillset toward high-quality graphics, "starting with 2d overviews of
+the systems, like sim city style", and separately for ADRs and dungeons to be **navigable** — because
+"high quality pictures, graphs and charts have more headroom on synthesizing information quickly for
+humans."
+
+Rung one already existed and nobody had noticed: `harness-map` is a 2D system overview. So rung two
+is `harness-city` — the codebase as an isometric town. Districts are top-level directories, buildings
+are files, height is line count, colour is standing against the committed budget.
+
+### What the picture is for
+
+A list of thirty files sorted by line count is thirty facts you have to hold. A skyline is one image:
+the tall things are tall, the districts are visibly uneven, and a red tower is somewhere *specific*
+rather than somewhere on page two. That is the whole claim, and it either survives contact with a
+real repository or the rung was decoration.
+
+It survives. Rendered against a synthetic project with two over-budget modules, the two red towers
+are the first thing the eye lands on, before any number has been read.
+
+### Four passes to make it legible, none of them optional
+
+The first render was **flat** — technically correct and visually useless:
+
+1. **Linear height scaling crushed the middle.** With one 200-line module in the city, a 60-line file
+   drew at 30% and everything below it collapsed into an indistinguishable plate. Square-root scaling
+   spreads the range where files actually live. Ordering is preserved exactly; the true count is in
+   the tooltip.
+2. **A box is not a building.** Adding lit floor bands gave the height a *unit* — without them a
+   tower and a cottage read as "two boxes", which is precisely the comparison the rung exists to
+   make.
+3. **The SVG was stretched to fill its container**, which blew 13px plaque type up to headline size
+   sitting on the skyline. Natural width, never stretched.
+4. **The plaques collided.** Anchored per-district they overlapped; on a shared baseline they still
+   overlapped, because the names carried the statistics too. The fix was information design rather
+   than layout: **the picture carries the shape, a table carries the numbers.** Which is Eric's point
+   restated — pictures synthesise, but numbers belong where they can be read.
+
+Each of those was found by *looking at it*. None would have been found by reading the code, and the
+tests would have passed at every stage.
+
+### The gate caught the ladder's own founding rule being broken
+
+The duplication and clone gates went red in the very change whose purpose was to stop two pictures of
+one repository disagreeing. The new view needed the ADR list, the escaper, the argument parse — all
+of which lived inside the first view — and copying takes ten seconds while the drift takes months to
+surface.
+
+So the thing that was *declared* got built: `model.mjs` derives the repository once, and
+`cartography.mjs` now consumes it instead of parsing `docs/adr` a second time. `render.mjs` holds the
+plumbing both views share.
+
+**Views may share their plumbing and must never share their conclusions.** Escaping and argument
+parsing are plumbing. "What counts as a big file" is a conclusion, and a rung that decides that for
+itself has stopped being a view of the repository and become an opinion about it. That rule is what
+makes a 3D rung possible later without the renderings quietly drifting apart.
+
+### One raise, at a real boundary
+
+Duplication 10 → 14, recorded. `model.mjs` re-derives `descriptor`, `DEFAULT_CAP` and `WARN_AT` from
+`harness-gates` — deliberately, because an adopter may install `harness-core` alone and a cross-plugin
+import would resolve only in a checkout of this repository. Unlike the *imagined* PATH boundary this
+gate's IGNORE list once defended, the plugin boundary is real. Everything that could genuinely be
+shared in this change was shared.

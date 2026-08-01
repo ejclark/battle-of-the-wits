@@ -42,6 +42,7 @@ Works in any repository, in any language, with no configuration.
 |---|---|
 | `/harness-core:dungeon` | **The dominant persona.** Where you are, the bosses, the locked loot, the fog — read from measured state. `--today` answers *what should I build?* with campaigns that each state what clearing them buys; `--new` lists the raw encounters. |
 | `harness-map` | Renders the ADR history as a **dungeon map** — cleared rooms, bosses standing, unlit regions — to a standalone HTML file. |
+| `harness-city` | Renders the codebase as an **isometric city** — districts are directories, buildings are files, height is lines, colour is standing against budget. Answers *where is the weight, and where is the risk?* at a glance. |
 | `/harness-core:bootstrap` | The one-shot — drops the entire process (CI, commits, releases, lint, hooks, gate wiring, ledger) into a repository. Never clobbers; declares what it imposes. |
 | `/harness-core:ears` | Turns a vague request into EARS-format requirements and scaffolds the matching specs. The upstream half of the BDD loop. |
 | `/harness-core:retro` | Turns a failure into a banked lesson: timeline, root cause, detection lag, and the cheapest prevention that makes the drift impossible. |

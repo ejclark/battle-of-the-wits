@@ -484,3 +484,20 @@ Prevention ranks, best first:
   fallout — squarely the class that is Eric's call and should have been raised the moment it was
   seen, not summarised later. **Noticing something that needs a human and deferring the telling is
   the same failure as not noticing.**
+
+### The second view of the repository immediately duplicated the first
+- **SHA:** `n/a`   **DATE:** 2026-08-01   **STATUS:** closed
+- **SIGNAL:** the duplication and clone gates went red in the very change that added `city.mjs` —
+  the same change whose stated purpose was to stop two pictures of one repository disagreeing.
+- **ROOT CAUSE:** the new view needed the ADR list, the HTML escaper, the `-o/--out` parse and the
+  repo-name resolution, all of which already existed inside the first view's module. Copying was the
+  path of least resistance and it takes ten seconds; the drift it causes takes months to notice,
+  because two renderings that were correct on the day they were written stay *plausible* long after
+  they stop agreeing.
+- **PREVENTION:** gate — already mechanised, and it fired unaided. The fix was to build the thing the
+  ladder was declared to need: `model.mjs` derives the repository once and `cartography.mjs` now
+  consumes it instead of parsing ADRs a second time, with `render.mjs` holding the shared plumbing.
+- **SIDE QUESTS:** worth stating as a rule for the rungs above this one — **views may share their
+  plumbing and must never share their conclusions.** Escaping and argument parsing are plumbing;
+  "what counts as a big file" is a conclusion, and a rung that decides that for itself has stopped
+  being a view of the repository and become an opinion about it.

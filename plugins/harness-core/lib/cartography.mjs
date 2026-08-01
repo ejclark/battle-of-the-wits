@@ -7,29 +7,9 @@
 //
 // Everything is derived: rooms from docs/adr, bosses from committed budgets, fog from dimensions the
 // repo cannot measure. Nothing is invented, so the map cannot flatter the repository.
-import { existsSync, readFileSync, readdirSync } from "node:fs";
-import { join } from "node:path";
+import { rooms } from "./model.mjs";
+import { esc } from "./render.mjs";
 import { bossList, unlitDimensions } from "./state.mjs";
-
-/** Parse the ADR front-matter every template in this harness writes. */
-function rooms(root) {
-  const dir = join(root, "docs/adr");
-  if (!existsSync(dir)) return [];
-  return readdirSync(dir)
-    .filter((f) => /^\d{4}-/.test(f) && f.endsWith(".md") && !f.startsWith("0000"))
-    .sort()
-    .map((file) => {
-      const body = readFileSync(join(dir, file), "utf8");
-      const title = (body.match(/^#\s*ADR-\d+:\s*(.+)$/m) ?? [, file.replace(/\.md$/, "")])[1].trim();
-      const status = (body.match(/\*\*Status:\*\*\s*([^\n<]+)/) ?? [, "Unknown"])[1].trim();
-      const date = (body.match(/\*\*Date:\*\*\s*([^\n]+)/) ?? [, ""])[1].trim();
-      const superseded = /Superseded/i.test(status);
-      return { id: file.slice(0, 4), file, title, status, date, superseded };
-    });
-}
-
-const esc = (s) =>
-  String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 
 function mapHtml(root, repoName) {
   const cleared = rooms(root);
