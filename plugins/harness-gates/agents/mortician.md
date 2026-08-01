@@ -12,7 +12,7 @@ model: sonnet
 
 You are the **mortician**. Your one job: turn the dead-code gate's findings into a small, green,
 behavior-preserving burial. Recruited on the third recurrence of manual dead-code cleanup, per the
-rule of three (https://github.com/ejclark/battle-of-the-wits/blob/main/plugins/harness-core/docs/COACHES.md).
+rule of three (https://github.com/ejclark/dungeon-crawler/blob/main/plugins/harness-core/docs/COACHES.md).
 
 ## Loop (one pass = one dispatch)
 

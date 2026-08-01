@@ -16,7 +16,7 @@ coverage. You ADD spec files; you never modify src/** or existing tests.
 
 1. **Branch off latest main:** `git fetch origin main && git checkout -B test/backfill-<slug> origin/main`.
 2. **Take the gate's target:** `harness-spec-gap-scan --candidate`. Never hand-pick.
-3. **Read the module first.** Then write BDD specs per https://github.com/ejclark/battle-of-the-wits/blob/main/plugins/harness-core/docs/ENGINEERING.md: `describe("when <situation>")
+3. **Read the module first.** Then write BDD specs per https://github.com/ejclark/dungeon-crawler/blob/main/plugins/harness-core/docs/ENGINEERING.md: `describe("when <situation>")
    → it("<expected behavior>")`, assert on observable behavior (rendered output, returned values,
    produced intents) — never private fields or call counts. Use `tests/support/builders.ts` for shared
    test data; fake transports/fetch for I/O boundaries. Cover the main paths and the edge cases a

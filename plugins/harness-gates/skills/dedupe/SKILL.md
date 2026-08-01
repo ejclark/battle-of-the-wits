@@ -68,6 +68,6 @@ Commit `dupe-budget.json` in the same PR so the consolidation is locked in.
   PR — not a silent merge.
 - **`authenticator.ts` caveat:** its inline login JS is a TS template literal — no backticks/`${}` inside
   it. Consolidating *server-side* helpers out of it is fine; anything feeding the inline string needs the
-  re-inline discipline (`https://github.com/ejclark/battle-of-the-wits/blob/main/plugins/harness-core/docs/ENGINEERING.md`).
+  re-inline discipline (`https://github.com/ejclark/dungeon-crawler/blob/main/plugins/harness-core/docs/ENGINEERING.md`).
 - **PR title = Conventional-Commit subject**, lowercase-led (`refactor: consolidate escapeHtml into src/ui`).
 - **Report honestly.** Not all green → no PR; say what failed and stop.

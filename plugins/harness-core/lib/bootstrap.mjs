@@ -18,7 +18,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync, chmodSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { renderJscpd, renderKnip } from "./configs.mjs";
+import { renderJscpd, renderKnip, scriptsFor } from "./configs.mjs";
 import { detect, gateSpecFor } from "./detect.mjs";
 import { plan, render } from "./phases.mjs";
 import { mergeClaudeSettings, mergeGitignore, mergePackageJson } from "./merge.mjs";
@@ -96,7 +96,7 @@ put(".github/workflows/pipeline.yml", tpl("github/workflows/harness.yml"));
 put(".github/pull_request_template.md", tpl("github/pull_request_template.md"));
 
 // ── gate wiring: the gates run inside the test suite, not as extra CI steps ─────
-const gateSpec = gateSpecFor(ROOT);
+const gateSpec = gateSpecFor(ROOT, descriptor);
 put(`${descriptor.testDir ?? "tests"}/arch/${gateSpec.name}`, tpl(gateSpec.template));
 
 // ── the lessons ledger ─────────────────────────────────────────────────────────
@@ -116,20 +116,7 @@ if (cs.skipped) skipped.push(cs.skipped);
 // ── package.json: merged, never replaced ───────────────────────────────────────
 // These two tables are the harness's OPINIONS and belong here; merge.mjs owns only the mechanism of
 // folding them in without trampling what the repo already decided.
-const SCRIPTS = {
-  typecheck: "tsc -p tsconfig.json --noEmit",
-  lint: "biome check .",
-  "lint:fix": "biome check --write .",
-  format: "biome format --write .",
-  verify: "npm run typecheck && npm run lint && npm test",
-  prepare: "husky",
-  "arch:scan": "harness-arch-scan",
-  "dupe:scan": "harness-dupe-scan",
-  "dead:scan": "harness-dead-scan",
-  "spec:gap": "harness-spec-gap-scan",
-  "clone:scan": "harness-clone-scan",
-  "incident:scan": "harness-incident-scan",
-};
+const SCRIPTS = scriptsFor(descriptor);
 
 const DEV_DEPS = {
   "@biomejs/biome": "^2.5.6",
@@ -169,7 +156,7 @@ if (pkgChanges.missing) {
 }
 
 console.log(`
-  Test runner detected: ${gateSpec.name === "gates.test.mjs" ? "node --test  → wrote gates.test.mjs" : "describe/it/expect  → wrote gates.spec.ts"}
+  Test runner detected: ${gateSpec.template.includes("test.mjs") ? "node --test" : "describe/it/expect"}  → wrote ${gateSpec.name}
 `);
 
 console.log(`
@@ -196,7 +183,7 @@ if (auto) {
   // --auto continues straight into the mechanical remainder of the sequence rather than handing
   // back a checklist. Everything it does is local and reversible; pushing stays opt-in.
   const { autoAdopt } = await import("./auto.mjs");
-  autoAdopt(ROOT, { ship });
+  autoAdopt(ROOT, { ship, wrote });
 } else {
   console.log(render(plan(detect(ROOT))));
   console.log("  Re-run `harness-bootstrap --plan` to see where you are, or --auto to run the rest.\n");

@@ -10,9 +10,9 @@ rather than a port.
 ## Install
 
 ```shell
-/plugin marketplace add ejclark/battle-of-the-wits
-/plugin install harness-core@battle-of-the-wits
-/plugin install harness-gates@battle-of-the-wits
+/plugin marketplace add ejclark/dungeon-crawler
+/plugin install harness-core@dungeon-crawler
+/plugin install harness-gates@dungeon-crawler
 /reload-plugins
 ```
 

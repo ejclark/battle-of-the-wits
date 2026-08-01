@@ -436,3 +436,51 @@ Prevention ranks, best first:
 - **SIDE QUESTS:** the same shape as the earlier "shipped template targeted a runner the repo does
   not have" — a fork in the adoption path is a place where two things must stay equal, and equality
   that nothing asserts is a coincidence with a shelf life.
+
+### The first adoption into a second repository failed four ways
+- **SHA:** `n/a`   **DATE:** 2026-08-01   **STATUS:** closed
+- **SIGNAL:** the README has said all along that "portable" was a claim rather than a fact, proven in
+  exactly one codebase. Adopting into a throwaway JavaScript project — `lib/`, `spec/`, `.js`, no
+  TypeScript — produced four defects in under a minute, none of which any existing test could see.
+- **ROOT CAUSE:** four separate assumptions, each invisible while there was only one adopter.
+  (1) The scripts table hardcoded `typecheck: tsc -p tsconfig.json --noEmit` and a `verify` that ran
+  it, so a JavaScript repo's first verify failed on a file it does not have, for a language it does
+  not use, in a script the harness had just written. (2) The gate spec template used `assert.fail`
+  outside a test callback and unsorted imports — flagged by the linter the harness itself installs,
+  so the bootstrap wrote a file its own verify rejected. (3) Three written files failed that
+  formatter. (4) Worst: the gate file was named `gates.test.mjs` in a repo whose suite globs
+  `spec/**/*.test.js`, so it was never collected — the gates reported nothing while the suite stayed
+  green. The runner decides which globals exist; the SUFFIX decides whether the file is seen, and one
+  check was answering both questions.
+- **PREVENTION:** script + gate — the scripts table is descriptor-aware (`scriptsFor`); both gate
+  templates throw instead of asserting outside a case; `--auto` formats what it wrote and nothing
+  else; and the gate file carries the repo's own `specSuffix`, with `.mjs` forced in a CommonJS
+  package because a file that throws on import is at least loud. Cases for each, including the
+  CommonJS conflict.
+- **SIDE QUESTS:** the fix for one ordering trap walked straight into another — `gateSpecFor` re-read
+  `harness.json` from disk, which by then was the DEFAULT the bootstrap had just written, so it named
+  the file after an opinion the repo never expressed. Passing the descriptor in fixed it. Whenever a
+  tool both writes a file and reads it, name which copy is authoritative.
+
+### A repository rename broke the release, and nothing could see it
+- **SHA:** `n/a`   **DATE:** 2026-08-01   **STATUS:** closed
+- **SIGNAL:** `semantic-release` failing on `main` — after the merge, where nothing is watching.
+  Eric spotted it and named the cause before any gate did. Detection lag: several merges.
+- **ROOT CAUSE:** the repository was renamed mid-session. GitHub redirects, so every push kept
+  working and every local tool kept agreeing with a remote URL that no longer existed — which is why
+  the rename was invisible rather than noisy. Meanwhile `package.json`'s repository URL, the
+  marketplace name in the README's install command, both plugin manifests, and a dozen doc links all
+  still named the old repo. **A rename is not a code change, so no diff contains it**, and every
+  gate here reads diffs or committed files.
+- **PREVENTION:** gate — `tests/identity.test.mjs` derives the repository's true slug from
+  `GITHUB_REPOSITORY` (set by Actions to the CURRENT name; the git remote is the stale thing, not the
+  witness) and asserts package.json, the marketplace name, the README install command, both plugin
+  manifests, and every `github.com/<owner>/…` link agree. Locally, with no ground truth available and
+  no network call permitted, it checks internal consistency and says so. Ledgers are exempt: an entry
+  describing what happened under the old name is correct, and rewriting history to satisfy a gate is
+  worse than the drift.
+- **SIDE QUESTS:** I noticed the rename mid-session, from a CI URL, and filed it as a note in a PR
+  body rather than stopping to ask. It was an identity change with predictable outward-facing
+  fallout — squarely the class that is Eric's call and should have been raised the moment it was
+  seen, not summarised later. **Noticing something that needs a human and deferring the telling is
+  the same failure as not noticing.**

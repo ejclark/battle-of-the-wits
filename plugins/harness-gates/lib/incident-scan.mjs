@@ -52,7 +52,7 @@ async function failedMainRuns() {
     headers: {
       Authorization: `Bearer ${token}`,
       Accept: "application/vnd.github+json",
-      "User-Agent": "battle-of-the-wits-harness",
+      "User-Agent": "dungeon-crawler-harness",
     },
   });
   if (!res.ok) throw new Error(`GitHub API ${res.status}`);
