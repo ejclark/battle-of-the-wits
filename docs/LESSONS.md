@@ -347,3 +347,22 @@ Prevention ranks, best first:
   direction that matters: it would also have kept passing while covering the wrong set.
 - **PREVENTION:** gate — the fixture is now read from the shipped template, so it cannot drift.
 - **SIDE QUESTS:** the enumeration-versus-category lesson applies to fixtures, not just to rules.
+
+### The automated adoption committed to the branch it then told you to protect
+- **SHA:** `n/a`   **DATE:** 2026-08-01   **STATUS:** closed
+- **SIGNAL:** the first end-to-end run of `harness-bootstrap --auto`, ever. Reading the code would
+  not have surfaced it — the commit step looks unremarkable until you watch it land on `main` and
+  then read the handover text it prints three lines later.
+- **ROOT CAUSE:** `--auto` ran `git add -A && git commit` on whatever branch was checked out, which
+  in a fresh adoption is the default branch. The handover it then prints instructs the adopter to
+  enable a ruleset requiring pull requests — at which point the adoption commit is stranded where it
+  can no longer be pushed. `harness-preflight`, installed by that same run, refuses exactly this.
+- **PREVENTION:** script + gate — the run now creates `chore/adopt-the-harness` before committing
+  (and leaves an adopter already on a feature branch where they are), with seven cases covering the
+  branch, the grandfather step, the unlit dimension, no-push-without-asking, the handover text, and
+  re-running safely. The handover also now says that preflight will refuse the adoption commit **by
+  design**, because adoption is the one change that legitimately writes `.github/workflows/`.
+- **SIDE QUESTS:** a tool that violates the doctrine it installs teaches the adopter that the
+  doctrine is optional — and it teaches them that on day one, which is the only day they are paying
+  full attention. Third instance this week of "two correct mechanisms that deadlock when composed",
+  and the first where the harness composed the deadlock with itself.

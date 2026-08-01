@@ -753,3 +753,56 @@ the lines by dropping the skeleton: a fragment written to disk is a quirks-mode 
 As in The Foundry, `harness-preflight` refuses this change, correctly, because an athlete may never
 raise a budget. It is a lead-level change and it lands as a reviewed PR. That distinction is now
 appearing often enough to be a real feature of the system rather than an edge case.
+
+---
+
+## 2026-08-01 (night, twelfth) · The First Run
+
+`harness-bootstrap --auto` is the adopter's **entire first experience** — Eric's "everything must be
+automated" path — and nothing had ever run it end to end.
+
+The first run, in a throwaway repo, took about four seconds and produced the finding immediately:
+
+```
+✓ commit  —  chore: adopt the engineering harness
+--- branch ---
+main
+```
+
+It commits to the default branch. Three lines later, the handover it prints tells the adopter to
+enable a ruleset requiring pull requests. So the adoption commit ends up stranded on a branch that
+can no longer be pushed — and `harness-preflight`, installed by that same run, refuses precisely
+this shape.
+
+**The harness composed a deadlock with itself.** Third instance of that pattern this week (the
+semantic-release bump, the all-branches ruleset), and the first where both halves were ours.
+
+Reading the code would not have found it. The commit step looks unremarkable in isolation; it is only
+wrong in sequence with a paragraph printed a few lines later. That is what running a thing gets you
+that reviewing it does not.
+
+### A tool that breaks its own rules on day one
+
+The deeper cost is not the stranded commit — it is what the adopter learns. Day one is the only day
+they are paying full attention, and on day one the tool demonstrates that its own doctrine is
+optional. Everything after that is negotiation.
+
+Now it creates `chore/adopt-the-harness` before committing, leaves an adopter already on a feature
+branch where they are, and — the part that matters as much — **says that preflight will refuse the
+adoption commit by design**, because adoption is the one change that legitimately writes
+`.github/workflows/` and `.claude/settings.json`. An expected refusal that nobody warned you about
+reads as a bug, and a bug on day one is uninstalled by lunch.
+
+### Seven cases, and a helper the clone gate asked for
+
+The branch, the grandfather step, the honestly-unlit dimension (knip is absent in a bare repo, so
+no `dead-budget.json` is written rather than a fabricated clean bill of health), never pushing
+unasked, the handover naming the credentialed steps, and re-running without clobbering.
+
+They use a repo with **no `package.json`** on purpose, so `npm install` and `npm run verify` are
+skipped and the adoption *sequence* is what is under test rather than a package manager.
+
+The clone gate immediately caught the new `gitRepo()` fixture duplicating `gitscope.test.mjs`'s —
+now `makeGitRepo()` in `helpers.mjs`, which also documents the deliberate case: given `{}` it leaves
+the repository **unborn**, because that is a real state a tool meets and several cases exist to prove
+nothing crashes there.

@@ -5,22 +5,14 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
 import { changedFiles, currentBranch, defaultBranch } from "../plugins/harness-gates/lib/gitscope.mjs";
+import { makeGitRepo } from "./helpers.mjs";
 
 // The two questions the blast-radius preflight is built on: what is the base, and what did this
 // change touch. Both have been wrong once, and in the same way — they answered a slightly different
 // question than the one being asked, while the gate reported a confident verdict anyway.
 
-const init = () => {
-  const root = mkdtempSync(join(tmpdir(), "botw-scope-"));
-  const git = (...a) => execFileSync("git", a, { cwd: root, stdio: "pipe", encoding: "utf8" });
-  git("init", "-q", "-b", "main");
-  git("config", "user.email", "probe@example.com");
-  git("config", "user.name", "probe");
-  return { root, git };
-};
-
 test("with no remote, the name and the comparison ref are the same", () => {
-  const { root, git } = init();
+  const { root, git } = makeGitRepo({});
   writeFileSync(join(root, "a.txt"), "a\n");
   git("add", "-A");
   git("commit", "-qm", "c1");
@@ -30,7 +22,7 @@ test("with no remote, the name and the comparison ref are the same", () => {
 test("with a remote, the comparison ref is the remote-tracking branch", () => {
   const origin = mkdtempSync(join(tmpdir(), "botw-origin-"));
   execFileSync("git", ["init", "-q", "--bare", "-b", "main", origin], { stdio: "pipe" });
-  const { root, git } = init();
+  const { root, git } = makeGitRepo({});
   git("remote", "add", "origin", origin);
   writeFileSync(join(root, "a.txt"), "a\n");
   git("add", "-A");
@@ -43,7 +35,7 @@ test("with a remote, the comparison ref is the remote-tracking branch", () => {
 test("changedFiles reports a file that has never been added", () => {
   // `git diff` does not. A preflight built on diff alone waved through an athlete CREATING
   // .github/workflows/evil.yml — the more dangerous half, and the one it exists to stop.
-  const { root, git } = init();
+  const { root, git } = makeGitRepo({});
   writeFileSync(join(root, "a.txt"), "a\n");
   git("add", "-A");
   git("commit", "-qm", "c1");
@@ -52,7 +44,7 @@ test("changedFiles reports a file that has never been added", () => {
 });
 
 test("changedFiles reports staged and unstaged edits", () => {
-  const { root, git } = init();
+  const { root, git } = makeGitRepo({});
   writeFileSync(join(root, "a.txt"), "a\n");
   writeFileSync(join(root, "b.txt"), "b\n");
   git("add", "-A");
@@ -68,7 +60,7 @@ test("changedFiles reports staged and unstaged edits", () => {
 test("changedFiles never counts the runtime registry", () => {
   // .harness/ is the claims registry — coordination state, never part of a change. Counting it
   // would make every athlete fail its own territory check.
-  const { root, git } = init();
+  const { root, git } = makeGitRepo({});
   writeFileSync(join(root, "a.txt"), "a\n");
   git("add", "-A");
   git("commit", "-qm", "c1");
@@ -78,7 +70,7 @@ test("changedFiles never counts the runtime registry", () => {
 });
 
 test("currentBranch answers empty in an unborn repository rather than throwing", () => {
-  const { root, git } = init();
+  const { root, git } = makeGitRepo({});
   assert.equal(typeof currentBranch(root), "string");
   writeFileSync(join(root, "a.txt"), "a\n");
   git("add", "-A");
