@@ -193,6 +193,32 @@ purest form. The substrate now exists; the history does not. Revisit after a few
 _(src: Eric · while: "this data potentially gives us the ability to see amplification of improvements
 in a measurable form")_
 
+**19. A profile is a VIEW; the context it renders has no model — and should belong to the person.**
+The GitHub profile README works at the scale of one render target. That is the constraint, and it is
+worth naming precisely, because the obvious diagnosis is wrong: the problem is not that GitHub is one
+*project*, it is that **the view IS the store.** What someone is working on, what they are into, what
+they are stuck on — that context is bigger than any one page and changes faster — yet it exists only
+as prose inside the one artefact that renders it. Re-rendering it anywhere else means writing it
+again, and the two copies drift, which is the failure this harness already solved once for repository
+structure: `model.mjs` derives, and the city and the map are views that may never become second
+sources of truth.
+**The boundary that decides whether this is good or poisonous is authorship, and it is the same line
+`/profile` already draws.** A person housing their own evolving context, and rendering it wherever
+they choose, is theirs and portable and outlives any project. *Us* accumulating context about them —
+watching profile updates as a signal stream, assembling a picture — is the aggregation trap with
+extra steps, and the sentence that prompted this supports both readings. So: whatever ever gets
+housed is **authored and owned by the person, and this project holds a pointer at most, never a
+copy.**
+**Why it is banked and not built:** the same test that stalled #2, and the same answer. With exactly
+one render target there is nothing to abstract *toward*, so an abstraction today is pure indirection
+— a layer whose only job is to forward. The trigger is **a second surface that wants the same
+context** and would otherwise get a hand-maintained duplicate. Cheap insurance taken now instead:
+`/profile` asks its three questions and records the *answers*, treating the README as a rendering of
+them rather than as the original — which costs nothing today and makes the eventual model a
+formalisation rather than a rewrite. Pairs with #2. _(src: Eric · while: "github profile works at a
+scale of one project/dimension… updating GitHub profile is another source to abstract and house
+context")_
+
 ### Side quests (surfaced by Claude while working — proposals to prune)
 
 **3. Humans do not claim territory; athletes do.**

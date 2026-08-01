@@ -85,8 +85,10 @@ A good one is short and answers three questions someone actually has:
 - **What should someone message you about?** An invitation, so the page has a purpose.
 - **How do they reach you?** Only channels they are happy to have indexed forever.
 
-Ask those three as questions and write down their answers in their words. **Do not improve the
-voice.** A profile that sounds like a press release reads as a press release, and the small
+Ask those three as questions and **keep their answers, in their words, as the answers** — the README
+is a *rendering* of them, not the original. Costs nothing today; it means that if this context ever
+needs to appear anywhere else, that is a second view rather than a second copy to keep in sync. **Do
+not improve the voice.** A profile that sounds like a press release reads as a press release, and the small
 specific details — the odd hobby, the thing they are stuck on — are the parts people remember.
 
 Six to ten lines is plenty. It can grow.
