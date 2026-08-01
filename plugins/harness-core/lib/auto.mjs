@@ -57,8 +57,15 @@ function step(label, fn) {
   }
 }
 
+// WINDOWS HAS NO `npm`, IT HAS `npm.cmd`. execFileSync does not consult PATHEXT, so every call here
+// threw ENOENT on the first Windows machine that tried it — and EVERY mechanical step of the
+// adoption reported ✗ (install, freeze, format, verify) while the file-writing half worked fine. A
+// run that writes everything and enforces nothing is the false green this project exists to
+// prevent, found by a contributor on a platform nobody had tested.
+const winExe = (cmd) => (process.platform === "win32" && !/\.(cmd|exe|bat)$/i.test(cmd) ? `${cmd}.cmd` : cmd);
+
 const run = (cmd, args, cwd) =>
-  execFileSync(cmd, args, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+  execFileSync(winExe(cmd), args, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
 
 export function autoAdopt(root, { ship = false, wrote = [] } = {}) {
   console.log("\n⚙  Automated adoption run\n");

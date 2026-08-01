@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { basename } from "node:path";
 import { test } from "node:test";
+import { isAbsolute } from "node:path";
 import { esc, outPath, repoNameOf } from "../plugins/harness-core/lib/render.mjs";
 import { makeGitRepo, makeRepo } from "./helpers.mjs";
 
@@ -27,7 +28,9 @@ test("both -o and --out are honoured", () => {
 });
 
 test("the output path is absolute, so the file lands where the caller meant", () => {
-  assert.ok(outPath(["-o", "rel.html"], "d.html").startsWith("/"));
+  // isAbsolute, not startsWith("/") — on Windows an absolute path begins C:\\, so the POSIX
+  // spelling failed a pure-logic function that was behaving correctly. Assert the property.
+  assert.ok(isAbsolute(outPath(["-o", "rel.html"], "d.html")));
 });
 
 test("the repo name comes from the remote, not the checkout directory", () => {
