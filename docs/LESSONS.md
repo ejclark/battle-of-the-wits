@@ -461,3 +461,26 @@ Prevention ranks, best first:
   `harness.json` from disk, which by then was the DEFAULT the bootstrap had just written, so it named
   the file after an opinion the repo never expressed. Passing the descriptor in fixed it. Whenever a
   tool both writes a file and reads it, name which copy is authoritative.
+
+### A repository rename broke the release, and nothing could see it
+- **SHA:** `n/a`   **DATE:** 2026-08-01   **STATUS:** closed
+- **SIGNAL:** `semantic-release` failing on `main` — after the merge, where nothing is watching.
+  Eric spotted it and named the cause before any gate did. Detection lag: several merges.
+- **ROOT CAUSE:** the repository was renamed mid-session. GitHub redirects, so every push kept
+  working and every local tool kept agreeing with a remote URL that no longer existed — which is why
+  the rename was invisible rather than noisy. Meanwhile `package.json`'s repository URL, the
+  marketplace name in the README's install command, both plugin manifests, and a dozen doc links all
+  still named the old repo. **A rename is not a code change, so no diff contains it**, and every
+  gate here reads diffs or committed files.
+- **PREVENTION:** gate — `tests/identity.test.mjs` derives the repository's true slug from
+  `GITHUB_REPOSITORY` (set by Actions to the CURRENT name; the git remote is the stale thing, not the
+  witness) and asserts package.json, the marketplace name, the README install command, both plugin
+  manifests, and every `github.com/<owner>/…` link agree. Locally, with no ground truth available and
+  no network call permitted, it checks internal consistency and says so. Ledgers are exempt: an entry
+  describing what happened under the old name is correct, and rewriting history to satisfy a gate is
+  worse than the drift.
+- **SIDE QUESTS:** I noticed the rename mid-session, from a CI URL, and filed it as a note in a PR
+  body rather than stopping to ask. It was an identity change with predictable outward-facing
+  fallout — squarely the class that is Eric's call and should have been raised the moment it was
+  seen, not summarised later. **Noticing something that needs a human and deferring the telling is
+  the same failure as not noticing.**

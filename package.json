@@ -1,12 +1,12 @@
 {
-  "name": "battle-of-the-wits",
+  "name": "dungeon-crawler",
   "version": "1.0.0",
   "private": true,
   "type": "module",
   "description": "A portable engineering harness for Claude Code, distributed as a plugin marketplace.",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ejclark/battle-of-the-wits.git"
+    "url": "git+https://github.com/ejclark/dungeon-crawler.git"
   },
   "license": "MIT",
   "engines": {
@@ -17,24 +17,12 @@
     "validate": "node scripts/validate-manifests.mjs",
     "check-versions": "node scripts/check-versions.mjs",
     "commitlint": "commitlint --from origin/main --to HEAD --verbose",
-    "verify": "npm run validate && npm run check-versions && npm test",
-    "lint": "biome check .",
-    "lint:fix": "biome check --write .",
-    "format": "biome format --write .",
-    "prepare": "husky",
-    "arch:scan": "harness-arch-scan",
-    "dupe:scan": "harness-dupe-scan",
-    "dead:scan": "harness-dead-scan",
-    "spec:gap": "harness-spec-gap-scan",
-    "clone:scan": "harness-clone-scan",
-    "incident:scan": "harness-incident-scan"
+    "verify": "npm run validate && npm run check-versions && npm test"
   },
   "devDependencies": {
     "@commitlint/cli": "^20.1.0",
     "@commitlint/config-conventional": "^20.0.0",
     "knip": "^6.31.0",
-    "semantic-release": "^25.0.0",
-    "@biomejs/biome": "^2.5.6",
-    "husky": "^9.1.7"
+    "semantic-release": "^25.0.0"
   }
 }

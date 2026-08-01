@@ -32,7 +32,7 @@ earned after the policy proves out over reps.
 4. **DISPATCH.** Launch the athlete: cheap model tier, isolated worktree, its standard contract
    (branch off origin/main, gate-confirm the target, run the drill, verify by exit status, ratchet,
    push, report — no PR-opening; athletes carry no GitHub tooling). Its own definition points at
-   [the dispatch bracket](https://github.com/ejclark/battle-of-the-wits/blob/main/plugins/harness-gates/docs/DISPATCH.md) for the bracket. Include the known worktree caveat:
+   [the dispatch bracket](https://github.com/ejclark/dungeon-crawler/blob/main/plugins/harness-gates/docs/DISPATCH.md) for the bracket. Include the known worktree caveat:
    `node_modules` may need a temporary symlink from the main checkout.
 5. **PREFLIGHT BEFORE LANDING.** For every athlete branch, `harness-preflight --agent <athlete>` from
    that worktree. It refuses workflow files, credential-shaped files, a raised budget, and any edit
