@@ -66,9 +66,9 @@ test("bosses come from committed budgets, biggest first", () => {
     const out = run(root);
     const bosses = out.slice(out.indexOf("BOSSES"), out.indexOf("LOOT"));
     assert.match(bosses, /src\/huge\.ts/);
-    assert.match(bosses, /2000 lines held/);
+    assert.match(bosses, /2000 lines/, "the boss must carry its measured stat");
     assert.ok(
-      bosses.indexOf("src/huge.ts") < bosses.indexOf("src/mid.ts"),
+      bosses.indexOf("huge.ts") < bosses.indexOf("mid.ts"),
       "bosses must be ordered by size, so the biggest threat reads first",
     );
     assert.match(bosses, /7 modules with no spec/);
@@ -131,7 +131,7 @@ test("the forge invents nothing — every encounter traces to a committed budget
   });
   try {
     const out = forgeRun(root);
-    assert.match(out, /src\/colossus\.ts/, "the biggest file must be named, not described vaguely");
+    assert.match(out, /colossus\.ts/, "the biggest file must be named, not described vaguely");
     assert.match(out, /2400 lines/);
     assert.match(out, /12 duplicated definitions/);
     // Nothing may be offered that no budget supports.

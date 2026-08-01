@@ -28,7 +28,7 @@ import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { detect, plan } from "./phases.mjs";
 import { forge } from "./forge.mjs";
-import { readJson } from "./state.mjs";
+import { bossList, readJson } from "./state.mjs";
 
 const ROOT = process.cwd();
 
@@ -40,26 +40,6 @@ const CHAMBERS = [
   { name: "The Throne", phase: "5 · Autonomy" },
 ];
 
-
-/** Bosses are measured, not invented: the biggest committed budgets are the biggest files. */
-function bosses() {
-  const arch = readJson(ROOT, "arch-budget.json") ?? {};
-  const found = Object.entries(arch)
-    .filter(([, cap]) => typeof cap === "number")
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5)
-    .map(([file, cap]) => ({ kind: "god file", name: file, stat: `${cap} lines held` }));
-
-  const specGap = readJson(ROOT, "spec-gap-budget.json");
-  if (specGap && typeof specGap.untested === "number" && specGap.untested > 0) {
-    found.push({ kind: "the unwatched", name: `${specGap.untested} modules with no spec`, stat: "spec gap" });
-  }
-  const dupe = readJson(ROOT, "dupe-budget.json");
-  if (dupe && typeof dupe.duplicateDefs === "number" && dupe.duplicateDefs > 0) {
-    found.push({ kind: "the twins", name: `${dupe.duplicateDefs} duplicated definitions`, stat: "duplication" });
-  }
-  return found;
-}
 
 /** Loot is capability. Each item names the chamber that unlocks it — nothing is granted early. */
 function loot(state, steps) {
@@ -128,12 +108,12 @@ export function render() {
     L.push("");
   }
 
-  const bs = bosses();
+  const bs = bossList(ROOT).slice(0, 6);
   L.push("  ▸ BOSSES");
   if (bs.length === 0) {
     L.push("      none visible — either the dungeon is clean or the debt is not yet frozen");
   } else {
-    for (const b of bs) L.push(`      ☠ ${b.name}   (${b.stat})`);
+    for (const b of bs) L.push(`      ☠ ${b.detail}   (${b.stat})`);
   }
   L.push("");
 
