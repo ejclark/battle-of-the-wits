@@ -521,3 +521,26 @@ described, standing that is derived rather than awarded, an intake that preserve
 non-expert uniquely produces, and a written record of what happens when it goes wrong. If something
 here is never used within a few months, it was ceremony and should be deleted — and that judgement is
 easier to make honestly if it was written down as a possibility from the start.
+
+## Never hand a non-technical person a command to type
+
+The rule this project kept breaking, on the person it was written for.
+
+Someone who does not use git cannot be unblocked with `git remote add origin … && git fetch && git
+reset --hard`. Not because it is hard to paste — because when it fails, and it will, they have no way
+to tell a typo from a wrong assumption from a genuinely broken repository. **A command is only a
+useful thing to give someone who can debug it.**
+
+Give them a **description of the situation** instead, and let the tooling work out the commands:
+
+> ❌ *"Run `git pull origin main`."*
+> ✅ *"My copy is out of date and I may have downloaded it as a zip rather than cloned it. Work out
+> whether it can be updated or whether a fresh copy is cleaner, tell me which and why, then do it."*
+
+The second one survives being wrong about the situation, which the first does not. It also produces a
+better outcome for an expert — they get the reasoning rather than a command they would have had to
+sanity-check anyway.
+
+**The tell that this rule is being broken:** you are relaying commands through a third person. If the
+owner is copying instructions to a contributor, the instructions are aimed at the wrong reader.
+
