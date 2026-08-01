@@ -87,7 +87,7 @@ if (gi.wrote) wrote.push(gi.wrote);
 if (gi.skipped) skipped.push(gi.skipped);
 
 // ── git hooks (husky) ──────────────────────────────────────────────────────────
-for (const hook of ["pre-commit", "commit-msg", "pre-push"]) {
+for (const hook of ["pre-commit", "commit-msg", "pre-push", "post-commit"]) {
   put(`.husky/${hook}`, tpl(`husky/${hook}`), { exec: true });
 }
 
