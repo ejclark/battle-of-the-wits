@@ -388,3 +388,55 @@ covered by the suite." What has run *this path*, in *this condition*.
 An athlete has still never been dispatched. That was the right call while its first command was
 broken — and it is now, for the first time, a thing that could be tried rather than a thing that
 would have failed silently. Still Eric's call to make.
+
+---
+
+## 2026-08-01 (night, fifth) · The Foundry
+
+Followed the tool's own recommendation this time — `harness-dungeon --today` named The Foundry, with
+`bootstrap.mjs` at 238 lines as the target. That is the pilot loop working as designed: *what should
+I build today?* answered by measured state rather than by a person.
+
+Two seams, both cohesive rather than convenient:
+
+- **`mergeClaudeSettings` → `merge.mjs`**, which already owns "fold into a file the project owns
+  without trampling it." `settings.json` carries **hooks**, which are code execution — rewriting it
+  wholesale would be the single most destructive thing the bootstrap could do, so it belongs with the
+  two other merges that follow the same rule.
+- **`gateSpecFor` → `detect.mjs`**, which already owns "what has actually been done here?" Choosing a
+  gate spec by reading the repo's test runner is repo-state detection, not writing.
+
+`bootstrap.mjs`: **238 → 209**.
+
+### The rail said no, and it was right
+
+Both receiving modules had to grow to accept the code — `merge.mjs` 69 → 101, `detect.mjs` 59 → 80 —
+and `harness-preflight` refused the change outright:
+
+> a budget may only be lowered; raising one is marking your own homework
+
+That refusal is correct and should not be weakened. But it means something specific and worth naming:
+**the decomposer athlete structurally cannot perform an extraction into an existing module.** It can
+only ever split into brand-new files. Every "move this into the module that should already own it"
+refactor is, by construction, a lead-level change.
+
+That is a real limit of the current rails, not a bug to patch tonight — and the wrong fix is obvious
+and tempting: let an athlete raise a budget when something else falls. A net-sum rule sounds
+principled and would have failed here anyway, because the extraction added explanatory comments in
+its new homes and the *total* line count genuinely rose. The honest accounting is that this change
+costs lines and buys placement.
+
+So the fix that landed is a **doctrine** one: `decomposer.md` now says extract into a new file, and if
+the natural home already exists, say so and stop. Better a dispatch that reports "this needs a human"
+in ten seconds than one that burns its whole run producing a diff the bracket will refuse.
+
+Preflight is not wired into CI — it is the athlete's self-check inside the dispatch bracket — so this
+PR is unaffected by its own finding. The raise is recorded in `arch-budget.json` with the reasoning,
+which is the mechanism built two dungeons ago for exactly this.
+
+### One more stale reference
+
+The extraction left a template literal in the summary still reading `usesNodeTest`, a variable that
+had just moved. It crashed on `--dry-run`. Caught by running the tool rather than by the suite — the
+`--dry-run` path *is* covered, but the crash was in the summary printed after it. Same night, fifth
+instance: **what has actually run this?**

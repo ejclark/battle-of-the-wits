@@ -56,3 +56,24 @@ export function detect(root) {
     hasVerify: Boolean(pkg?.scripts?.verify),
   };
 }
+
+/**
+ * Which gate spec to write, and under which filename — decided by the repo's own test runner.
+ *
+ * Getting this wrong is the worst failure the bootstrap can have: a gate file the runner never
+ * discovers reports nothing, the suite stays green, and the repo believes it is guarded when it is
+ * not. `node --test` provides `test()` but NOT `expect`, and globs *.test.mjs; Vitest/Rstest/Jest
+ * provide describe/it/expect and glob *.spec.ts.
+ */
+export function gateSpecFor(root) {
+  const testScript = (() => {
+    try {
+      return JSON.parse(readFileSync(join(root, "package.json"), "utf8")).scripts?.test ?? "";
+    } catch {
+      return "";
+    }
+  })();
+  return /\bnode\s+--test\b/.test(testScript)
+    ? { template: "specs/gates.test.mjs", name: "gates.test.mjs" }
+    : { template: "specs/gates.spec.ts", name: "gates.spec.ts" };
+}
