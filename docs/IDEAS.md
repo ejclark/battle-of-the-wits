@@ -161,6 +161,38 @@ retros actually cost. Revisit only if the trend gets worse while someone is watc
 one condition under which a gate would be adding something. _(src: Eric · while: "the intent of the
 retro is applied at a natural fault line; small commits relative to the task at hand")_
 
+**17. Debt DENSITY — complexity of the dungeons relative to the world we build.**
+Every budget here is absolute, so a repository that doubles in size while holding debt flat has
+genuinely improved and nothing says so. Density says it: today this repo carries **3.89 duplicate
+definitions and 1.39 clones per 1k lines, across 3,601 lines in 29 budgeted files** — figures
+derivable right now from `model.mjs` plus the budget files, with no new measurement at all.
+It is the honest way to compare a project to its own past as it grows, and the first number that
+would let two repositories be compared without pretending they are the same size.
+**The trap, and it is the reason this is banked rather than built: density improves by growing the
+denominator.** Add code, dilute debt, look better. That is precisely the "what would someone do to
+make this number look good, and would you be happy if they did" test in `DECIDING.md` §6 failing, so
+density can only ever ship *alongside* the absolute number, never instead of it. The visual half —
+dungeon complexity drawn relative to the size of the world — is the same figure as a picture, and it
+waits for the same reason all visual work does. Pairs with #18. _(src: Eric · while: "the complexity
+of the dungeons relative to the world we build")_
+
+**18. Amplification is the SECOND derivative, and the flywheel claim has never been measured.**
+`COACHES.md` asserts a compounding flywheel: "each codified loop lowers the marginal cost of the next
+unit of work, so throughput compounds while cost falls." That is an amplification claim, it is stated
+as fact, and **nothing has ever checked it.** The first derivative — is debt falling — is already
+visible from budget history. Amplification is the derivative of *that*: is the rate at which we can
+retire debt itself increasing?
+There is a worked example sitting in this session's history to calibrate against: `--accept` replaced
+four hand-rolled JSON round-trips with one command, so the *next* justified raise cost one invocation
+instead of five minutes of scripting. That is one codification and one measurable before/after.
+Two things must be right or the number lies. **Normalise by work, not by time** — retired-per-commit
+rather than retired-per-week, or a quiet fortnight reads as a collapse in capability. And **the ledger
+must be thick enough to carry a second derivative**, which needs far more than the ~20 records that
+support a first one; a second derivative from thin data is the "hard data extrapolated" failure in its
+purest form. The substrate now exists; the history does not. Revisit after a few months of boundaries.
+_(src: Eric · while: "this data potentially gives us the ability to see amplification of improvements
+in a measurable form")_
+
 ### Side quests (surfaced by Claude while working — proposals to prune)
 
 **3. Humans do not claim territory; athletes do.**
