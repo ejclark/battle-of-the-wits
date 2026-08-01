@@ -5,21 +5,20 @@
 //   harness-bootstrap --dry-run    # show the plan, touch nothing
 //   harness-bootstrap --force      # overwrite existing files (destructive; asks for it explicitly)
 //
-// WHY THIS EXISTS: installing the plugins gives you the drills and the gates, and then leaves you to
+// WHY THIS EXISTS: installing the plugins gives you the drills and the gates, then leaves you to
 // hand-roll the plumbing that makes them run — pipeline, commit linting, releases, formatter, hooks,
-// gate wiring. Standing that up the first time cost three red CI runs (a missing lockfile, a test
-// script that never executed the suite, a linter warning that fails the job). Every one of those is
-// a SETUP defect, not a project defect, so every adopter would rediscover all three. This ships the
-// version that is already proven green.
+// gate wiring. Standing that up cost three red CI runs (a missing lockfile, a test script that never
+// executed the suite, a linter warning that fails the job) — all SETUP defects, not project defects,
+// so every adopter would rediscover all three. This ships the version already proven green.
 //
 // TWO RULES THIS FOLLOWS:
 //   1. Never clobber. An existing file is a decision someone made; it is reported as skipped.
 //   2. Say what it imposes. These are opinions (Conventional Commits, semantic-release, ratcheting
-//      gates), not laws — the summary names them so you can disagree deliberately rather than
-//      discover it three weeks later.
+//      gates), not laws — named in the summary so you disagree deliberately, not three weeks later.
 import { existsSync, mkdirSync, readFileSync, writeFileSync, chmodSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { renderJscpd, renderKnip } from "./configs.mjs";
 import { detect, plan, render } from "./phases.mjs";
 import { mergeGitignore, mergePackageJson } from "./merge.mjs";
 
@@ -59,12 +58,22 @@ function put(destRel, contents, { exec = false } = {}) {
 
 const tpl = (p) => readFileSync(join(TPL, p), "utf8");
 
+// Read BEFORE anything is written: knip and jscpd are scoped by config rather than by scanner code,
+// so their files are RENDERED from the descriptor (configs.mjs) rather than copied.
+const descriptor = (() => {
+  try {
+    return JSON.parse(readFileSync(join(ROOT, "harness.json"), "utf8"));
+  } catch {
+    return {};
+  }
+})();
+
 // ── config files ───────────────────────────────────────────────────────────────
 put("biome.json", tpl("node/biome.json"));
 put("commitlint.config.js", tpl("node/commitlint.config.js"));
 put(".releaserc.json", tpl("node/releaserc.json"));
-put("knip.json", tpl("node/knip.json"));
-put(".jscpd.json", tpl("node/jscpd.json"));
+put("knip.json", renderKnip(descriptor));
+put(".jscpd.json", renderJscpd(descriptor));
 put(".npmrc", tpl("node/npmrc"));
 put(".nvmrc", tpl("node/nvmrc"));
 
@@ -86,20 +95,11 @@ put(".github/workflows/pipeline.yml", tpl("github/workflows/harness.yml"));
 put(".github/pull_request_template.md", tpl("github/pull_request_template.md"));
 
 // ── gate wiring: the gates run inside the test suite, not as extra CI steps ─────
-const descriptor = (() => {
-  try {
-    return JSON.parse(readFileSync(join(ROOT, "harness.json"), "utf8"));
-  } catch {
-    return {};
-  }
-})();
-// WHICH gate spec, and under WHICH filename, is decided by the repo's own test runner. Getting this
+// WHICH gate spec, and under WHICH filename, is decided by the repo's own test runner. Getting it
 // wrong is the worst failure this bootstrap can have: a gate file the runner never discovers reports
-// nothing, the suite stays green, and the repo believes it is guarded when it is not. A gate that
-// cannot be seen is worse than no gate, because it buys false confidence.
-//
-// `node --test` provides `test()` from node:test but NOT `expect`, and typically globs a specific
-// filename pattern (*.test.mjs). Vitest/Rstest/Jest provide describe/it/expect and glob *.spec.ts.
+// nothing, the suite stays green, and the repo believes it is guarded when it is not.
+// `node --test` provides `test()` but NOT `expect`, and globs *.test.mjs; Vitest/Rstest/Jest provide
+// describe/it/expect and glob *.spec.ts.
 const testScript = (() => {
   try {
     return JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8")).scripts?.test ?? "";

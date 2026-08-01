@@ -1,6 +1,0 @@
-{
-  "$schema": "https://unpkg.com/knip@6/schema.json",
-  "entry": ["src/scripts/*.ts", "scripts/*.mjs", "tests/**/*.spec.ts"],
-  "project": ["src/**/*.ts", "scripts/*.mjs"],
-  "ignoreDependencies": ["@commitlint/config-conventional", "husky"]
-}

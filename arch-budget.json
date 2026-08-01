@@ -4,6 +4,7 @@
   "plugins/harness-core/lib/bootstrap.mjs": 238,
   "plugins/harness-core/lib/campaigns.mjs": 115,
   "plugins/harness-core/lib/cartography.mjs": 172,
+  "plugins/harness-core/lib/configs.mjs": 73,
   "plugins/harness-core/lib/detect.mjs": 59,
   "plugins/harness-core/lib/dungeon.mjs": 159,
   "plugins/harness-core/lib/forge.mjs": 147,
