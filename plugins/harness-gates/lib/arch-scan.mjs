@@ -63,6 +63,57 @@ if (process.argv.includes("--candidate")) {
   process.exit(0);
 }
 
+// ACCEPT A JUSTIFIED RAISE — the other half of the ratchet, and the half that was pure manual toil.
+//
+//   harness-arch-scan --accept "<why this growth is earned>"
+//
+// `--update` only ever lowers, correctly. But raises are legitimate — a module that RECEIVES a
+// well-placed extraction grows, and the ratchet cannot tell that from someone piling on. The
+// documented answer has always been "record it with reasoning", and the only way to do that was to
+// hand-edit JSON. That happened four times in one session, twice with a scripted round-trip that had
+// to be debugged. The doctrine on resource cost is explicit: a model-in-the-loop procedure costs
+// every time, a script costs once.
+//
+// It is also STRICTLY SAFER than the hand-edit it replaces, which is the part worth noticing:
+//   · a reason is REQUIRED, where the JSON file happily accepts a silent raise
+//   · only files that are ACTUALLY over budget are raised, and only to their current size
+//   · it cannot lower anything — the two directions stay separate commands and separate intentions
+// Removing toil and adding a rail in the same change is the shape to look for; a convenience that
+// weakens a gate is not a toil-killer, it is a bypass with better ergonomics.
+if (process.argv.includes("--accept")) {
+  const why = process.argv[process.argv.indexOf("--accept") + 1];
+  const over = files.filter((x) => x.lines > (budget[x.file] ?? DEFAULT_CAP));
+
+  if (!over.length) {
+    console.error("Nothing is over budget — there is no raise to accept.");
+    process.exit(2);
+  }
+  if (!why || why.startsWith("--") || why.trim().length < 40) {
+    console.error(`✗ --accept needs a REASON, and "${why ?? ""}" is not one.\n`);
+    console.error("  usage: harness-arch-scan --accept \"<why this growth is earned>\"\n");
+    console.error("  Files that would be raised:");
+    for (const { file, lines } of over) console.error(`    ${file}: ${budget[file] ?? DEFAULT_CAP} → ${lines}`);
+    console.error(`
+  Say what the module RECEIVED and why this is its right home, and say what must not be done to
+  recover the lines. A future reader has to be able to judge whether the raise is still earned, and
+  "refactor" tells them nothing — an unexplained raise is indistinguishable from giving up.
+`);
+    process.exit(2);
+  }
+
+  const next = { ...Object.fromEntries(Object.entries(budget).filter(([k]) => !k.startsWith("_"))) };
+  for (const { file, lines } of over) next[file] = lines;
+  const slug = why.toLowerCase().replace(/[^a-z0-9]+/g, "_").split("_").filter(Boolean).slice(0, 4).join("_");
+  let key = `_why_${slug}`;
+  for (let n = 2; budget[key] !== undefined; n++) key = `_why_${slug}_${n}`;
+  writeBudget(ROOT, "arch", { ...next, [key]: `${over.map((o) => `${o.file} ${budget[o.file] ?? DEFAULT_CAP} → ${o.lines}`).join("; ")}. ${why}` }, { sort: true });
+
+  console.log(`✓ raised ${over.length} budget(s), recorded as ${key}:`);
+  for (const { file, lines } of over) console.log(`    ${file}: ${budget[file] ?? DEFAULT_CAP} → ${lines}`);
+  console.log("\n  This is a deliberate, reviewable act. It belongs in the same PR as the growth it accepts.");
+  process.exit(0);
+}
+
 if (process.argv.includes("--update")) {
   const next = {};
   for (const { file, lines } of files) {

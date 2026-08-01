@@ -11,7 +11,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
+import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -59,6 +59,45 @@ test("arch-scan reads sourceDir from the descriptor and catches an over-budget f
     assert.match(out, /huge\.ts/, "the report must name the offending file in lib/");
     // Proves it scanned lib/ rather than finding nothing: a missing dir cannot produce this finding.
     assert.match(out, /small\.ts/, "the small file in lib/ must also have been measured");
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("--accept refuses a raise with no real reason, and records one that has it", () => {
+  // Planted violation, in the direction that matters: the failure mode of a raise command is that it
+  // makes raising EASY. A budget that can be raised without a recorded reason converts the ratchet
+  // into decoration, so the reason requirement is the gate and is what gets tested first.
+  const root = makeRepo({ "lib/big.ts": `export const x = 1;\n${"// filler\n".repeat(60)}` });
+  writeFileSync(join(root, "arch-budget.json"), JSON.stringify({ "lib/big.ts": 10 }));
+  try {
+    const lazy = runGate("harness-arch-scan", root, ["--accept", "wip"]);
+    assert.equal(lazy.code, 2, "a one-word reason must be refused");
+    assert.match(lazy.out, /needs a REASON/);
+    assert.equal(JSON.parse(readFileSync(join(root, "arch-budget.json"), "utf8"))["lib/big.ts"], 10, "and must not have written");
+
+    const why = "received a cohesive extraction out of the scanner modules and is their natural home";
+    const ok = runGate("harness-arch-scan", root, ["--accept", why]);
+    assert.equal(ok.code, 0, ok.out);
+    const after = JSON.parse(readFileSync(join(root, "arch-budget.json"), "utf8"));
+    assert.ok(after["lib/big.ts"] > 10, "the over-budget file is raised to its real size");
+    const recorded = Object.entries(after).find(([k]) => k.startsWith("_why_"));
+    assert.ok(recorded, "the reason must be recorded beside the number, not discarded");
+    assert.match(recorded[1], /10 → \d+/, "and must carry the delta, so a reader can judge the raise");
+    assert.equal(runGate("harness-arch-scan", root).code, 0, "the gate is green afterwards");
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("--accept raises nothing when nothing is over budget", () => {
+  // The other half of the rail: a raise command that runs on a clean repo would let someone bank
+  // headroom in advance, which is a ratchet running backwards with extra steps.
+  const root = makeRepo({ "lib/small.ts": "export const y = 2;\n" });
+  try {
+    const { code, out } = runGate("harness-arch-scan", root, ["--accept", "a perfectly good and sufficiently long reason for a raise"]);
+    assert.equal(code, 2, "there is no raise to accept");
+    assert.match(out, /Nothing is over budget/);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

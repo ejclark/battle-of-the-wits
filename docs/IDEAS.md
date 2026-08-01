@@ -114,6 +114,20 @@ system has exactly one author, how much reasoning exists only in one person's he
 `LESSONS.md` and the ADRs. Pairs with #1, which needs the same principal×district matrix.
 _(src: Eric · while: the same pushback — "the system becomes more resilient at the same time")_
 
+**13. The gates fire after the writing is finished — pull the feedback left.**
+Measured on the contributor-model run: eight distinct gates failed at least once, ten budget
+round-trips followed, and roughly **half of the 29-minute build span was rework driven by feedback
+that arrived late**. Every one of those findings was a true positive, so the gates are not the
+problem — their *position in the loop* is. They run in `npm test`, which is the end.
+The repo already learned the outer version of this lesson ("a verification step that only exists in
+CI turns a typo into a commit-push-wait cycle") and fixed it by moving shellcheck into the suite. This
+is the same lesson one level deeper: **a check that only exists in the suite turns a stray line into a
+write-test-fix cycle.** The scanners are individually fast and already runnable. The missing piece is
+a single pre-commit sweep — something like `harness-preflight --gates`, running the scanners against
+the working tree so the arch/dupe/clone/spec-gap answer arrives while the file is still open rather
+than after the commit message is written. Pairs with #5. _(src: Claude · while: a retro on the run
+that built the contributor model)_
+
 ### Side quests (surfaced by Claude while working — proposals to prune)
 
 **3. Humans do not claim territory; athletes do.**

@@ -89,6 +89,28 @@ someone has an account, whether their 2FA will work, or where they will get stuc
 get stuck is the deliverable*, not an obstacle to the deliverable. The information that arrives
 mid-drive is the product.
 
+### Point a fan-out at verification, never at generation
+
+Measured, on the run that produced the contributor model: three workflows, 26 agents, 2.85M tokens.
+**The design half was rejected wholesale** — all three independent designs were discarded by their own
+synthesis in favour of what had already been written inline, and the first-launched workflow reported
+45 minutes in, opening with *"the architecture is already built and it is good."* **The adversarial
+half paid for the entire run**, including a live PII hole that four shipped refusals could not have
+caught.
+
+The lesson is a straight application of the doctrine it violated: **AI made producing cheap and left
+verifying exactly as expensive.** Generation was not the constraint — a session with the repository
+in context designs faster than a fan-out can report — so spending capacity there was optimising a
+non-constraint, and the fan-out's latency became pure added lead time.
+
+So the rule: **a fan-out reviews a working draft; it does not produce one.** Write the thing, then
+spend agents trying to break it. If a design genuinely needs several independent attempts — a wide
+solution space, a decision that is expensive to reverse — say so out loud first, because that is the
+exception rather than the default, and the default is what the tokens go to.
+
+Deliberately not a gate. Nothing can mechanically tell a redundant fan-out from a needed one, and a
+gate that guessed would refuse exactly the case worth running.
+
 ### Two seats that serve the staff rather than the code
 
 Both sit outside the defensive roster, because neither watches a quality dimension. They watch the
