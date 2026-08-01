@@ -1,7 +1,6 @@
 {
   "name": "harness-gates",
   "description": "Quality gates and the athlete roster: architecture, duplication, dead-code and spec-gap scanners with ratcheting budgets, plus the background agents that burn the debt down.",
-  "version": "1.0.0",
   "author": {
     "name": "Eric Clark"
   },

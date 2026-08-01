@@ -8,14 +8,12 @@
     {
       "name": "harness-core",
       "source": "./plugins/harness-core",
-      "description": "Toolchain-agnostic engineering drills: EARS requirements, blameless retros, and the governor dispatch cycle. Works in any repository, any language.",
-      "version": "1.0.0"
+      "description": "Toolchain-agnostic engineering drills: EARS requirements, blameless retros, and the governor dispatch cycle. Works in any repository, any language."
     },
     {
       "name": "harness-gates",
       "source": "./plugins/harness-gates",
-      "description": "Quality gates and the athlete roster: architecture, duplication, dead-code and spec-gap scanners with ratcheting budgets, plus the background agents that burn the debt down.",
-      "version": "1.0.0"
+      "description": "Quality gates and the athlete roster: architecture, duplication, dead-code and spec-gap scanners with ratcheting budgets, plus the background agents that burn the debt down."
     }
   ]
 }
