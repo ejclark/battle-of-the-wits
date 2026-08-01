@@ -98,6 +98,6 @@
     }
   },
   "files": {
-    "includes": ["**", "!**/dist", "!**/node_modules", "!**/coverage", "!**/spikes"]
+    "includes": ["**", "!**/dist", "!**/node_modules", "!**/coverage", "!**/spikes", "!**/templates/**"]
   }
 }

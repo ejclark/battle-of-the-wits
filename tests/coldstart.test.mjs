@@ -23,7 +23,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { chmodSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -307,4 +307,44 @@ test("tool detection does not depend on a POSIX shell", () => {
   assert.match(auto, /platform === "win32"/, "detection must branch on platform");
   assert.match(auto, /"where"/, "and use the Windows equivalent rather than assuming a shell");
   assert.doesNotMatch(auto, /\bexecSync\(/, "a shell invocation is where the next platform assumption will hide");
+});
+
+// ── 9 · what the first Windows contributor found ───────────────────────────────
+
+test("commands are resolved in a way Windows can execute", () => {
+  // The whole mechanical half of the adoption failed on the first Windows machine that tried it:
+  // `npm` is `npm.cmd` there, execFileSync does not consult PATHEXT, and every step threw ENOENT —
+  // install, freeze, format, verify — while the FILE-WRITING half worked perfectly and reported
+  // success. Files everywhere, enforcement nowhere, which is this project's defining failure.
+  const auto = readFileSync(join(REPO, "plugins/harness-core/lib/auto.mjs"), "utf8");
+  assert.match(auto, /win32.*\.cmd|\.cmd.*win32/s, "npm/npx must resolve to their .cmd form on Windows");
+  assert.doesNotMatch(auto, /shell:\s*true/, "shell:true would make every argument shell-interpreted — the suffix is the narrow fix");
+});
+
+test("biome does not discover the config templates it ships", () => {
+  // Found by a contributor, not by us. Biome walks the tree, finds
+  // templates/node/biome.json — a complete root config — and refuses to run at all with a
+  // nested-root error. Every OTHER tool here already excludes templates/ (knip, jscpd, the
+  // descriptor); biome was the one that did not, so it was latent until the first machine where
+  // the pre-commit hook actually ran.
+  const biome = JSON.parse(readFileSync(join(REPO, "biome.json"), "utf8"));
+  const includes = biome.files?.includes ?? [];
+  assert.ok(includes.some((g) => /templates/.test(g) && g.startsWith("!")), "biome.json must exclude templates/, as knip and jscpd already do");
+
+  // The template it would have tripped over is still a full config on purpose — it is what an
+  // adopter receives — so the exclusion is the fix, not editing the template.
+  assert.ok(existsSync(join(TEMPLATES, "node/biome.json")), "the template moved; this exclusion may no longer be doing anything");
+});
+
+test("no pure-logic test asserts a POSIX-shaped path", () => {
+  // render.test.mjs asserted `startsWith("/")` on an absolute path. On Windows an absolute path
+  // begins `C:\`, so a function that was behaving perfectly failed its own test — a portability
+  // defect in the SUITE, in a file with no shell and no filesystem in it.
+  for (const f of readdirSync(join(REPO, "tests")).filter((f) => f.endsWith(".mjs"))) {
+    const body = readFileSync(join(REPO, "tests", f), "utf8")
+      .split("\n")
+      .filter((l) => !l.trim().startsWith("//"))
+      .join("\n");
+    assert.doesNotMatch(body, /startsWith\("\/"\)/, `${f} assumes a POSIX absolute path — use isAbsolute()`);
+  }
 });
