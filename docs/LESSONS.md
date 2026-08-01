@@ -268,3 +268,20 @@ Prevention ranks, best first:
   half was rewritten so each rule states the principle and any example is marked as an example.
 - **SIDE QUESTS:** promotion-by-relocation is the general shape: moving an artifact into a portable
   home does not make it portable. Ask what the moved thing *claims*, not just where it now sits.
+
+### The blast-radius gate measured against a branch that may not be current
+- **SHA:** `n/a`   **DATE:** 2026-08-01   **STATUS:** closed
+- **SIGNAL:** `harness-preflight` refused a change for raising two budgets that had already been
+  raised, in a reviewed PR, on `main`. The refusal was against a local `main` that had not been
+  fetched since before that merge.
+- **ROOT CAUSE:** `defaultBranch()` resolved `origin/HEAD`, stripped the `origin/` prefix, and used
+  the result as BOTH the branch name and the comparison ref. The name and the ref are different
+  questions — "am I on the default branch?" versus "what is this diff against?" — and answering the
+  second with the first means comparing against whatever the local branch happens to be. An
+  athlete's worktree is exactly where that is stale.
+- **PREVENTION:** gate — the two are now separate values, the ref prefers `origin/<name>` when it
+  resolves, and both helpers moved to `gitscope.mjs` where they are tested by import. Verified by a
+  negative control: the new case fails against the old implementation.
+- **SIDE QUESTS:** the failure is asymmetric and that is the part worth remembering. A stale base
+  invents violations that are not there — noisy, self-correcting — and HIDES violations that are.
+  A false clear from the gate that guards the irreversible class is the direction that costs.

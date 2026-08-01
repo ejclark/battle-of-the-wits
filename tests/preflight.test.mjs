@@ -6,7 +6,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { writeFileSync, mkdirSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { makeRepo, runTool, bin } from "./helpers.mjs";
 
@@ -130,4 +131,53 @@ test("an ordinary change on a branch passes", () => {
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
+});
+
+// A stale local `main` must not become the yardstick.
+//
+// `defaultBranch()` resolved `origin/HEAD`, then stripped the `origin/` prefix and used the result
+// as BOTH the branch name and the comparison ref — so every diff was taken against the LOCAL `main`,
+// whatever that happened to be. In a worktree that has not fetched (an athlete's, typically) that is
+// a stale commit.
+//
+// The failure is not symmetric. A stale base invents violations that are not there — annoying — and
+// HIDES violations that are — which is a false clear from the gate that guards the irreversible
+// class. This case pins the second direction by construction: the budget raise it checks for is
+// visible only against the stale local ref, and must not be reported.
+test("the comparison base is the remote-tracking ref, not a stale local branch", () => {
+  const origin = mkdtempSync(join(tmpdir(), "botw-origin-"));
+  execFileSync("git", ["init", "-q", "--bare", "-b", "main", origin], { stdio: "pipe" });
+
+  const root = mkdtempSync(join(tmpdir(), "botw-stale-"));
+  const git = (...a) => execFileSync("git", a, { cwd: root, stdio: "pipe", encoding: "utf8" });
+  execFileSync("git", ["clone", "-q", origin, root], { stdio: "pipe" });
+  git("config", "user.email", "probe@example.com");
+  git("config", "user.name", "probe");
+
+  // c1: the budget is low.
+  writeFileSync(join(root, "arch-budget.json"), JSON.stringify({ "src/a.ts": 1 }));
+  git("add", "-A");
+  git("commit", "-qm", "c1");
+  git("push", "-q", "origin", "main");
+
+  // c2: someone raised it deliberately, in a reviewed PR. This is now the real base.
+  writeFileSync(join(root, "arch-budget.json"), JSON.stringify({ "src/a.ts": 9 }));
+  git("add", "-A");
+  git("commit", "-qm", "c2");
+  git("push", "-q", "origin", "main");
+  const c1 = git("rev-parse", "HEAD~1").trim();
+
+  // A branch off the REAL base, changing nothing about the budget…
+  git("checkout", "-qb", "feature");
+  writeFileSync(join(root, "note.txt"), "ordinary work\n");
+  git("add", "-A");
+  git("commit", "-qm", "work");
+
+  // …in a worktree whose local `main` has fallen behind, which is the normal state of an athlete's
+  // checkout. Against c1 the budget reads as 1 → 9, a raise. Against origin/main it is unchanged.
+  git("update-ref", "refs/heads/main", c1);
+
+  const r = runTool(bin("harness-gates", "harness-preflight"), root);
+  assert.equal(r.code, 0, `preflight must diff against origin/main, not the stale local main:\n\n${r.out}`);
+  assert.match(r.out, /origin\/main/, "and it should say which ref it compared against");
 });
