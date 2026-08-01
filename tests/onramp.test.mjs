@@ -229,9 +229,12 @@ test("every drill the README lists is one the reader was told how to install", (
   // command" on the first thing a curious newcomer tries is a small failure with an outsized
   // message: it says the instructions are approximate.
   const readme = read("README.md");
-  const newcomerBlock = [...readme.matchAll(/```shell\n([\s\S]*?)```/g)].map((m) => m[1]).find((b) => b.includes("onboard"));
-  assert.ok(newcomerBlock, "the newcomer paste block is gone");
-  const installed = new Set([...newcomerBlock.matchAll(/\/plugin install ([\w-]+)@/g)].map((m) => m[1]));
+  // One block now serves both audiences — the contributor path swaps its last LINE — so whatever it
+  // installs is what every reader has. The earlier two-block version is what produced the defect:
+  // the newcomer block pulled harness-core only while the drill list offered harness-gates skills.
+  const block = [...readme.matchAll(/```shell\n([\s\S]*?)```/g)].map((m) => m[1]).find((b) => b.includes("/plugin install"));
+  assert.ok(block, "the paste block is gone");
+  const installed = new Set([...block.matchAll(/\/plugin install ([\w-]+)@/g)].map((m) => m[1]));
 
   // Where does each named drill actually live?
   const home = {};
@@ -240,7 +243,7 @@ test("every drill the README lists is one the reader was told how to install", (
     if (existsSync(dir)) for (const s of readdirSync(dir)) home[s] = plugin;
   }
   // Only drills offered WITHOUT a caveat count — the list may name others as long as it says so.
-  const unqualified = readme.split("**Drills**")[1]?.split("And from `harness-gates`")[0] ?? "";
+  const unqualified = readme.split("**Drills**")[1]?.split("\n\n**")[0] ?? "";
   for (const m of unqualified.matchAll(/`\/([\w-]+)`/g)) {
     const drill = m[1];
     if (!home[drill]) continue; // not a skill; the list also names shell commands

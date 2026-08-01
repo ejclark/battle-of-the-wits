@@ -67,6 +67,7 @@
   "overrides": [
     {
       "includes": [
+        "**/arch/gates.*",
         "**/scripts/**",
         "**/src/scripts/**",
         "**/commitlint.config.js",

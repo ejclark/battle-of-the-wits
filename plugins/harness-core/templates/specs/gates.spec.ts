@@ -29,6 +29,12 @@
 // by the linter this harness installs (noMisplacedAssertion), and a bootstrap must not write a file
 // its own verify then rejects.
 import { execFileSync } from "node:child_process";
+// VITEST DOES NOT PROVIDE describe/it AS GLOBALS unless `globals: true` is configured, and most
+// projects do not configure it — so this file referenced two identifiers that did not exist and the
+// repo went red on the gate file the bootstrap had just written it. Jest and Vitest-with-globals
+// both tolerate an explicit import of names they also inject, so importing is the option that is
+// correct in every case rather than in most of them.
+import { describe, it } from "vitest";
 
 const gate = (bin: string) => {
   try {

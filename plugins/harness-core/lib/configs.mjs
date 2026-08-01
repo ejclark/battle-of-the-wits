@@ -95,6 +95,74 @@ export function renderJscpd(desc = {}) {
 }
 
 /**
+ * harness.json — RENDERED from what the repository actually is, never copied from a template.
+ *
+ * THE WORST FAILURE THIS BOOTSTRAP CAN PRODUCE, and it shipped. A static template declared
+ * `sourceExt: ".ts"`, so adopting into a JavaScript repo wrote a descriptor claiming TypeScript.
+ * Every scanner reads that descriptor to decide what to look at, so every gate globbed `**` + `.ts`,
+ * found NOTHING, and reported green — permanently, on a repository with real debt in it.
+ *
+ * A gate scanning zero files does not look broken. It looks clean. That is the false green this
+ * entire project exists to prevent, installed by its own one-shot as the default state.
+ *
+ * Detection is deliberately dumb — count the files, take the majority — because a clever inference
+ * that is wrong is worse than a simple one that is obviously wrong. Nothing to detect means the
+ * DOCUMENTED default, never a guess dressed as a measurement.
+ */
+export function renderDescriptor(root, { readdirSync, existsSync, readFileSync }) {
+  const readPkg = (p) => (existsSync(p) ? readFileSync(p, "utf8") : "{}");
+  const first = (candidates, fallback) => candidates.find((d) => existsSync(`${root}/${d}`)) ?? fallback;
+  const sourceDir = first(["src", "lib", "app", "packages"], "src");
+
+  // Majority extension among source files, walking at most a few levels — enough to classify a
+  // repository, cheap enough to run during a bootstrap.
+  const counts = {};
+  const walk = (dir, depth) => {
+    if (depth > 4 || !existsSync(dir)) return;
+    for (const e of readdirSync(dir, { withFileTypes: true })) {
+      if (e.name === "node_modules" || e.name.startsWith(".")) continue;
+      const full = `${dir}/${e.name}`;
+      if (e.isDirectory()) walk(full, depth + 1);
+      else {
+        const ext = e.name.match(/(\.[cm]?[jt]sx?)$/)?.[1];
+        if (ext) counts[ext.replace(/^\.[cm]/, ".")] = (counts[ext.replace(/^\.[cm]/, ".")] ?? 0) + 1;
+      }
+    }
+  };
+  walk(`${root}/${sourceDir}`, 0);
+  const ranked = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  const sourceExt = ranked.length ? ranked[0][0].replace(/x$/, "") : ".ts";
+
+  const testDir = first(["tests", "test", "spec", "__tests__"], "tests");
+
+  // The suffix must match the RUNNER, not just the language. `scriptsFor` writes `node --test` for a
+  // repo with no real test script, and `node --test` collects `*.test.mjs` — so a `.spec.ts` suffix
+  // here names a gate file that runner will never look at. Language decides the template; the runner
+  // decides whether the file is collected at all, and getting that wrong is the silent one.
+  let realTest = null;
+  try {
+    realTest = effectiveTestScript(JSON.parse(readPkg(`${root}/package.json`)));
+  } catch {
+    realTest = null;
+  }
+  const typescript = sourceExt === ".ts" && realTest !== null && !/\bnode\s+--test\b/.test(realTest);
+  return `${JSON.stringify(
+    {
+      persona: "dungeon",
+      sourceDir,
+      testDir,
+      sourceExt,
+      specSuffix: typescript ? ".spec.ts" : ".test.mjs",
+      specExempt: [],
+      exclude: [],
+      fleet: { maxConcurrent: 3, tokenCeiling: null },
+    },
+    null,
+    2,
+  )}\n`;
+}
+
+/**
  * The scripts table the bootstrap merges into `package.json`.
  *
  * `typecheck` is CONDITIONAL, and finding that out cost the first adoption into a repository shaped

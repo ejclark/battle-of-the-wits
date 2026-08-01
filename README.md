@@ -51,19 +51,12 @@ It never clobbers a file you already have, and it names every opinion it imposes
 nothing; `--plan` says where you are and what is next. The details are in
 [the drawers below](#plugins).
 
-**Joining this project instead** — walked from nothing to a merged change, no terminal, no git:
+**Contributing here instead?** Swap the last line for `/harness-core:onboard` and it walks you
+from nothing to a merged change — no terminal, no git. Or read
+[`CONTRIBUTING.md`](CONTRIBUTING.md), which does the same in the browser.
 
-```shell
-/plugin marketplace add ejclark/dungeon-crawler
-/plugin install harness-core@dungeon-crawler
-/reload-plugins
-/harness-core:onboard
-```
-
-Prefer to read? [`CONTRIBUTING.md`](CONTRIBUTING.md) does the same in the browser.
-
-**In the drawers:** [the map](#map) · [the name](#name) · [the two plugins](#plugins) ·
-[staying current](#updates) · [working on it](#developing)
+**Everything else is below, closed and optional:** [the map](#map) · [the name](#name) ·
+[the two plugins](#plugins) · [staying current](#updates) · [working on it](#developing)
 
 ---
 
@@ -104,9 +97,7 @@ Detail lives in folders; this is the map. Nothing below is needed to start.
 `/orient` which gear you are in · `/launch` new project · `/onboard` a new contributor ·
 `/spark` no idea what to build · `/profile` their own GitHub profile · `/intake` feedback into a
 banked observation · `/retro` failure into prevention · `/ears` wish into requirement ·
-`/governor` one dispatch cycle
-
-And from `harness-gates`, so only if you installed it: `/decompose` `/dedupe` `/ship`
+`/governor` one dispatch cycle · `/decompose` `/dedupe` `/ship`
 
 **Hit a harness defect?** `harness-report` composes a complete issue from files already on your
 disk — zero tokens, nothing transmitted, you press the button.
