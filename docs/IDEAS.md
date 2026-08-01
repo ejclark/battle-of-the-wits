@@ -273,6 +273,30 @@ planted-violation case — the LESSONS.md loop extended one repository outward. 
 asks what a harness boundary would carry; a second harness in use is what would answer it.
 _(src: Eric · while: weighing whether to steer a contributor toward our systems or their own)_
 
+**24. The onboarding surface is mechanically complete and has zero evidence.**
+Counted today: 9 drills, 8 agents, 3 issue forms, 3 reader-facing docs, a roster, a zoning table and
+a loop. **Contributors who have run any of it: zero. Issues filed: zero.** Every author on `main` is
+the owner or a bot.
+That is not a complaint about pace, it is the same finding as #9 stated at the level of the whole
+surface: a system whose central claim is *a non-technical person can follow this* is complete when a
+non-technical person has followed it, and not before. By this repository's own standard the current
+state is a scanner aimed at a directory that does not exist — everything reports green because
+nothing has been run. **The next real increment is not another drill. It is one person walking
+through and marking where they stopped**, and any further building before that is guessing at defects
+instead of collecting them. _(src: Claude · while: asked whether the onboarding dungeon is nearly
+complete)_
+
+**25. A tutorial "engine" is a routing table, not a program.**
+The ask was a choose-your-own-adventure tutorial. The thing that actually needed building was much
+smaller: a conversation already IS a choose-your-own-adventure, so the missing piece was the routing
+table and the discipline of naming the route — which is `/orient`, one file.
+Worth keeping as a caution against the version that sounds better. A rendered tutorial with tracked
+state would be a **second store of orientation content** that drifts from `docs/` exactly the way a
+wiki would (#22), plus a state machine to maintain, plus a surface no gate can check. The
+generalisable form: **before building an engine, check whether the model already running is the
+engine.** Where it is, what is missing is a table and a rule. _(src: Eric · while: "this needs a
+tutorial engine … a bit of choose your own adventure")_
+
 ### Side quests (surfaced by Claude while working — proposals to prune)
 
 **3. Humans do not claim territory; athletes do.**
