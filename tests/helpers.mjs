@@ -4,7 +4,7 @@
 // standalone PATH executables that deliberately must not import across that boundary — test files
 // are ordinary modules in one tree, so there is no reason for them to each own a copy.
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdtempSync, mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -23,6 +23,21 @@ const PLUGINS = join(dirname(fileURLToPath(import.meta.url)), "../plugins");
  * One place, because ten call sites remembering a platform suffix is ten chances to forget.
  */
 export const bin = (plugin, name) => join(PLUGINS, plugin, "bin", process.platform === "win32" ? `${name}.cmd` : name);
+
+/**
+ * A module's CODE, with its comment lines removed.
+ *
+ * Every "the source must not contain X" assertion needs this, because scanning the whole file also
+ * matches the COMMENT explaining why X is refused — which makes documenting a rule indistinguishable
+ * from breaking it. That trap is in LESSONS.md and it has now been walked into enough times to be
+ * worth one shared function.
+ */
+export function codeOf(path) {
+  return readFileSync(path, "utf8")
+    .split("\n")
+    .filter((l) => !l.trim().startsWith("//") && !l.trim().startsWith("*"))
+    .join("\n");
+}
 
 /** A throwaway repository seeded with exactly the files a case needs. */
 export function makeRepo(files = {}) {

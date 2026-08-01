@@ -19,7 +19,8 @@
 // are different states and conflating them is the false green this project exists to prevent.
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { GATES, readJson } from "./state.mjs";
+import { GATES, budgetTotal, readJson } from "./state.mjs";
+import { NAV, card, chip, page, tile } from "./shell.mjs";
 
 /** Every gate, with its budget and whether it has ever been frozen. */
 export function gateStates(root) {
@@ -27,14 +28,16 @@ export function gateStates(root) {
     const raw = readJson(root, `${gate}-budget.json`);
     if (raw === null) return { gate, lit: false, budget: null, entries: 0 };
 
-    // Two shapes in the wild: a bare number (one debt total) or a map of file → budget.
+    // Two shapes in the wild: a bare number (one debt total) or a map of file → budget. What each
+    // one TOTALS is `budgetTotal` in state.mjs, shared with the history view — a reader that
+    // disagrees with the one comparing a budget against its own past would draw a move that never
+    // happened.
     if (typeof raw === "number") return { gate, lit: true, budget: raw, entries: 1 };
     const keys = Object.keys(raw).filter((k) => !k.startsWith("_why"));
-    const numeric = keys.map((k) => raw[k]).filter((v) => typeof v === "number");
     return {
       gate,
       lit: true,
-      budget: numeric.reduce((a, b) => a + b, 0),
+      budget: budgetTotal(raw),
       entries: keys.length,
       // A justified raise is the interesting artefact: somebody had to write a paragraph for it.
       justified: Object.keys(raw).filter((k) => k.startsWith("_why")).length,
@@ -102,48 +105,66 @@ export function overviewDocument(root, repoName, { gates = gateStates(root), t =
         : { tone: "quiet", label: "level", detail: `${t.down} down, ${t.up} up` };
 
   const row = (g) =>
-    `<tr><td>${g.gate}</td><td class="n">${g.budget ?? "—"}</td><td class="n">${g.entries || "—"}</td>` +
+    `<tr><td class="name">${g.gate}</td><td class="n">${g.budget ?? "&mdash;"}</td>` +
+    `<td class="n">${g.entries || "&mdash;"}</td>` +
     `<td class="n">${g.justified ? `${g.justified} justified` : ""}</td></tr>`;
 
-  return `<!doctype html><meta charset="utf-8"><title>${repoName} — overview</title>
-<style>
-:root{--ink:#16181a;--dim:#6c7378;--paper:#fbfbf9;--card:#fff;--rule:#e4e2dc;
---good:#2f6f5e;--warn:#b0602c;--quiet:#6c7378}
-@media(prefers-color-scheme:dark){:root{--ink:#eceae4;--dim:#8b9296;--paper:#14161a;--card:#191c21;
---rule:#282c33;--good:#5fd7af;--warn:#e0985d;--quiet:#8b9296}}
-body{font:16px/1.55 ui-serif,Georgia,serif;color:var(--ink);background:var(--paper);
-max-width:46rem;margin:3.5rem auto;padding:0 1.5rem}
-h1{font-size:1.5rem;margin:0}h1 small{font:0.72rem/1 ui-monospace,Menlo,monospace;color:var(--dim);
-letter-spacing:.14em;text-transform:uppercase;display:block;margin-bottom:.5rem}
-.card{background:var(--card);border:1px solid var(--rule);border-radius:4px;padding:1.1rem 1.3rem;margin:1.5rem 0}
-.head{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;flex-wrap:wrap}
-h2{font:0.72rem/1 ui-monospace,Menlo,monospace;letter-spacing:.16em;text-transform:uppercase;
-color:var(--dim);margin:0 0 .8rem}
-.tag{font:0.7rem/1 ui-monospace,Menlo,monospace;letter-spacing:.1em;text-transform:uppercase;
-padding:.25rem .5rem;border:1px solid currentColor;border-radius:2px}
-.good{color:var(--good)}.warn{color:var(--warn)}.quiet{color:var(--quiet)}
-table{border-collapse:collapse;width:100%;font-size:.9rem}
-td,th{text-align:left;padding:.4rem .6rem .4rem 0;border-bottom:1px solid var(--rule)}
-td:first-child{font-family:ui-monospace,Menlo,monospace;font-size:.85rem}
-.n{text-align:right;font-variant-numeric:tabular-nums;color:var(--dim)}
-p{margin:.5rem 0 0;color:var(--dim);font-size:.9rem}
-nav{margin-top:2rem;font-size:.9rem}nav a{color:inherit;margin-right:1.2rem}
-</style>
-<h1><small>dungeon-crawler</small>${repoName}</h1>
+  // SUMMARY BEFORE DETAIL. A tool is scanned, not read top to bottom, so the three facts that decide
+  // whether you need to look further go first — and "unlit" is one of them, because a repository with
+  // two dimensions it cannot see is in a different state from one that is clean.
+  const tiles = [
+    tile("Gates lit", `${lit.length}<span class="n">/${gates.length}</span>`, {
+      tone: dark.length ? "warn" : "good",
+      note: dark.length ? `${dark.length} never frozen` : "every dimension measured",
+    }),
+    tile("Direction", direction.label, { tone: direction.tone, note: `${t.records} ledger record${t.records === 1 ? "" : "s"}` }),
+    tile("Justified raises", lit.reduce((n, g) => n + (g.justified ?? 0), 0), {
+      note: "each one carries a written reason",
+    }),
+  ].join("");
 
-<div class="card">
-  <div class="head"><h2>Direction</h2><span class="tag ${direction.tone}">${direction.label}</span></div>
-  <p>${direction.detail}.</p>
-  ${t.readable && t.up > t.down ? "<p><b>A raise is not a failure</b> — every one of them carries a written reason, which is the rail working. But a ratchet that has only ever gone one way is a ratchet in name.</p>" : ""}
-</div>
+  const doors = NAV.filter((v) => v.path !== "/")
+    .map((v) => `<a class="door" href="${v.path}"><b>${v.label}</b><span>${v.blurb}</span><span class="path">${v.path}</span></a>`)
+    .join("");
 
-<div class="card">
-  <h2>Gates — ${lit.length} lit${dark.length ? `, ${dark.length} unlit` : ""}</h2>
-  <table><thead><tr><th>gate</th><th class="n">budget</th><th class="n">entries</th><th class="n"></th></tr></thead>
-  <tbody>${lit.map(row).join("")}</tbody></table>
-  ${dark.length ? `<p><b>Unlit is not zero.</b> ${dark.map((g) => g.gate).join(", ")} ${dark.length === 1 ? "has" : "have"} never been frozen — that is unmeasured, not clean.</p>` : ""}
-</div>
+  const body = `
+<div class="tiles">${tiles}</div>
 
-<nav><a href="/map">Map →</a><a href="/city">City →</a></nav>
-<p>Nothing here describes a person. This describes the code.</p>`;
+${card(
+  "Direction",
+  `<p>${direction.detail}.</p>${
+    t.readable && t.up > t.down
+      ? "<p><b>A raise is not a failure</b> — every one of them carries a written reason, which is the rail working. But a ratchet that has only ever gone one way is a ratchet in name.</p>"
+      : ""
+  }`,
+  chip(direction.tone, direction.label),
+)}
+
+${card(
+  `Gates &mdash; ${lit.length} lit${dark.length ? `, ${dark.length} unlit` : ""}`,
+  `<div class="scroll"><table>
+    <thead><tr><th>gate</th><th class="n">budget</th><th class="n">entries</th><th class="n">raises</th></tr></thead>
+    <tbody>${lit.map(row).join("")}</tbody>
+  </table></div>` +
+    (dark.length
+      ? `<p><b>Unlit is not zero.</b> ${dark.map((g) => g.gate).join(", ")} ${
+          dark.length === 1 ? "has" : "have"
+        } never been frozen — that is unmeasured, not clean.</p>`
+      : ""),
+)}
+
+${card("Views", `<div class="doors">${doors}</div>`)}`;
+
+  return page({
+    title: `${repoName} — overview`,
+    repoName,
+    // The eyebrow says WHERE YOU ARE, not what this repository is called. It used to be the literal
+    // string "dungeon-crawler", which meant an adopter's own overview announced this project's name
+    // above theirs — a project-specific value that rode along in the lift, exactly the class of
+    // defect the portability suite exists to catch.
+    eyebrow: "Overview",
+    blurb: "What this repository's own instruments say, assembled from six gates that each answer honestly and separately.",
+    here: "/",
+    body,
+  });
 }
