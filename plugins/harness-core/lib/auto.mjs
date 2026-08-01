@@ -12,7 +12,7 @@
 // The genuinely human step is narrower still and cannot be automated from here at all: branch
 // protection, auto-merge, and the GitHub App grant need repo-admin credentials. The run ends by
 // naming them exactly, because a handover that says "configure your repo" is not a handover.
-import { execFileSync, execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -26,8 +26,16 @@ const THIS_DIR = dirname(fileURLToPath(import.meta.url));
 function resolveTool(name) {
   const sibling = join(THIS_DIR, "../../harness-gates/bin", name);
   if (existsSync(sibling)) return sibling;
+  // `command -v` is a POSIX shell builtin and Windows has no such thing — on a Windows machine this
+  // threw for EVERY tool, resolveTool returned null across the board, and the adoption silently
+  // skipped every step that needed a scanner while reporting the ones it did run as fine. A
+  // cross-platform check is one line and the alternative is a run that looks successful and froze no
+  // budgets. `where` is the cmd equivalent; neither is invoked through a shell, so a tool name can
+  // never be interpreted as one.
+  const probe = process.platform === "win32" ? "where" : "which";
   try {
-    return execSync(`command -v ${name}`, { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim() || null;
+    const found = execFileSync(probe, [name], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
+    return found.split(/\r?\n/)[0] || null; //  `where` can return several matches; the first wins
   } catch {
     return null;
   }

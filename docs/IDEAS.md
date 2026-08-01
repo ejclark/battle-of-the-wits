@@ -595,6 +595,28 @@ Watch for the failure: an app whose settings screen grows faster than its featur
 got shipped instead of written down. _(src: Eric · while: "whatever we allow them to customize should
 be managed as preferences or routed through backlog as feature requests")_
 
+**44. Docker: right answer, wrong problem, and the trigger that would change that.**
+Proposed as the fix for cross-platform support — containerise development, stop maintaining two
+platforms. The argument is sound in general and does not survive the specific numbers.
+**What the dual-support burden actually was, measured rather than estimated: two defects.**
+`command -v` in `resolveTool` (a POSIX shell builtin Windows lacks — six lines), and instructions
+naming `bin/harness-*` launchers that start `#!/bin/sh` (say `node <module>` instead — free).
+Everything else is Node, which was already cross-platform. That is the entire burden Docker would
+have eliminated, and it is now paid.
+**What it would have cost:** Docker Desktop on Windows is a multi-gigabyte install needing WSL2,
+sometimes a BIOS change, and a licensing conversation inside a company — paid by the newcomer, on day
+one, before anything has worked. That trades a burden WE carry, small and already spent, for one the
+USER carries, large and worst-timed. It also contradicts the claim the product is sold on: adoption
+is an install, not a port.
+**And structurally it does not do the job.** Claude Code runs on the host. A containerised harness
+puts the agent outside and the tools inside, so every gate invocation crosses a boundary — that is
+not removing a platform seam, it is adding an integration seam in the hot path.
+**The trigger that flips this**, and it is worth watching for: the day the harness needs anything
+beyond Node and git — a pinned Python, a native binary, a database. At that point reproducibility
+stops being free and containerising is correct. Until then this is a real breaking change bought to
+solve a problem worth about six lines. _(src: Eric · while: "given the windows scenario.. that might
+be the time to pivot towards docker")_
+
 ### Side quests (surfaced by Claude while working — proposals to prune)
 
 **3. Humans do not claim territory; athletes do.**

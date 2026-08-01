@@ -37,7 +37,7 @@ Each one ends at something observable. Do not advance until it is on their scree
 repo first and build inside it — either order works. What to say out loud: it is not a folder any
 more, it is a history, and every version they have had is now recoverable.
 
-**2 · The pipeline runs.** `harness-bootstrap --auto` writes it. Push, open the **Actions** tab, watch
+**2 · The pipeline runs.** `harness-bootstrap --auto` writes it — or `node <checkout>/plugins/harness-core/lib/bootstrap.mjs --auto` if they are on Windows or have no plugins, since the `bin/` launchers are shell scripts and Windows cannot run them. Push, open the **Actions** tab, watch
 it go. First time someone sees their own CI run is the moment this stops feeling borrowed.
 
 **3 · A pull request is open.** Branch, change one visible thing, open the PR. Name what a PR *is*:
