@@ -33,11 +33,26 @@ Nothing there is flavour: bosses are real files over budget, loot is capability 
 
 ## Get started
 
-**Paste this into a Claude Code session opened on your repo. It does the rest.**
+**Open a Claude Code session on your repo and paste this. It does the rest.**
 
-*Needs the Claude Code CLI — terminal, desktop, or an IDE extension. `/plugin` is not available on
-every surface; if you get **"/plugin isn't available in this environment"** you are on one of them,
-and the two paths under it below need nothing installed at all.*
+```
+Set up the dungeon-crawler engineering harness in this repository.
+
+Clone https://github.com/ejclark/dungeon-crawler to a temp directory, run its
+plugins/harness-core/bin/harness-bootstrap --auto here, then walk me through what it
+wrote, what opinions it imposes, and what is left for me to do.
+```
+
+That is all of day one — pipeline, hooks, formatter, gate wiring, budgets frozen at today's debt. It
+never clobbers a file you already have, and it names every opinion it imposes. Nothing is pushed and
+nothing is irreversible; `--dry-run` shows the plan and touches nothing.
+
+**Plain English on purpose.** Slash commands are not available on every Claude Code surface — if you
+have ever seen *"/plugin isn't available in this environment"*, that is why. The paste above works
+wherever Claude Code does.
+
+<details>
+<summary>Have the CLI? Install the plugins instead — the drills stay available afterwards.</summary>
 
 ```shell
 /plugin marketplace add ejclark/dungeon-crawler
@@ -47,17 +62,13 @@ and the two paths under it below need nothing installed at all.*
 harness-bootstrap --auto
 ```
 
-That is all of day one — pipeline, hooks, formatter, gate wiring, budgets frozen at today's debt. It
-never clobbers a file you already have, and it names every opinion it imposes. To look before you
-leap, `harness-bootstrap --dry-run` shows the plan and touches nothing.
+Same result, plus every drill below stays on tap in future sessions rather than only during setup.
 
-**Contributing here instead?** Two ways in, and the second one works everywhere:
+</details>
 
-- **With the CLI** — swap the last line for `/harness-core:onboard` and it walks you from nothing to
-  a merged change.
-- **With nothing at all** — [`CONTRIBUTING.md`](CONTRIBUTING.md) does the same in the browser, on
-  github.com. No install, no terminal, no git, no plugins. **If anything above did not work for
-  you, start here** — it is a complete path, not a consolation prize.
+**Contributing here instead?** [`CONTRIBUTING.md`](CONTRIBUTING.md) takes you from nothing to a
+merged change entirely on github.com — no install, no terminal, no git. **If anything above did not
+work for you, start there**: it is a complete path, not a consolation prize.
 
 **Everything else is below, closed and optional:** [the map](#map) · [the name](#name) ·
 [the two plugins](#plugins) · [staying current](#updates) · [working on it](#developing)

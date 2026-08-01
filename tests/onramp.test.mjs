@@ -147,7 +147,12 @@ test("the README says why you would care and how to start, and defers the rest",
   // Both jobs must actually still be done up front. A ceiling met by deleting the reason to care
   // would pass the line count and fail the reader.
   assert.ok(open.includes("## Get started"), "the paste must be above the fold, not in a drawer");
-  assert.ok(/```shell/.test(open), "the command itself has to be in the open — a link to it is one click too many");
+  // ANY fenced block, not a ```shell one. The primary paste became plain English — a prompt rather
+  // than a command — precisely because slash commands are not available on every Claude Code
+  // surface, and asserting the language tag made a correct fix look like a regression. Third time
+  // this suite has pinned a spelling instead of the thing it meant; the thing meant is "there is
+  // something to copy, above the fold."
+  assert.ok(/```[\s\S]*?```/.test(open), "the thing to paste has to be in the open — a link to it is one click too many");
   assert.ok(open.indexOf("Writing code got cheap") < open.indexOf("## Get started"), "why you would care comes before how to start");
 
   // And the deferred material must still be reachable. Brevity that loses the map is not brevity.
