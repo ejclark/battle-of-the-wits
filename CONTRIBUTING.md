@@ -285,8 +285,8 @@ Things there that are genuinely missing, and each is one view:
 
 - **Incidents over time.** `docs/LESSONS.md` records every failure with its prevention. Nothing shows
   them as a sequence.
-- **What a budget looked like a month ago.** Every budget file is committed, so the history is in git
-  and nothing reads it.
+- ~~**What a budget looked like a month ago.**~~ Built — `/history` in `harness-serve`. Left here on
+  purpose as a worked example of the shape: one view, over data that was already committed.
 - **Which gate fires most.** The run ledger has the records; no view counts them.
 - **A file's story.** Pick any source file: its budget, its history, what `_why_` says about it.
 

@@ -21,12 +21,12 @@
 //
 // NO DEPENDENCIES, same rule as the starter. `node:http` is enough, and a visualiser that needs an
 // install before it renders anything is a visualiser nobody opens twice.
-import { execFileSync } from "node:child_process";
 import { createServer } from "node:http";
 import { cityDocument } from "./city.mjs";
+import { historyDocument } from "./history.mjs";
 import { mapDocument } from "./cartography.mjs";
 import { overviewDocument } from "./overview.mjs";
-import { repoNameOf } from "./render.mjs";
+import { gitOut, repoNameOf } from "./render.mjs";
 
 const HOST = "127.0.0.1"; //  never a public interface — see above; deliberately not configurable
 
@@ -38,13 +38,8 @@ const HOST = "127.0.0.1"; //  never a public interface — see above; deliberate
  * exactly the question the page is asking.
  */
 export function revision(root) {
-  const git = (args) => {
-    try {
-      return execFileSync("git", args, { cwd: root, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
-    } catch {
-      return ""; //  not a repo, or no commits yet — both are states, not errors
-    }
-  };
+  //  not a repo, or no commits yet — both are states, not errors, so an unanswerable git reads empty
+  const git = (args) => (gitOut(root, args) ?? "").trim();
   return `${git(["rev-parse", "HEAD"])}:${git(["status", "--porcelain"]).length}`;
 }
 
@@ -66,6 +61,7 @@ const LIVE = `<script>
 const VIEWS = {
   "/": { title: "Overview", render: overviewDocument },
   "/map": { title: "Map", render: mapDocument },
+  "/history": { title: "History", render: historyDocument },
   "/city": { title: "City", render: cityDocument },
 };
 
@@ -121,9 +117,10 @@ if (process.argv[1]?.endsWith("serve.mjs")) {
     res.end(body);
   }).listen(port, HOST, () => {
     console.log(`\n  ⛬  ${repoNameOf(root)} — http://${HOST}:${port}\n`);
-    console.log("      /       what the instruments say");
-  console.log("      /map    the repository as territory");
-    console.log("      /city   the repository as a skyline\n");
+    console.log("      /         what the instruments say");
+    console.log("      /history  what each budget looked like before today");
+    console.log("      /map      the repository as territory");
+    console.log("      /city     the repository as a skyline\n");
     console.log("  Live: every view re-derives on request and the page reloads when the repo moves.");
     console.log("  Localhost only, by construction — a map names every file and its debt.\n");
   });

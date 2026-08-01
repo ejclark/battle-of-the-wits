@@ -19,7 +19,7 @@
 // are different states and conflating them is the false green this project exists to prevent.
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { GATES, readJson } from "./state.mjs";
+import { GATES, budgetTotal, readJson } from "./state.mjs";
 
 /** Every gate, with its budget and whether it has ever been frozen. */
 export function gateStates(root) {
@@ -27,14 +27,16 @@ export function gateStates(root) {
     const raw = readJson(root, `${gate}-budget.json`);
     if (raw === null) return { gate, lit: false, budget: null, entries: 0 };
 
-    // Two shapes in the wild: a bare number (one debt total) or a map of file → budget.
+    // Two shapes in the wild: a bare number (one debt total) or a map of file → budget. What each
+    // one TOTALS is `budgetTotal` in state.mjs, shared with the history view — a reader that
+    // disagrees with the one comparing a budget against its own past would draw a move that never
+    // happened.
     if (typeof raw === "number") return { gate, lit: true, budget: raw, entries: 1 };
     const keys = Object.keys(raw).filter((k) => !k.startsWith("_why"));
-    const numeric = keys.map((k) => raw[k]).filter((v) => typeof v === "number");
     return {
       gate,
       lit: true,
-      budget: numeric.reduce((a, b) => a + b, 0),
+      budget: budgetTotal(raw),
       entries: keys.length,
       // A justified raise is the interesting artefact: somebody had to write a paragraph for it.
       justified: Object.keys(raw).filter((k) => k.startsWith("_why")).length,
@@ -144,6 +146,6 @@ nav{margin-top:2rem;font-size:.9rem}nav a{color:inherit;margin-right:1.2rem}
   ${dark.length ? `<p><b>Unlit is not zero.</b> ${dark.map((g) => g.gate).join(", ")} ${dark.length === 1 ? "has" : "have"} never been frozen — that is unmeasured, not clean.</p>` : ""}
 </div>
 
-<nav><a href="/map">Map →</a><a href="/city">City →</a></nav>
+<nav><a href="/history">History →</a><a href="/map">Map →</a><a href="/city">City →</a></nav>
 <p>Nothing here describes a person. This describes the code.</p>`;
 }
