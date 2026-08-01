@@ -10,7 +10,19 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const PLUGINS = join(dirname(fileURLToPath(import.meta.url)), "../plugins");
-export const bin = (plugin, name) => join(PLUGINS, plugin, "bin", name);
+
+/**
+ * The path to a launcher, in the form THIS PLATFORM can execute.
+ *
+ * The .cmd twins fixed the USER's PATH — typing `harness-arch-scan` works on Windows now. They did
+ * not fix the SUITE, which resolves launchers by explicit path and so kept handing execFileSync an
+ * extensionless `#!/bin/sh` file that Windows cannot run. Ten test files do this, so `verify` stayed
+ * red there for a reason that had already been fixed everywhere else — the most confusing possible
+ * state to leave someone in.
+ *
+ * One place, because ten call sites remembering a platform suffix is ten chances to forget.
+ */
+export const bin = (plugin, name) => join(PLUGINS, plugin, "bin", process.platform === "win32" ? `${name}.cmd` : name);
 
 /** A throwaway repository seeded with exactly the files a case needs. */
 export function makeRepo(files = {}) {

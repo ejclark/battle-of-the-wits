@@ -397,3 +397,26 @@ test("git stores the twins so Windows checks them out as CRLF", () => {
   // And the shell launchers must still be LF everywhere: a CRLF shebang fails with "bad interpreter".
   assert.match(attrs, /^plugins\/\*\/bin\/\* text eol=lf$/m, "both plugins — this once named only harness-gates while claiming to cover all launchers");
 });
+
+test("no test resolves a launcher by a path Windows cannot execute", () => {
+  // The .cmd twins fixed the USER's PATH — typing `harness-arch-scan` works on Windows now. They
+  // did not fix the SUITE, which resolved launchers by explicit path and kept handing execFileSync
+  // an extensionless `#!/bin/sh` file. So `verify` stayed red there for a reason already fixed
+  // everywhere else, which is the most confusing possible state to leave somebody in.
+  //
+  // helpers.bin() is the single place that knows about the suffix, because ten call sites
+  // remembering a platform rule is ten chances to forget it.
+  for (const f of readdirSync(join(REPO, "tests")).filter((f) => f.endsWith(".mjs") && f !== "helpers.mjs")) {
+    const body = readFileSync(join(REPO, "tests", f), "utf8")
+      .split("\n")
+      .filter((l) => !l.trim().startsWith("//") && !l.trim().startsWith("*"))
+      .join("\n");
+    // A literal launcher path is only allowed as test DATA (a fixture filename), never as something
+    // handed to execFileSync — so flag it where it is being assigned as a path to run.
+    assert.doesNotMatch(
+      body,
+      /^\s*const (BIN|LAUNCHER)\b[^\n]*bin\/harness-/m,
+      `${f} builds a launcher path itself — use helpers.bin(), which knows what Windows needs`,
+    );
+  }
+});

@@ -5,6 +5,7 @@
 // and the harness goes with it. These cases pin the two promises the drill makes: it never destroys
 // existing work, and running it twice is the same as running it once.
 import { test } from "node:test";
+import { bin } from "./helpers.mjs";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, rmSync } from "node:fs";
@@ -14,7 +15,7 @@ import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
 
-const BIN = join(dirname(fileURLToPath(import.meta.url)), "../plugins/harness-core/bin/harness-bootstrap");
+const BIN = bin("harness-core", "harness-bootstrap");
 
 function run(cwd, args = []) {
   return execFileSync(BIN, args, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
