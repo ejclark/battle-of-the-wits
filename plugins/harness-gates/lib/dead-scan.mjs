@@ -13,20 +13,13 @@
 //
 // Enforced in CI via tests/arch/dead.spec.ts.
 import { execFileSync } from "node:child_process";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { descriptor, readBudget, writeBudget } from "./descriptor.mjs";
 
 const ROOT = process.cwd();
-// --- capability descriptor -------------------------------------------------
-// The harness is repo-agnostic: every path it scans comes from harness.json at
-// the target repo root, never from an assumption about layout. Missing file =
-// the documented defaults, so a conventional repo needs no config at all.
-const DESC = (() => {
-  const d = { sourceDir: "src", testDir: "tests", specSuffix: ".spec.ts", sourceExt: ".ts" };
-  try { Object.assign(d, JSON.parse(readFileSync(join(ROOT, "harness.json"), "utf8"))); } catch {}
-  return d;
-})();
-const BUDGET_FILE = join(ROOT, "dead-budget.json");
+// Descriptor, budget I/O, tree walk and repo-relative paths come from descriptor.mjs — one
+// behaviour, not six copies. A `bin/` launcher runs `node lib/<x>.mjs`, so a sibling import is an
+// ordinary relative specifier; the "standalone executables must not import" rule was never true.
+const DESC = descriptor(ROOT);
 
 // knip exits non-zero when it finds issues; we own the verdict, so tolerate that.
 let out = "";
@@ -84,14 +77,12 @@ if (process.argv.includes("--candidate")) {
   process.exit(0);
 }
 
-const budget = existsSync(BUDGET_FILE)
-  ? JSON.parse(readFileSync(BUDGET_FILE, "utf8"))
-  : { deadCode: Number.POSITIVE_INFINITY };
+const budget = readBudget(ROOT, "dead", { deadCode: Number.POSITIVE_INFINITY });
 
 if (process.argv.includes("--update")) {
   const prev = Number.isFinite(budget.deadCode) ? budget.deadCode : debt;
   const next = { deadCode: Math.min(prev, debt) }; // ratchet down only
-  writeFileSync(BUDGET_FILE, `${JSON.stringify(next, null, 2)}\n`);
+  writeBudget(ROOT, "dead", next);
   console.log(`dead-budget.json updated — deadCode=${next.deadCode} (only lowers).`);
   process.exit(0);
 }

@@ -14,21 +14,16 @@
 //
 // Enforced in CI via tests/arch/clone.spec.ts — runs on every PR, no extra workflow.
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { descriptor, readBudget, writeBudget } from "./descriptor.mjs";
 
 const ROOT = process.cwd();
-// --- capability descriptor -------------------------------------------------
-// The harness is repo-agnostic: every path it scans comes from harness.json at
-// the target repo root, never from an assumption about layout. Missing file =
-// the documented defaults, so a conventional repo needs no config at all.
-const DESC = (() => {
-  const d = { sourceDir: "src", testDir: "tests", specSuffix: ".spec.ts", sourceExt: ".ts" };
-  try { Object.assign(d, JSON.parse(readFileSync(join(ROOT, "harness.json"), "utf8"))); } catch {}
-  return d;
-})();
-const BUDGET_FILE = join(ROOT, "clone-budget.json");
+// Descriptor, budget I/O, tree walk and repo-relative paths come from descriptor.mjs — one
+// behaviour, not six copies. A `bin/` launcher runs `node lib/<x>.mjs`, so a sibling import is an
+// ordinary relative specifier; the "standalone executables must not import" rule was never true.
+const DESC = descriptor(ROOT);
 
 // Run jscpd (config lives in .jscpd.json: scans src/, ignores specs, min-tokens 50). We own the
 // verdict, so tolerate jscpd's own exit code and read its JSON report from a temp dir.
@@ -72,14 +67,12 @@ if (process.argv.includes("--candidate")) {
   process.exit(0);
 }
 
-const budget = existsSync(BUDGET_FILE)
-  ? JSON.parse(readFileSync(BUDGET_FILE, "utf8"))
-  : { clones: Number.POSITIVE_INFINITY };
+const budget = readBudget(ROOT, "clone", { clones: Number.POSITIVE_INFINITY });
 
 if (process.argv.includes("--update")) {
   const prev = Number.isFinite(budget.clones) ? budget.clones : debt;
   const next = { clones: Math.min(prev, debt) }; // ratchet down only
-  writeFileSync(BUDGET_FILE, `${JSON.stringify(next, null, 2)}\n`);
+  writeBudget(ROOT, "clone", next);
   console.log(`clone-budget.json updated — clones=${next.clones} (only lowers).`);
   process.exit(0);
 }

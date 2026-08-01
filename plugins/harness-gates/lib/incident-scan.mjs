@@ -20,19 +20,15 @@
 // GraphQL. Degrades to a clean no-op (exit 0) with no token or no network, so it never becomes a
 // flaky gate; the ledger's own well-formedness is checked offline, which is the part CI enforces.
 import { execFileSync } from "node:child_process";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { descriptor, readBudget, writeBudget } from "./descriptor.mjs";
 
 const ROOT = process.cwd();
-// --- capability descriptor -------------------------------------------------
-// Repo-agnostic: every path comes from harness.json at the target repo root, never from an
-// assumption about layout. Missing file = the documented defaults, so a conventional repo needs none.
-const DESC = (() => {
-  const d = { sourceDir: "src", testDir: "tests", specSuffix: ".spec.ts", sourceExt: ".ts" };
-  try { Object.assign(d, JSON.parse(readFileSync(join(ROOT, "harness.json"), "utf8"))); } catch {}
-  return d;
-})();
-const BUDGET_FILE = join(ROOT, "incident-budget.json");
+// Descriptor, budget I/O, tree walk and repo-relative paths come from descriptor.mjs — one
+// behaviour, not six copies. A `bin/` launcher runs `node lib/<x>.mjs`, so a sibling import is an
+// ordinary relative specifier; the "standalone executables must not import" rule was never true.
+const DESC = descriptor(ROOT);
 const LEDGER_FILE = join(ROOT, "docs/LESSONS.md");
 
 const args = process.argv.slice(2);
@@ -84,9 +80,7 @@ const isLearned = (sha) => new RegExp(`\\*\\*SHA:\\*\\*\\s*\`?${sha}`).test(ledg
 // Grandfather like every other gate: with no committed budget, freeze whatever exists rather than
 // blocking. This was the one scanner that assumed its budget file was already there, so it crashed
 // with ENOENT on a repo adopting the harness for the first time — the exact moment it must not.
-const budget = existsSync(BUDGET_FILE)
-  ? JSON.parse(readFileSync(BUDGET_FILE, "utf8"))
-  : { unlearnedIncidents: Number.POSITIVE_INFINITY };
+const budget = readBudget(ROOT, "incident", { unlearnedIncidents: Number.POSITIVE_INFINITY });
 
 const FIELDS = ["SHA", "DATE", "STATUS", "SIGNAL", "ROOT CAUSE", "PREVENTION", "SIDE QUESTS"];
 
@@ -149,7 +143,7 @@ async function main() {
 
   if (flag("--update")) {
     const next = Math.min(budget.unlearnedIncidents, unlearned.length);
-    writeFileSync(BUDGET_FILE, `${JSON.stringify({ unlearnedIncidents: next }, null, 2)}\n`);
+    writeBudget(ROOT, "incident", { unlearnedIncidents: next });
     console.log(`incident-scan: budget ratcheted to ${next}`);
     return 0;
   }

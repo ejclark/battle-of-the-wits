@@ -8,33 +8,19 @@
 //   harness-spec-gap-scan              # report + enforce (exit 1 if the gap grew)
 //   harness-spec-gap-scan --update     # rewrite spec-gap-budget.json (ratchet: only lower)
 //   harness-spec-gap-scan --candidate  # highest-leverage untested file as JSON
-import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join, relative, resolve } from "node:path";
+import { readFileSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
+import { descriptor, lineCount, readBudget, relTo, walkFiles, writeBudget } from "./descriptor.mjs";
 import { exercisedByExecution, launcherAliases } from "./references.mjs";
 
 const ROOT = process.cwd();
-// --- capability descriptor -------------------------------------------------
-// Repo-agnostic: every path comes from harness.json at the target repo root, never from an
-// assumption about layout. Missing file = the documented defaults, so a conventional repo needs none.
-const DESC = (() => {
-  const d = { sourceDir: "src", testDir: "tests", specSuffix: ".spec.ts", sourceExt: ".ts", exclude: [] };
-  try { Object.assign(d, JSON.parse(readFileSync(join(ROOT, "harness.json"), "utf8"))); } catch {}
-  return d;
-})();
-const BUDGET_FILE = join(ROOT, "spec-gap-budget.json");
+// Descriptor, budget I/O, tree walk and repo-relative paths come from descriptor.mjs — one
+// behaviour, not six copies. A `bin/` launcher runs `node lib/<x>.mjs`, so a sibling import is an
+// ordinary relative specifier; the "standalone executables must not import" rule was never true.
+const DESC = descriptor(ROOT);
 
-function walk(dir, pred, acc = []) {
-  // A repo may legitimately have no test tree yet — that is the *finding* (everything is a gap),
-  // not a crash. Missing directories read as empty so a fresh adopter gets a report, not a stack.
-  if (!existsSync(dir)) return acc;
-  for (const e of readdirSync(dir, { withFileTypes: true })) {
-    const p = join(dir, e.name);
-    if (e.isDirectory()) walk(p, pred, acc);
-    else if (pred(e.name)) acc.push(p);
-  }
-  return acc;
-}
-const rel = (f) => relative(ROOT, f).split("\\").join("/");
+const walk = (dir, pred) => walkFiles(dir, pred);
+const rel = (f) => relTo(ROOT, f);
 
 // A file with no runtime behavior to spec: every export is a type/interface, so it compiles away
 // like a .d.ts. Nothing to assert on — a "spec" would be vacuous or fabricate behavior.
@@ -83,10 +69,9 @@ for (const spec of walk(join(ROOT, DESC.testDir), (n) => n.endsWith(DESC.specSuf
   for (const f of exercisedByExecution(body, aliases)) tested.add(f);
 }
 
-const lineCount = (f) => readFileSync(join(ROOT, f), "utf8").split("\n").length;
 const untested = srcFiles
   .filter((f) => !tested.has(f))
-  .map((f) => ({ file: f, lines: lineCount(f) }))
+  .map((f) => ({ file: f, lines: lineCount(join(ROOT, f)) }))
   .sort((a, b) => b.lines - a.lines);
 const debt = untested.length;
 
@@ -102,14 +87,12 @@ if (process.argv.includes("--candidate")) {
   process.exit(0);
 }
 
-const budget = existsSync(BUDGET_FILE)
-  ? JSON.parse(readFileSync(BUDGET_FILE, "utf8"))
-  : { untestedFiles: Number.POSITIVE_INFINITY };
+const budget = readBudget(ROOT, "spec-gap", { untestedFiles: Number.POSITIVE_INFINITY });
 
 if (process.argv.includes("--update")) {
   const prev = Number.isFinite(budget.untestedFiles) ? budget.untestedFiles : debt;
   const next = { untestedFiles: Math.min(prev, debt) }; // ratchet down only
-  writeFileSync(BUDGET_FILE, `${JSON.stringify(next, null, 2)}\n`);
+  writeBudget(ROOT, "spec-gap", next);
   console.log(`spec-gap-budget.json updated — untestedFiles=${next.untestedFiles} (only lowers).`);
   process.exit(0);
 }

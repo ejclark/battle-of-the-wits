@@ -9,32 +9,20 @@
 //   harness-arch-scan            # report + enforce (exit 1 on any over-budget file)
 //   harness-arch-scan --update   # rewrite arch-budget.json (ratchet: budgets only lower)
 //
-import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
-import { join, relative } from "node:path";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { descriptor, isExcluded, isSourceName, lineCount, readBudget, relTo, walkFiles, writeBudget } from "./descriptor.mjs";
 
 const ROOT = process.cwd();
-// --- capability descriptor -------------------------------------------------
-// Repo-agnostic: every path comes from harness.json at the target repo root, never from an
-// assumption about layout. Missing file = the documented defaults, so a conventional repo needs none.
-const DESC = (() => {
-  const d = { sourceDir: "src", testDir: "tests", specSuffix: ".spec.ts", sourceExt: ".ts", exclude: [] };
-  try { Object.assign(d, JSON.parse(readFileSync(join(ROOT, "harness.json"), "utf8"))); } catch {}
-  return d;
-})();
+// Descriptor, budget I/O, tree walk and repo-relative paths come from descriptor.mjs — one
+// behaviour, not six copies. A `bin/` launcher runs `node lib/<x>.mjs`, so a sibling import is an
+// ordinary relative specifier; the "standalone executables must not import" rule was never true.
+const DESC = descriptor(ROOT);
 const SRC = join(ROOT, DESC.sourceDir);
-const BUDGET_FILE = join(ROOT, "arch-budget.json");
 const DEFAULT_CAP = 500; // a NEW file may not exceed this without an explicit budget entry
 const WARN_AT = 300; // files above this are worth watching even if within budget
 
-function walk(dir, acc = []) {
-  for (const e of readdirSync(dir, { withFileTypes: true })) {
-    const p = join(dir, e.name);
-    if (e.isDirectory()) walk(p, acc);
-    else if (e.name.endsWith(DESC.sourceExt) && !e.name.endsWith(".d.ts")) acc.push(p);
-  }
-  return acc;
-}
-const lineCount = (f) => readFileSync(f, "utf8").split("\n").length;
+const isSource = (n) => isSourceName(DESC, n);
 // A cheap cohesion proxy: how many distinct top-level things a file exports. Size says a file is
 // big; exports say it's doing many jobs. A file that's big AND exports many unrelated symbols is a
 // stronger split candidate than one big cohesive unit — this stops a decomposer from "passing" by
@@ -48,24 +36,13 @@ const exportCount = (f) => {
   const named = (src.match(/^export\s*\{/gm) || []).length;
   return decl + named;
 };
-const rel = (f) => relative(ROOT, f).split("\\").join("/");
+const rel = (f) => relTo(ROOT, f);
 
-// Paths the repo declares are not first-party source — fixtures, generated output, and TEMPLATES.
-// A template is source-shaped but is not this project's code; measuring it inflates every number and
-// (worse) reports duplication between two deliberate variants of the same file as debt.
-const EXCLUDED = (f) => (DESC.exclude ?? []).some((p) => rel(f).startsWith(p));
-const sortKeys = (o) =>
-  Object.fromEntries(
-    Object.keys(o)
-      .sort()
-      .map((k) => [k, o[k]]),
-  );
-
-const files = walk(SRC)
-  .filter((f) => !EXCLUDED(f))
+const files = walkFiles(SRC, isSource)
+  .filter((f) => !isExcluded(DESC, rel(f)))
   .map((f) => ({ file: rel(f), lines: lineCount(f), exports: exportCount(f) }))
   .sort((a, b) => b.lines - a.lines);
-const budget = existsSync(BUDGET_FILE) ? JSON.parse(readFileSync(BUDGET_FILE, "utf8")) : {};
+const budget = readBudget(ROOT, "arch", {});
 
 // --candidate: emit the single highest-leverage split target as JSON for the decomposer agent.
 // Score = how far over budget (or how far above the watch line) × a cohesion penalty for many
@@ -87,14 +64,12 @@ if (process.argv.includes("--candidate")) {
 }
 
 if (process.argv.includes("--update")) {
-  // `_`-prefixed keys are prose, not budgets: the justification for a deliberate raise. A rewrite
-  // that drops them destroys the reasoning needed to judge whether the raise is still earned.
-  const next = Object.fromEntries(Object.entries(budget).filter(([k]) => k.startsWith("_")));
+  const next = {};
   for (const { file, lines } of files) {
     const prev = budget[file];
     next[file] = prev !== undefined ? Math.min(prev, lines) : lines; // ratchet down only
   }
-  writeFileSync(BUDGET_FILE, `${JSON.stringify(sortKeys(next), null, 2)}\n`);
+  writeBudget(ROOT, "arch", next, { sort: true });
   console.log(`arch-budget.json updated — ${Object.keys(next).length} files (budgets only lower).`);
   process.exit(0);
 }

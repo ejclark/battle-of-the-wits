@@ -293,3 +293,48 @@ This repository's `knip.json` enumerates its entry points explicitly rather than
 generated shape, because its launcher-backed modules are genuinely unusual. That is a legitimate
 divergence — but it does mean the harness is not eating exactly what it cooks here, and a future
 reader should not take the committed file as the reference output. `configs.mjs` is the reference.
+
+---
+
+## 2026-08-01 (night, third) · The Mirror Halls
+
+The duplication gate had been reporting the same finding for months, and it was right every time:
+**32 duplicated definitions**, six scanners each carrying their own copy of the descriptor, the
+budget file, the tree walk, and the repo-relative path helper.
+
+It survived because it had a defence, written into the duplication scanner itself:
+
+> nine standalone PATH executables each parse argv and resolve their own root **because they must not
+> import across that boundary**
+
+That reads like architecture. It is also false, and it had already been falsified in the same
+directory: `harness-claim` is launched from a `bin/` wrapper and imports `registry.mjs`, and has
+since the day it was written. A launcher runs `node lib/<x>.mjs`; from there a sibling import is an
+ordinary relative specifier. There is no boundary. There was a plausible-sounding reason nobody spent
+sixty seconds testing.
+
+**The thing worth carrying forward:** a gate can be argued *out* of a finding as easily as into one,
+and the argument that wins is the one that sounds like architecture. The gate was never wrong. The
+comment was.
+
+And the copies were not free. `spec-gap-scan` ignoring the `exclude` key that `arch-scan` and
+`dupe-scan` both honoured — the bug found two dungeons ago — is precisely what six copies of one
+preamble produce: a fix applied to some of them.
+
+Debt after: duplication **32 → 25**, clones **10 → 4**, and every scanner got shorter.
+
+### The part that only happened because of a manual step
+
+Halfway through, `harness-dupe-scan --update` died with a ReferenceError — a missing import on the
+write path — **seconds after a 108-passing test run said everything was fine.**
+
+Every gate case invoked the report path. Nothing anywhere exercised `--update`, which is the command
+a person runs immediately after a cleanup, at the exact moment they most need the tool to work. Six
+cases now run each scanner's `--update` in a throwaway repo.
+
+A suite that covers one of two code paths reports the confidence of a suite that covers both. That is
+the third variant of the same lesson in one night: **an unmeasured dimension is not a passing grade**
+— gates that were never wired, a config nobody scoped, and now a command nobody ran.
+
+Next obvious sweep: `--candidate` has no case either, and it is what every athlete calls to pick its
+target. An athlete has still never been dispatched, so nothing has noticed.
