@@ -1,0 +1,27 @@
+{
+  "name": "battle-of-the-wits",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A portable engineering harness for Claude Code, distributed as a plugin marketplace.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ejclark/battle-of-the-wits.git"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test tests/",
+    "validate": "node scripts/validate-manifests.mjs",
+    "sync-versions": "node scripts/sync-versions.mjs"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^20.1.0",
+    "@commitlint/config-conventional": "^20.0.0",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
+    "semantic-release": "^25.0.0"
+  }
+}
