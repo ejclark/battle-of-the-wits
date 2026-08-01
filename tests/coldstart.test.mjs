@@ -244,7 +244,7 @@ test("FIRST-APP.md walks the whole journey, and every command in it is real", ()
     ["a real dev server", /npx serve/],
     ["their own backlog", /localStorage/],
     ["a repository", /github\.com\/new/],
-    ["the pipeline", /harness-bootstrap --auto/],
+    ["the pipeline", /bootstrap\.mjs|harness-bootstrap/],
     ["one change all the way round", /pull request/i],
     ["the deliberate failure", /break(ing)? .*on purpose|Do not skip this one/i],
     ["the three features", /\*\*edit\*\* a to-do item/],
@@ -267,4 +267,44 @@ test("FIRST-APP.md walks the whole journey, and every command in it is real", ()
   const canon = [...readme.matchAll(/```\n(Set up the dungeon-crawler[\s\S]*?)```/g)][0]?.[1];
   assert.ok(canon, "the README's setup prompt moved — this test pins the walkthrough against it");
   assert.ok(doc.includes(canon.trim()), "FIRST-APP.md ships a DIFFERENT setup prompt from the README");
+});
+
+// ── 8 · the instructions must run on the machines people actually have ─────────
+
+test("no copy/paste instruction tells a Windows user to execute a shell script", () => {
+  // The project's first real contributor is on Windows. Every `bin/harness-*` launcher starts
+  // `#!/bin/sh`, which cmd and PowerShell cannot run — so the one command the README handed him was
+  // guaranteed to fail, and the failure would have read as his mistake.
+  //
+  // `node <module>` is the portable form and costs nothing to say. The launchers stay: they are the
+  // right ergonomics once the plugins are installed on a POSIX machine, and they are not what an
+  // instruction to a stranger should name.
+  for (const rel of ["README.md", "plugins/harness-core/templates/starter/FIRST-APP.md"]) {
+    const doc = readFileSync(join(REPO, rel), "utf8");
+    for (const block of doc.matchAll(/```[a-z]*\n([\s\S]*?)```/g)) {
+      assert.doesNotMatch(
+        block[1],
+        /(^|\s)(\.\/)?(plugins\/[\w-]+\/)?bin\/harness-[\w-]+/m,
+        `${rel} tells the reader to run a bin/ launcher — those are #!/bin/sh and Windows cannot execute them`,
+      );
+    }
+  }
+});
+
+test("tool detection does not depend on a POSIX shell", () => {
+  // `command -v` is a shell builtin Windows does not have, so this threw for every tool, returned
+  // null across the board, and the adoption skipped every step that needed a scanner while
+  // reporting the steps it did run as fine — a successful-looking run that froze no budgets.
+  // CODE only. The first version of this searched the whole file and matched the COMMENT explaining
+  // why `command -v` was removed — so documenting the fix would have been indistinguishable from
+  // reverting it. That is the brittle-assertion lesson from LESSONS.md, arriving one commit after
+  // it was written down, which is roughly how long these take to recur.
+  const auto = readFileSync(join(REPO, "plugins/harness-core/lib/auto.mjs"), "utf8")
+    .split("\n")
+    .filter((l) => !l.trim().startsWith("//"))
+    .join("\n");
+  assert.doesNotMatch(auto, /command -v/, "command -v does not exist on Windows");
+  assert.match(auto, /platform === "win32"/, "detection must branch on platform");
+  assert.match(auto, /"where"/, "and use the Windows equivalent rather than assuming a shell");
+  assert.doesNotMatch(auto, /\bexecSync\(/, "a shell invocation is where the next platform assumption will hide");
 });

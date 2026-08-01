@@ -39,7 +39,7 @@ Nothing there is flavour: bosses are real files over budget, loot is capability 
 Set up the dungeon-crawler engineering harness in this repository.
 
 Clone https://github.com/ejclark/dungeon-crawler to a temp directory, run its
-plugins/harness-core/bin/harness-bootstrap --auto here, then walk me through what it
+plugins/harness-core/lib/bootstrap.mjs with node, here, then walk me through what it
 wrote, what opinions it imposes, and what is left for me to do.
 ```
 
