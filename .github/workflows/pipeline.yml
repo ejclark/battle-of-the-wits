@@ -81,14 +81,17 @@ jobs:
       - name: Portability suite
         run: npm test
 
-      # A launcher with a syntax error is exactly as broken as a scanner with one. The glob covers
-      # EVERY shipped executable — an earlier version matched only *-scan, which silently exempted
-      # harness-ship and would have exempted harness-bootstrap too. A gate with a hole in it reads
-      # green for the wrong reason.
-      - name: Shellcheck the shipped executables
-        run: |
-          sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck
-          shellcheck plugins/*/bin/*
+      # INSTALL ONLY. The list of what to check lives in tests/shell.test.mjs, which runs in the
+      # suite below and skips loudly when shellcheck is absent — so this step exists purely to make
+      # sure it is present here and the dimension is actually measured.
+      #
+      # This step used to re-glob `plugins/*/bin/*` itself, which was a SECOND list of the same
+      # thing, and the two drifted the moment .cmd twins arrived: the test excluded them, the
+      # workflow did not, and CI failed on batch files for not being shell. Two lists of one thing
+      # do not stay equal; they stay equal until the first change, and then one of them is wrong
+      # and nobody knows which.
+      - name: Install shellcheck (the suite runs it)
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck
 
   release:
     name: release

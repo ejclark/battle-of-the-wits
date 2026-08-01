@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { readdirSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
@@ -73,4 +73,17 @@ test("every shipped shell script passes shellcheck", () => {
   } catch (err) {
     assert.fail(`shellcheck reported problems:\n\n${err.stdout ?? ""}${err.stderr ?? ""}`);
   }
+});
+
+test("CI does not keep a second list of what to shellcheck", () => {
+  // The workflow used to re-glob `plugins/*/bin/*` itself. That was a SECOND list of the same
+  // thing, and the two drifted the moment the .cmd twins arrived — the test excluded them, the
+  // workflow did not, and CI failed on batch files for not being shell.
+  //
+  // Two lists of one thing do not stay equal. They stay equal until the first change, and then one
+  // of them is wrong and nobody knows which. The list lives here, where the reasoning for what is
+  // in it lives; CI installs the tool and runs the suite.
+  const wf = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../.github/workflows/pipeline.yml"), "utf8");
+  assert.doesNotMatch(wf, /^\s*shellcheck\s+\S/m, "CI is globbing for shellcheck again — the scope belongs in this file, not two places");
+  assert.match(wf, /install -y -qq shellcheck/, "CI must still install it, or this whole dimension silently skips");
 });
