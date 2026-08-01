@@ -43,7 +43,7 @@ const EXPECTED = [
   ".husky/pre-push",
   ".github/workflows/pipeline.yml",
   ".github/pull_request_template.md",
-  "tests/arch/gates.spec.ts",
+  "tests/arch/gates.test.mjs",
   "docs/LESSONS.md",
 ];
 
@@ -153,7 +153,7 @@ test("the gate spec it writes invokes the harness binaries, not local script pat
   const root = makeRepo();
   try {
     run(root);
-    const spec = readFileSync(join(root, "tests/arch/gates.spec.ts"), "utf8");
+    const spec = readFileSync(join(root, "tests/arch/gates.test.mjs"), "utf8");
     assert.match(spec, /harness-arch-scan/);
     assert.doesNotMatch(spec, /scripts\/arch-scan\.mjs/, "must not reference the origin repo's layout");
   } finally {
@@ -171,7 +171,7 @@ test("gate wiring follows the descriptor's testDir", () => {
     // Both halves come from the descriptor: `testDir` decides WHERE, and `specSuffix` decides
     // whether the repo's own test command will ever collect the file.
     assert.equal(existsSync(join(root, "spec/arch/gates.test.ts")), true, "should honor testDir and specSuffix");
-    assert.equal(existsSync(join(root, "tests/arch/gates.spec.ts")), false, "must not use the defaults");
+    assert.equal(existsSync(join(root, "tests/arch/gates.test.mjs")), false, "must not use the defaults");
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

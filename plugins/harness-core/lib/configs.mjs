@@ -17,6 +17,29 @@
 /** Extension without the leading dot — `.ts` → `ts`. */
 const ext = (e) => e.replace(/^\./, "");
 
+// WHAT `npm init` WRITES IS NOT A DECISION SOMEONE MADE.
+//
+// The never-clobber rule is right, and this is the one place it was wrong. `npm init -y` seeds
+// `"test": "echo \"Error: no test specified\" && exit 1"`, and the bootstrap read that as a choice to
+// be respected — so a cold adoption left the adopter's very first `npm run verify` RED, on a script
+// the harness itself had just wired into `verify`.
+//
+// Worse, the damage was not confined to `verify`. `gateSpecFor` infers the test RUNNER from this same
+// string; the placeholder does not match `node --test`, so it concluded describe/it/expect, wrote
+// `gates.spec.ts` into a plain JavaScript repository, and the gate file was never collected by
+// anything. Gates present, gates inert, suite green — the exact false green this project exists to
+// prevent, produced by its own bootstrap for the third recorded time.
+//
+// One string, three failures. So the placeholder is recognised in ONE place and both readers consult
+// it. It is matched EXACTLY: a test script an adopter actually wrote is still untouchable.
+export const NPM_STUB_TEST = /^echo\s+"Error: no test specified"\s*&&\s*exit\s+1\s*$/;
+
+/** The test command this repo really has — treating npm's placeholder as the absence it is. */
+export function effectiveTestScript(pkg = {}) {
+  const declared = pkg?.scripts?.test;
+  return declared && !NPM_STUB_TEST.test(declared) ? declared : null;
+}
+
 /**
  * knip.json — the dead-code detector's module graph.
  *
@@ -104,6 +127,10 @@ export function scriptsFor(desc = {}, { hasTsconfig = true } = {}) {
   const checks = [typecheck ? "npm run typecheck" : null, "npm run lint", "npm test"].filter(Boolean);
   return {
     ...(typecheck ? { typecheck: "tsc -p tsconfig.json --noEmit" } : {}),
+    // Offered, not imposed: `mergePackageJson` keeps a real test script and only displaces npm's
+    // placeholder. `node --test` is the zero-dependency choice — nothing to install, and it exits 0
+    // on a repo with no tests yet, so day one is green rather than red-for-no-reason.
+    test: "node --test",
     lint: "biome check .",
     "lint:fix": "biome check --write .",
     format: "biome format --write .",

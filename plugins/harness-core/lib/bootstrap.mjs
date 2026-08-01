@@ -158,6 +158,14 @@ if (pkgChanges.missing) {
     console.log(`      devDependencies:  ${pkgChanges.devDependencies.join(", ")}`);
 }
 
+// The ONE key this tool overwrites, so it is never a surprise found later in a diff.
+if (pkgChanges.replaced?.length) {
+  console.log(`\n  ⚠ replaced \`scripts.test\` — it held \`npm init\`'s placeholder, which fails on purpose.
+      Left alone it would have made your first \`npm run verify\` red for something you did not do,
+      and it would have been read as a test runner that is not there. It is now \`node --test\`.
+      If you meant to keep the placeholder, put it back — nothing else here depends on it.`);
+}
+
 console.log(`
   Test runner detected: ${gateSpec.template.includes("test.mjs") ? "node --test" : "describe/it/expect"}  → wrote ${gateSpec.name}
 `);

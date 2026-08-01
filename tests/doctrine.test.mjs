@@ -102,7 +102,7 @@ test("the DESCRIPTOR convenience copy is byte-identical to the shipped one", () 
 // because a gate nobody wired in never fails. Scoped by category, not by enumeration: the assertion
 // reads the template rather than restating its list, so a gate added there cannot be forgotten here.
 test("this repository runs every gate the shipped template wires in", () => {
-  const gates = (file) => [...readFileSync(file, "utf8").matchAll(/gate\("(harness-[\w-]+)"\)/g)].map((m) => m[1]);
+  const gates = (file) => [...readFileSync(file, "utf8").matchAll(/gate\("(harness-[\w-]+)"/g)].map((m) => m[1]);
   const promised = gates(join(PLUGINS, "harness-core/templates/specs/gates.test.mjs"));
   const kept = new Set(gates(join(REPO, "tests/arch/gates.test.mjs")));
   assert.ok(promised.length > 0, "the shipped template names no gates — the parse is wrong");

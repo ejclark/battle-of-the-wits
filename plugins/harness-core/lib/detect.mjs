@@ -6,6 +6,7 @@
 // fix is the decomposition it was pointing at, not a negotiated number.
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { effectiveTestScript } from "./configs.mjs";
 
 const BUDGETS = [
   "arch-budget.json",
@@ -70,7 +71,12 @@ export function gateSpecFor(root, descriptor = null) {
       return {};
     }
   })();
-  const nodeTest = /\bnode\s+--test\b/.test(pkg.scripts?.test ?? "");
+  // Infer from the test command the repo will HAVE, not the one it has this instant. `npm init`'s
+  // placeholder matches no runner, so reading it literally concluded describe/it/expect and wrote a
+  // `.spec.ts` gate into a plain JavaScript repo — a gate file no runner collects, reporting nothing,
+  // beside a green suite. The bootstrap displaces that placeholder with `node --test`; this has to
+  // agree with it, or the two halves of one decision disagree in silence.
+  const nodeTest = /\bnode\s+--test\b/.test(effectiveTestScript(pkg) ?? "node --test");
   const template = nodeTest ? "specs/gates.test.mjs" : "specs/gates.spec.ts";
 
   // The FILENAME comes from the repo's own spec suffix, not the template's: the runner decides which

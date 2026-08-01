@@ -64,7 +64,10 @@ jobs:
 
       - name: Typecheck
         if: steps.changes.outputs.code == 'true'
-        run: npm run typecheck
+        # --if-present: `scriptsFor` omits `typecheck` entirely for a JavaScript repo, or one with
+        # no tsconfig. Without this flag CI dies on "Missing script" for a step the harness
+        # deliberately chose not to write.
+        run: npm run typecheck --if-present
 
       - name: Lint
         if: steps.changes.outputs.code == 'true'

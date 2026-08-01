@@ -69,7 +69,7 @@ test("the two gate-spec templates defend the same dimensions", () => {
   // least likely thing anyone would think to check.
   const gates = (file) => {
     const body = readFileSync(join(TEMPLATES, "specs", file), "utf8");
-    return [...body.matchAll(/gate\("(harness-[\w-]+)"\)/g)].map((m) => m[1]).sort();
+    return [...body.matchAll(/gate\("(harness-[\w-]+)"/g)].map((m) => m[1]).sort();
   };
   const forNodeTest = gates("gates.test.mjs");
   assert.ok(forNodeTest.length >= 6, "the parse found too few gates to be reading the file right");
