@@ -5,5 +5,9 @@
   "sourceExt": ".ts",
   "specSuffix": ".spec.ts",
   "specExempt": [],
-  "exclude": []
+  "exclude": [],
+  "fleet": {
+    "maxConcurrent": 3,
+    "tokenCeiling": null
+  }
 }

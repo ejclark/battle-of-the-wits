@@ -27,63 +27,18 @@
 //
 // State lives in .harness/claims.json — RUNTIME state, never committed. Two athletes in separate
 // worktrees still share the primary checkout's file, which is what makes it a shared registry.
-import { closeSync, existsSync, mkdirSync, openSync, readFileSync, rmSync, statSync, unlinkSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { readRegistry, withLock as lockRegistry, writeRegistry } from "./registry.mjs";
 
 const ROOT = process.cwd();
-const DIR = join(ROOT, ".harness");
-const FILE = join(DIR, "claims.json");
-const LOCK = join(DIR, "claims.lock");
 const TTL_MS = Number(process.env.HARNESS_CLAIM_TTL_MS ?? 60 * 60 * 1000);
 
 const now = () => Date.now();
 
-/** Acquire the lock or die. Never spins forever — a wedged lock must surface, not hang the fleet. */
-function withLock(fn) {
-  mkdirSync(DIR, { recursive: true });
-  const deadline = now() + 5000;
-  for (;;) {
-    try {
-      closeSync(openSync(LOCK, "wx"));
-      break;
-    } catch {
-      // A lock older than the TTL belongs to a process that is gone.
-      try {
-        const { mtimeMs } = statSync(LOCK);
-        if (now() - mtimeMs > TTL_MS) rmSync(LOCK, { force: true });
-      } catch {
-        /* raced with another releaser — retry */
-      }
-      if (now() > deadline) {
-        console.error("claims: could not acquire .harness/claims.lock within 5s");
-        process.exit(2);
-      }
-    }
-  }
-  try {
-    return fn();
-  } finally {
-    try {
-      unlinkSync(LOCK);
-    } catch {
-      /* already gone */
-    }
-  }
-}
-
-/** Read claims, dropping anything expired. Pruning on read means a crash self-heals. */
-function read() {
-  if (!existsSync(FILE)) return [];
-  let claims;
-  try {
-    claims = JSON.parse(readFileSync(FILE, "utf8"));
-  } catch {
-    return []; // a corrupt registry must not wedge the fleet; it rebuilds from live claims
-  }
-  return (Array.isArray(claims) ? claims : []).filter((c) => c.expires > now());
-}
-
-const write = (claims) => writeFileSync(FILE, `${JSON.stringify(claims, null, 2)}\n`);
+// Locking and expiry come from the shared registry: claims and fleet control live in the same
+// plugin and CAN import from each other, unlike the standalone scanners that must not cross the
+// PATH boundary. Repeating the exception where sharing is easy would be cargo-culting it.
+const readClaims = () => readRegistry(ROOT, "claims");
+const writeClaims = (claims) => writeRegistry(ROOT, "claims", claims);
 
 const norm = (p) => p.replace(/^\.\//, "").replace(/\/+$/, "");
 
@@ -95,8 +50,8 @@ export function overlaps(a, b) {
 }
 
 function claim(agent, paths) {
-  return withLock(() => {
-    const claims = read();
+  return lockRegistry(ROOT, "claims", TTL_MS, () => {
+    const claims = readClaims();
     const conflicts = [];
     for (const held of claims) {
       if (held.agent === agent) continue; // re-claiming your own territory is idempotent
@@ -112,22 +67,22 @@ function claim(agent, paths) {
       console.error("\n  Pick a different target, or wait for that athlete to release.");
       return 1;
     }
-    write([...claims.filter((c) => c.agent !== agent), { agent, paths: paths.map(norm), expires: now() + TTL_MS }]);
+    writeClaims([...claims.filter((c) => c.agent !== agent), { agent, paths: paths.map(norm), expires: now() + TTL_MS }]);
     console.log(`✓ ${agent} holds ${paths.length} path(s) for ${Math.round(TTL_MS / 60000)}m`);
     return 0;
   });
 }
 
 const release = (agent) =>
-  withLock(() => {
-    const before = read();
-    write(before.filter((c) => c.agent !== agent));
+  lockRegistry(ROOT, "claims", TTL_MS, () => {
+    const before = readClaims();
+    writeClaims(before.filter((c) => c.agent !== agent));
     console.log(`✓ ${agent} released ${before.filter((c) => c.agent === agent).length} claim(s)`);
     return 0;
   });
 
 function list() {
-  const claims = read();
+  const claims = readClaims();
   if (!claims.length) {
     console.log("no live claims — the territory is open");
     return 0;
@@ -142,7 +97,7 @@ function list() {
 
 const argv = process.argv.slice(2);
 if (argv[0] === "--list") process.exit(list());
-else if (argv[0] === "--prune") process.exit(withLock(() => (write(read()), console.log("✓ pruned"), 0)));
+else if (argv[0] === "--prune") process.exit(lockRegistry(ROOT, "claims", TTL_MS, () => (writeClaims(readClaims()), console.log("✓ pruned"), 0)));
 else if (argv[0] === "--release") {
   if (!argv[1]) {
     console.error("usage: harness-claim --release <agent>");
