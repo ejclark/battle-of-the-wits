@@ -70,6 +70,12 @@ loop they just learned:
 Do them one at a time, each through branch → PR → green → merge. The repetition is the point: by the
 third one the mechanics have disappeared and they are thinking about the feature.
 
+**`harness-starter` writes lesson 7's app** — logic with no DOM in it, eight real tests, EARS
+requirements, styles that say to change them. Use it rather than typing an app out in front of
+somebody: the twenty minutes spent fighting a typo in a config file is the part of the work with no
+lesson in it. Then have them run `npm test` immediately, and say what the green means — the thing
+they are about to change is known-good *now*, so anything that breaks next is theirs.
+
 ## What to build with, and what not to argue about
 
 Reach for what the repository already declares before choosing anything. If it is empty: a bundler

@@ -1,0 +1,18 @@
+/* Change every one of these. That is the point of step 2 — a project you have decorated is one you
+   come back to. There is no wrong answer here and nothing depends on these values. */
+:root { --ink: #1a1a1a; --paper: #fbfbf9; --accent: #2f6f5e; --done: #9aa0a6; }
+@media (prefers-color-scheme: dark) { :root { --ink: #ececec; --paper: #17191a; --done: #6b7075; } }
+
+body { font: 17px/1.5 system-ui, sans-serif; color: var(--ink); background: var(--paper);
+       max-width: 34rem; margin: 4rem auto; padding: 0 1.25rem; }
+h1 { font-size: 1.6rem; }
+form { display: flex; gap: .5rem; }
+input { flex: 1; padding: .6rem .7rem; font: inherit; border: 1px solid #8884; border-radius: 6px;
+        background: transparent; color: inherit; }
+button { padding: .6rem 1rem; font: inherit; border: 0; border-radius: 6px; cursor: pointer;
+         background: var(--accent); color: #fff; }
+ul { list-style: none; padding: 0; margin-top: 1.5rem; display: flex; flex-direction: column; gap: .5rem; }
+li { display: flex; align-items: center; gap: .6rem; }
+li.done span { color: var(--done); text-decoration: line-through; }
+li span { flex: 1; cursor: text; }
+li button { background: transparent; color: var(--done); padding: .2rem .4rem; font-size: 1.1rem; }

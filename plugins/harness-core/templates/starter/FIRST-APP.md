@@ -161,6 +161,13 @@ anyone else sees them, and that you have personally watched do it.**
 
 ## Step 9 · Build the three real features
 
+**Shortcut, if you have the plugins:** `harness-starter` writes this app for you — logic, tests,
+requirements, styles — so you can spend step 9 changing it rather than typing it. Run `npm test`
+straight away: eight passing tests before you have written a line. That green is not a formality, it
+means the thing you are about to change is known-good *right now*, so anything that breaks next is
+something you did.
+
+
 Now the app properly, one capability at a time, each through the loop you just learned:
 
 - a user can **create** a to-do item
