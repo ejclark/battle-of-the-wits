@@ -204,9 +204,42 @@ an unnecessary sentence costs a moment, a missing one costs the person.
 ## Resource cost is a fitness dimension
 
 The constraint isn't only Eric's attention — it's every **finite resource** a run consumes: tokens,
-GitHub API budget (the GraphQL bucket — **scarce on a private repo, much less so on a public one, so
-re-derive this before quoting it**), GHA minutes, wall-clock. Treat waste in
-these the way defense treats slop: measure it, and convert the recurring cost into a one-time one.
+GitHub API budget, GHA minutes, wall-clock. Treat waste in these the way defense treats slop: measure
+it, and convert the recurring cost into a one-time one.
+
+### The API constraint — keep the shape, never the number
+
+The specific limits change, and a document that quotes them goes stale silently while still sounding
+authoritative. So what is written down here is the **structure**, which is stable, and the numbers are
+treated as **inputs to be read at runtime** rather than facts to be memorised. Same discipline as the
+capability descriptor: do not hardcode a value that varies — read it and derive.
+
+**The structure, which holds regardless of the numbers:**
+
+- There are **separate buckets**, and they do not share a budget. The GraphQL bucket and the REST
+  core bucket are refilled independently, so exhausting one leaves the other untouched. *Which
+  interface you reach for is therefore a resource decision, not a style preference.*
+- **Cost is per-point, not per-call.** A GraphQL request is charged by the complexity of what it asks
+  for, so one query can cost what hundreds of REST calls cost. Counting *calls* will mislead you.
+- **Visibility changes the picture.** A private repository is the tight case; a public one is
+  materially more generous. Both facts matter — the private numbers are the ones to design against,
+  because a harness that only works on public repos is not portable.
+- **Polling is the dominant waste**, in every bucket, always. Status polling costs more than the
+  operation it is watching. Webhooks and single reads are the fix, and that ordering does not change
+  when the limits do.
+
+**The rate is derived, not quoted.** Sustainable operations per hour is `limit ÷ cost-per-operation`,
+where both terms are variables: the limit is readable live from the API's own rate-limit endpoint,
+and the cost is measurable by taking the difference across one real operation. **Anything that needs
+this number should compute it**, and a script that does is worth more than a paragraph asserting a
+figure that was true once.
+
+**The worked example, kept because the ratio is the lesson and the ratio is stable:** landing a pull
+request via the GitHub **MCP** spent GraphQL by the thousands — one create + auto-merge + read cycle
+measured around 6,000 points, with status-*polling* worse — while the same outcome over `git` plus
+repo-scoped **REST** ran on the local machine and the far more plentiful core bucket. Two different
+buckets, three orders of magnitude apart, for an identical result. The absolute figures will drift;
+**the choice they justify will not.**
 
 **Codify the loop into a script/codemod.** A model-in-the-loop procedure costs tokens (and often API
 calls) *every* time; a script is a one-time build cost, then **~free per run forever** — and it can't
@@ -215,11 +248,8 @@ each codified loop lowers the marginal cost of the next unit of work, so through
 cost falls. Sound architecture + proper tooling + clean config make the next script cheaper to build,
 compounding it further.
 
-Worked example (the one that motivated this): landing a PR via the GitHub **MCP** spends **GraphQL**
-by the thousands (one create+auto-merge+read cycle measured ~6,000 points; status-*polling* is worse),
-while the same outcome over `git` + repo-scoped **REST** runs on your machine and the plentiful 15k/hr
-**core** bucket. The fix was codified as `harness-ship` + the `/ship` skill: verify locally → push →
-open over REST → one auto-merge call → **stop, trust the webhook, never poll**. Reach for the script;
+That example was codified as `harness-ship` + the `/ship` skill: verify locally → push → open over
+REST → one auto-merge call → **stop, trust the webhook, never poll**. Reach for the script;
 grow the roster of scripts as recurring costs surface. When a finite resource starts binding, that's a
 *measured* constraint the offensive coordinator elevates — never optimize a resource speculatively.
 
