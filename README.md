@@ -1,27 +1,22 @@
 # dungeon-crawler
 
-A portable engineering harness for Claude Code: ratcheting quality gates, corrective drills, and
-background agents that burn structural debt down. Distributed as a **plugin marketplace**, so
-adopting it is an install rather than a port.
+**Writing code got cheap. Checking it did not.** That gap is the whole problem this solves.
+
+When a machine can produce a thousand lines in a minute, the only thing between you and a codebase
+you no longer trust is how much of the checking happens without you. This is that checking: gates
+that freeze today's debt and only ever ratchet it down, drills that turn a failure into a permanent
+prevention, and background agents that burn structural debt while you do something else.
+
+**And it refuses to lie to you** — a gate that cannot measure something says so rather than passing,
+because a false green is worse than a red.
+
+Any repository, any language. Adoption is an install, not a port.
 
 ---
 
-## Start here
+## Get started
 
-**Joining this project, or new to git?** Paste this into a Claude Code session opened on this repo
-and it takes you from nothing to a merged change — no terminal, no git, nothing to install:
-
-```shell
-/plugin marketplace add ejclark/dungeon-crawler
-/plugin install harness-core@dungeon-crawler
-/reload-plugins
-/harness-core:onboard
-```
-
-Prefer to read rather than be walked through it? Everything works in the browser instead →
-**[`CONTRIBUTING.md`](CONTRIBUTING.md)**
-
-**Setting up your own project?** Paste this into a Claude Code session opened on your repo:
+Paste into a Claude Code session opened on **your own repo**:
 
 ```shell
 /plugin marketplace add ejclark/dungeon-crawler
@@ -31,14 +26,25 @@ Prefer to read rather than be walked through it? Everything works in the browser
 harness-bootstrap --auto
 ```
 
-That is all of day one. **This command never changes and never needs to** — the plugins carry no
-version field, so it always resolves to the latest published state.
+Or on **this repo**, to be walked from nothing to a merged change — no terminal, no git:
 
-**Not sure what you are looking at?** Ask for `/harness-core:orient`.
+```shell
+/plugin marketplace add ejclark/dungeon-crawler
+/plugin install harness-core@dungeon-crawler
+/reload-plugins
+/harness-core:onboard
+```
+
+Either one pulls in everything below, so **none of it is required reading.** Prefer to read?
+[`CONTRIBUTING.md`](CONTRIBUTING.md) does the same in the browser.
+
+**In the drawers:** [the map](#map) · [the name](#name) · [the two plugins](#plugins) ·
+[staying current](#updates) · [working on it](#developing)
 
 ---
 
-## Where everything is
+<details id="map">
+<summary><b>Where everything is</b></summary>
 
 Detail lives in folders; this is the map. Nothing below is needed to start.
 
@@ -79,9 +85,9 @@ banked observation · `/retro` failure into prevention · `/ears` wish into requ
 **Hit a harness defect?** `harness-report` composes a complete issue from files already on your
 disk — zero tokens, nothing transmitted, you press the button.
 
----
+</details>
 
-<details>
+<details id="name">
 <summary><b>Why "Battle of the Wits"</b></summary>
 
 The name the operating model goes by. A codebase and the entropy in it are genuinely adversarial —
@@ -98,7 +104,7 @@ that system lifted out of the project it grew in so it can run anywhere.
 
 </details>
 
-<details>
+<details id="plugins">
 <summary><b>What the two plugins contain</b></summary>
 
 **`harness-core`** — toolchain-agnostic. The drills, the doctrine, the bootstrap, and the visual
@@ -120,8 +126,11 @@ carries its own history.**
 
 </details>
 
-<details>
+<details id="updates">
 <summary><b>Staying current, and where updates stop</b></summary>
+
+**Neither paste command ever changes and neither needs to** — the plugin manifests carry no version
+field, so they always resolve to the latest published state. Claude Code tracks them by commit SHA.
 
 **The procedure updates itself; your configuration stays yours.**
 
@@ -137,7 +146,7 @@ would write, and the diff is yours to take or ignore.
 
 </details>
 
-<details>
+<details id="developing">
 <summary><b>Working on the harness itself, and its honest status</b></summary>
 
 ```shell
