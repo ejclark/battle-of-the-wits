@@ -34,6 +34,9 @@ A conventional TypeScript project needs no file at all; the defaults below alrea
 | `testDir` | `"tests"` | Root of the test tree. |
 | `sourceExt` | `".ts"` | Extension identifying a source file. |
 | `specSuffix` | `".spec.ts"` | Suffix identifying a spec file, used to pair specs to sources. |
+| `specExempt` | `[]` | Paths with no honest unit assertion available (CLI mains, fixture data, GPU-bound render code). Defaults to empty on purpose — an exemption the adopter didn't ask for is a silently lowered bar. |
+| `exclude` | `[]` | Path prefixes that are **not first-party source**: fixtures, generated output, templates. Measuring a template inflates every number and reports two deliberate variants of one file as duplication. |
+| `persona` | `"dungeon"` | The active harness persona shown in the status line: `dungeon` · `coach` · `orchestra` · `corporate` · `startup` · `senate`. |
 
 ### Example
 
