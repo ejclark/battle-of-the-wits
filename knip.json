@@ -12,6 +12,7 @@
     "plugins/harness-gates/lib/dupe-scan.mjs",
     "plugins/harness-gates/lib/fleet.mjs",
     "plugins/harness-gates/lib/incident-scan.mjs",
+    "plugins/harness-gates/lib/log-cli.mjs",
     "plugins/harness-gates/lib/preflight.mjs",
     "plugins/harness-gates/lib/spec-gap-scan.mjs",
     "plugins/harness-gates/lib/standing.mjs",

@@ -243,7 +243,67 @@ every day and teaches everyone that the system is full of ceremony. **The trigge
 that genuinely cannot be a patch** — and when it arrives, the thing to build is the smallest version
 of the above that carries it, not all of it.
 
-## 6 · When nothing here tells you what to do
+## 6 · Data is the bedrock — which is an argument about capture, not about storage
+
+Agreed on the premise, and the premise has a sequencing trap inside it.
+
+**Git is already the database.** It is append-only, content-addressed, fully historical, provenanced,
+and every adopter has one. A retro that produced real numbers — three workflows, 26 agents, 2.85M
+tokens, a design half that shipped nothing — was computed from 51 commits, 19 budget snapshots, 34
+incident entries and a backlog file, with **zero infrastructure**. Nothing about that was blocked on
+storage.
+
+Exactly one class of measurement was missing, and it was missing for a reason worth naming: **what a
+run cost while it happened lived in a session and died with it.** That is the asymmetry that decides
+the order of work here.
+
+> **You cannot mine data you never recorded.** Recording costs almost nothing. Not recording is
+> unrecoverable, and it is invisible until you look back and find nothing there.
+
+So the gap was **capture**, not storage, and capture is what `harness-log` closes. Append-only JSONL,
+committed, queryable with `jq`, loadable into DuckDB or SQLite in one command the day it outgrows
+that — which is the migration path, and it is free. Two design decisions carry the rest:
+
+- **`merge=union` on the ledger**, so two branches appending in parallel merge instead of conflicting.
+  An append-only log under a normal merge driver conflicts on every concurrent write, which is how a
+  metrics file quietly gets deleted by the first person in a hurry.
+- **No actor field, ever.** It records *what happened*, never *who did it*. A per-person performance
+  log is a different product with a different ethics, and the aggregation trap is documented next
+  door: individually innocuous entries accreting into a profile nobody decided to publish. The schema
+  is the defence — you cannot query a column that does not exist.
+
+### When a database is the right answer
+
+Not never. The trigger is specific, and it is not a row count:
+
+> **A query you can state and cannot answer.**
+
+"Which gate fires most often" is answerable with `jq` over a decade of this. When a real question
+genuinely is not, *that question specifies the schema* — and building storage before it exists means
+guessing the schema and being wrong in a way that is expensive to undo, which is the one shape of
+mistake this whole harness is built to avoid.
+
+There is also a hard portability constraint that a database has to clear before it is even eligible:
+**an adopter installs plugins; they do not stand up Postgres.** Anything that requires a service to
+be provisioned, hosted and backed up stops being a portable harness and becomes a product with an
+operations manual. Whatever storage eventually arrives has to be a file, or it has to live in the
+target repo's own infrastructure rather than in the harness — the same line every other piece of
+state here already sits on.
+
+### What to mine, once there is enough
+
+Stated now so the capture is pointed somewhere rather than hoarded:
+
+- **Detection lag per gate** — how long between a defect landing and something noticing. Already the
+  learning coach's metric, currently reconstructed by hand each time.
+- **Ratchet direction over time** — debt retired versus growth accepted. Both are recorded; a ledger
+  that logged only improvement would be a scoreboard.
+- **Which gate fires most** — that is where the rework is, which is a different question from which
+  gate matters most, and conflating them is how a useful gate gets switched off.
+- **Time-to-first-merge per contributor cohort** — the falsifiable criterion in `CONTRIBUTORS.md` is
+  currently unmeasurable for want of exactly this.
+
+## 7 · When nothing here tells you what to do
 
 Ask, in this order:
 

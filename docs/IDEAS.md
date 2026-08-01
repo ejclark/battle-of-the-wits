@@ -128,6 +128,27 @@ the working tree so the arch/dupe/clone/spec-gap answer arrives while the file i
 than after the commit message is written. Pairs with #5. _(src: Claude · while: a retro on the run
 that built the contributor model)_
 
+**14. Wire gate outcomes into the ledger, so detection lag stops being reconstructed by hand.**
+`harness-log` exists and the ratchet already emits on every budget move, in both directions. What is
+still hand-reconstructed is the thing the learning coach actually measures: **how long between a
+defect landing and something noticing.** The pieces are all present — gates know their own result, the
+ledger takes a `gate` record, and git knows when the cause landed — and nothing joins them. The
+cheapest wiring is a pre-commit or CI hook calling `harness-log --event gate --gate <n> --result
+<pass|fail>`, which also answers "which gate fires most", the number that says where rework lives.
+Deliberately not wired into the scanners themselves yet: that is six edits and a budget raise for a
+signal nobody has queried once. Pairs with #13. _(src: Claude · while: building the run ledger)_
+
+**15. A database becomes right at a stateable, unanswerable query — not at a row count.**
+Banked as the standing decision so it is not re-litigated. Git is already an append-only,
+content-addressed, fully historical store, and every number in the first retro came from it with no
+infrastructure. JSONL plus `jq` covers a decade of this repository, and DuckDB or SQLite is one
+command away when it does not. The trigger to revisit: a real question that can be **stated** and
+**cannot be answered** from the ledger and git together — because that question specifies the schema,
+and building storage before it exists means guessing the schema. The hard constraint any answer must
+clear first: an adopter installs plugins, they do not stand up Postgres, so whatever arrives is a file
+or it lives in the target repo rather than in the harness. _(src: Eric · while: "we likely need to
+invest in database infrastructure to organize our information")_
+
 ### Side quests (surfaced by Claude while working — proposals to prune)
 
 **3. Humans do not claim territory; athletes do.**

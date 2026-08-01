@@ -12,6 +12,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { descriptor, isExcluded, isSourceName, lineCount, readBudget, relTo, walkFiles, writeBudget } from "./descriptor.mjs";
+import { append } from "./ledger.mjs";
 
 const ROOT = process.cwd();
 // Descriptor, budget I/O, tree walk and repo-relative paths come from descriptor.mjs — one
@@ -108,6 +109,9 @@ if (process.argv.includes("--accept")) {
   for (let n = 2; budget[key] !== undefined; n++) key = `_why_${slug}_${n}`;
   writeBudget(ROOT, "arch", { ...next, [key]: `${over.map((o) => `${o.file} ${budget[o.file] ?? DEFAULT_CAP} → ${o.lines}`).join("; ")}. ${why}` }, { sort: true });
 
+  // Recorded AS IT HAPPENS, which is the point: a retro that has to reconstruct the timeline
+  // afterwards pays for the reconstruction every time, and can only ever see what survived.
+  append(ROOT, "ratchet", { gate: "arch", direction: "up", files: over.length, delta: over.reduce((n, o) => n + (o.lines - (budget[o.file] ?? DEFAULT_CAP)), 0) });
   console.log(`✓ raised ${over.length} budget(s), recorded as ${key}:`);
   for (const { file, lines } of over) console.log(`    ${file}: ${budget[file] ?? DEFAULT_CAP} → ${lines}`);
   console.log("\n  This is a deliberate, reviewable act. It belongs in the same PR as the growth it accepts.");
@@ -120,7 +124,9 @@ if (process.argv.includes("--update")) {
     const prev = budget[file];
     next[file] = prev !== undefined ? Math.min(prev, lines) : lines; // ratchet down only
   }
+  const lowered = files.reduce((n, { file, lines }) => n + Math.max(0, (budget[file] ?? lines) - lines), 0);
   writeBudget(ROOT, "arch", next, { sort: true });
+  if (lowered) append(ROOT, "ratchet", { gate: "arch", direction: "down", delta: lowered });
   console.log(`arch-budget.json updated — ${Object.keys(next).length} files (budgets only lower).`);
   process.exit(0);
 }
