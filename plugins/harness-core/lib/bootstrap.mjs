@@ -113,8 +113,6 @@ const DEV_DEPS = {
   "@biomejs/biome": "^2.5.6",
   "@commitlint/cli": "^20.1.0",
   "@commitlint/config-conventional": "^20.0.0",
-  "@semantic-release/changelog": "^6.0.3",
-  "@semantic-release/git": "^10.0.1",
   husky: "^9.1.7",
   knip: "^6.0.0",
   "semantic-release": "^25.0.0",
@@ -175,7 +173,11 @@ console.log(`
   What this imposes — these are opinions, not laws. Disagree deliberately:
 
     · Conventional Commits, enforced by commitlint on every commit and in CI
-    · semantic-release owns the version number; never hand-edit one
+    · semantic-release owns the version number; never hand-edit one. It only TAGS and writes
+      release notes — it never pushes a bump commit back to main, so it works unchanged under a
+      ruleset that requires pull requests. (To commit a CHANGELOG.md you need BOTH
+      @semantic-release/git and a ruleset bypass actor for Actions; one without the other kills
+      the release job with GH013.)
     · Biome for lint + format, with a pre-commit hook that formats staged files
     · pre-push runs the FULL local gate — CI is confirmation, not the first line of defense
     · Quality gates run INSIDE the test suite (tests/arch/gates.spec.ts), so they cost no extra

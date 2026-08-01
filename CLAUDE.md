@@ -49,10 +49,13 @@ Assume more are hiding.
 
 - Branch off latest `origin/main` before editing; small focused PRs; squash-merge on green.
 - Conventional Commits, **lowercase-led subjects** (commitlint rejects a capitalized first word).
-- Verify before pushing: `npm test`, `npm run validate`, `node scripts/sync-versions.mjs --check`.
-- **Never hand-edit a `version` field.** The release owns it and `scripts/sync-versions.mjs` writes
-  it to every manifest. A manifest version that disagrees with the release is silent breakage —
-  installs go stale with nothing red.
+- Verify before pushing: `npm test`, `npm run validate`, `npm run check-versions`.
+- **Plugin manifests carry no `version` field, and the gate enforces it.** `main` is protected by a
+  ruleset requiring pull requests, so the release *cannot* push a bump commit back — a committed
+  version would drift from the tag silently, with nothing red. Claude Code uses the commit SHA when
+  the field is absent, so updates still reach users. semantic-release only tags and writes notes.
+  Restoring semver means BOTH `@semantic-release/git` and a ruleset bypass actor for Actions; one
+  without the other kills the release with `GH013`.
 - The pipeline is two mutually-exclusive jobs: `verify` on PRs, `release` on merge to `main`. Merged
   commits are never re-verified; branch protection already required `verify`.
 

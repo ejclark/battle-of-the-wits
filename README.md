@@ -94,15 +94,17 @@ state, not the harness's. The harness carries the procedure; the repo carries it
 npm ci
 npm test                              # the portability suite
 npm run validate                      # marketplace + plugin manifests
-node scripts/sync-versions.mjs --check
+npm run check-versions           # no committed versions in manifests
 ```
 
 CI runs all of the above plus `claude plugin validate` and shellcheck on every PR. Merging to `main`
-runs `semantic-release`, which tags a version and writes it into every plugin manifest — that field
-is how Claude Code decides whether an installed plugin has an update, so the release *is* the
-distribution.
+runs `semantic-release`, which tags the release and writes its notes.
 
-Never hand-edit a `version`. See [`CLAUDE.md`](CLAUDE.md) for the rules a new gate has to satisfy.
+**Plugin manifests deliberately carry no `version`.** `main` is protected by a ruleset requiring pull
+requests, so the release cannot push a bump commit back — a committed version would drift from the
+tag silently. Claude Code falls back to the commit SHA when the field is absent, so installs still
+update; they just track commits rather than semver. See [`CLAUDE.md`](CLAUDE.md) for the rules a new
+gate has to satisfy.
 
 ## Status
 

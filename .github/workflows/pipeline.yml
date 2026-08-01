@@ -57,10 +57,10 @@ jobs:
           claude plugin validate .
           for p in plugins/*/; do claude plugin validate "$p"; done
 
-      # Versions must agree across package.json, marketplace.json and every plugin.json. Drift here
-      # is silent: installs go stale with nothing red.
-      - name: Check version sync
-        run: node scripts/sync-versions.mjs --check
+      # Plugin manifests must carry NO version field. The ruleset forbids the release from pushing
+      # a bump commit to main, so a committed version would silently go stale against the tag.
+      - name: Check versions
+        run: npm run check-versions
 
       # The DNA expression test — every gate run against a repo with a non-default layout.
       - name: Portability suite
