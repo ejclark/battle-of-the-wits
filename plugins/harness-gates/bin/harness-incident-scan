@@ -5,5 +5,6 @@
 if [ -n "$CLAUDE_PLUGIN_ROOT" ] && [ -f "$CLAUDE_PLUGIN_ROOT/lib/incident-scan.mjs" ]; then
   exec node "$CLAUDE_PLUGIN_ROOT/lib/incident-scan.mjs" "$@"
 fi
-DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
+unset CDPATH
+DIR=$(cd -- "$(dirname -- "$0")" && pwd -P)
 exec node "$DIR/../lib/incident-scan.mjs" "$@"
