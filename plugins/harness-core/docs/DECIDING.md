@@ -162,7 +162,88 @@ most of getting it.
 
 ---
 
-## 5 · When nothing here tells you what to do
+## 5 · Expansions — the release class above a patch
+
+An expansion is not a big patch. *The Burning Crusade* was not more of vanilla: it raised the level
+cap, opened portals to planes that did not exist, and added flight — a **movement class**, not a
+speed. Afterwards the same player could do things that had previously been impossible, and that is a
+different kind of event from a patch, however large.
+
+Which makes it the same thing §4 already describes: **an expansion is a constraint elevation,
+packaged and announced.** That connection gives it a test rather than a vibe.
+
+### The payoff test
+
+> **An expansion must state what becomes newly POSSIBLE. If the best statement of its payoff is a
+> comparative — faster, cleaner, simpler, better — it is a patch wearing a costume.**
+
+Falsifiable, cheap to apply, and it kills most candidates. "Flight" passes. "Improved mount speed"
+does not, and no amount of scope makes it pass. This is the level-up/speed-up distinction made
+operational, and it is the whole reason to have the category at all: a release class whose entry
+criterion is *size* just relabels big work, and everyone learns to inflate.
+
+### Two release classes, and they take opposite disciplines
+
+This is the mountain/ocean split from `METAPHORS.md`, applied to shipping:
+
+| | **Patch** — mountain | **Expansion** — ocean |
+|---|---|---|
+| Retreat | always available; revert is one squash | committed once it lands in anyone's hands |
+| Contains breaking changes | **never** | this is where they live |
+| Caution is spent | on keeping retreat open — small, verified, reversible | on **provisioning before departure**; afterwards there is nothing to spend it on |
+| Decided by | doing it | deliberately, in advance, by a human |
+| Announced | it isn't | it is — that is half of what makes it one |
+
+The operative rule falls straight out: **a breaking change is not a patch that broke something. It is
+an expansion, or it is a mistake.** Conventional Commits already carries the marker; what is missing
+is that the marker currently points at nothing.
+
+### Contributors owning a direction — the part that makes influence real
+
+Right now standing gates **write radius** and nothing else, which means "influence" stops at
+permissions. Owning an expansion is the first thing in this system that would be genuinely *directing*
+rather than *contributing*, and it is the shape worth building when the time comes:
+
+- An expansion has **exactly one owner**, named, and the owner is accountable for the payoff
+  statement being true when it lands.
+- **Ownership requires `builder` or above by evidence** — not by appointment. This is where earned
+  influence finally does something that matters: you cannot drive a direction until the history shows
+  your changes hold. That is objective, it is the thing you asked for, and it is un-gameable in the
+  same way standing is.
+- It **groups banked ideas** (`#N` references into the idea log), so an expansion is assembled from
+  intent someone already expressed rather than invented in a planning meeting.
+- It has three states — **charted / crossing / landed** — and the payoff statement is written at
+  *charted* time, before the work, which is what makes it a commitment rather than a summary.
+- The owner may be a contributor and the reviewer of record may still be the owner of the repository.
+  Directing is not the same as merging, and separating them is what makes it safe to hand out early.
+
+### Cadence, and community presence
+
+Both are real needs and **neither is a need yet.** Naming the triggers is the useful thing:
+
+- **Cadence** becomes necessary when two people's work must land *together* to be coherent — not
+  before. With independent contributions, a cadence is a queue you built for yourself. Trigger:
+  the first expansion with more than one owner-adjacent contributor.
+- **Community presence** — a public roadmap, release notes written for readers rather than machines,
+  a place people ask questions — is **outward-facing identity**, and by §"Experience is the north
+  star" in `COACHES.md` that still waits. It is taste, it is the owner's, and elevating experience to
+  a north star explicitly did not transfer it. Trigger: someone outside the household asks when
+  something is coming.
+
+### Why none of this is built yet
+
+**This repository has never had a breaking change.** Zero, across its whole history. Building
+expansion machinery — a manifest, a gate, a state model, a cadence — before the first one is exactly
+the premature abstraction this document argues against, and the roster recruits itself from
+demonstrated repetition rather than anticipated need.
+
+So the design above is written down and the mechanism is not. That ordering is deliberate: the design
+costs nothing to hold and is ready the day it is wanted, whereas an unused mechanism costs maintenance
+every day and teaches everyone that the system is full of ceremony. **The trigger is the first change
+that genuinely cannot be a patch** — and when it arrives, the thing to build is the smallest version
+of the above that carries it, not all of it.
+
+## 6 · When nothing here tells you what to do
 
 Ask, in this order:
 

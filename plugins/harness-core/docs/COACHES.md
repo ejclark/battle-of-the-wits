@@ -89,6 +89,26 @@ someone has an account, whether their 2FA will work, or where they will get stuc
 get stuck is the deliverable*, not an obstacle to the deliverable. The information that arrives
 mid-drive is the product.
 
+### Two seats that serve the staff rather than the code
+
+Both sit outside the defensive roster, because neither watches a quality dimension. They watch the
+*decisions*, which nothing else here did.
+
+- **`theorist`** — tests a claim before it becomes a design decision. Every gate in this project checks
+  the code; nothing checked the **assumptions the code was designed around**, and a wrong assumption
+  survives review comfortably because it is never the thing under review. Its most valuable output is
+  "no evidence either way", which is exactly the posture a gate takes toward a dimension it cannot
+  measure. Recruited on the third recurrence, per the rule: two claims were tested by hand in one
+  session — a throughput prediction and a team-topology claim — and a third was already forming.
+
+- **`recruiter`** — the self-service path onto the roster, and the gate on it. An agent that creates
+  agents drops the cost of creating agents to zero, and that cost was the only thing preventing
+  proliferation. So its product is the **refusal**: it demands the three verified recurrences, applies
+  the orchestrator test, checks the contract is complete, and otherwise writes the skill instead. If it
+  approves everything it is worse than nothing — the same ad-hoc process with a rubber stamp and an
+  implication of rigour that is not there. It may not recruit a successor to itself, which is the one
+  proposal it can reject without checking anything.
+
 ### The captain is a different KIND of seat — and it already exists
 
 A team captain looks like a third orchestrator and is not one. Coach and quarterback hold **delegated
