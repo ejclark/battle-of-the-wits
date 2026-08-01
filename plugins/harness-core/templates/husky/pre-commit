@@ -1,5 +1,14 @@
-# Auto-format staged files so biome format drift can't be committed (retro: PR #111 lint slip).
+#!/usr/bin/env sh
+# Auto-format staged files so format drift cannot be committed.
+#
+# Paths are NUL-delimited on purpose. The obvious version — `biome format $files` on a newline-joined
+# list — word-splits on SPACES too, so a staged file named "release notes.md" became two arguments:
+# the format silently skipped it, and `git add` was handed two paths that do not exist. A file list
+# that only breaks once somebody has a space in a filename is a bug nobody is looking for on the day
+# it appears.
 files=$(git diff --cached --name-only --diff-filter=ACMR)
 [ -z "$files" ] && exit 0
-./node_modules/.bin/biome format --write --no-errors-on-unmatched $files 2>/dev/null
-git add $files
+
+git diff --cached --name-only --diff-filter=ACMR -z |
+  xargs -0 ./node_modules/.bin/biome format --write --no-errors-on-unmatched 2>/dev/null
+git diff --cached --name-only --diff-filter=ACMR -z | xargs -0 git add

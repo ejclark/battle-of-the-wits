@@ -386,3 +386,21 @@ Prevention ranks, best first:
 - **SIDE QUESTS:** an exclusion is a statement about *who measures*, never about whether something
   matters. Worth checking anything else excluded on principle — fixtures, generated output — for the
   same silent promotion from "out of scope" to "assumed fine".
+
+### The git hooks the harness installs were never checked by anything
+- **SHA:** `n/a`   **DATE:** 2026-08-01   **STATUS:** closed
+- **SIGNAL:** none, ever. Found by continuing the templates sweep the previous retro recommended.
+  CI shellchecks `plugins/*/bin/*` — every launcher, and no hook.
+- **ROOT CAUSE:** two faults. The glob was an ENUMERATION, so it covered exactly what its author had
+  in mind and nothing else; and the hooks live in `templates/`, which every gate excludes. Running
+  shellcheck on them found a real defect in `pre-commit`, which executes on every commit an adopter
+  makes: it word-split a newline-joined list of staged paths, so a file named `release notes.md`
+  became two arguments — formatting silently skipped it, and `git add` was handed two paths that do
+  not exist. None of the three hooks carried a shebang either, so nothing could analyse them.
+- **PREVENTION:** gate — `tests/shell.test.mjs` now covers every shipped shell script, launchers and
+  hook templates alike, and asserts the hooks are in scope so the coverage cannot silently narrow
+  again. Paths are NUL-delimited through `xargs -0`, with an end-to-end case that stages a filename
+  containing a space; verified by a negative control against the old implementation.
+- **SIDE QUESTS:** two enumerations failed in one week — the athletes' command paths and this glob.
+  A glob is an enumeration wearing a wildcard. When the scope is "everything of kind X", derive the
+  list and assert the derivation found the kinds you expect.

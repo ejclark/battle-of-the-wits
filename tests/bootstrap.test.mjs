@@ -408,3 +408,37 @@ test("the adopted detectors are scoped to the repo's declared layout", () => {
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+// The pre-commit hook handles a filename containing a space.
+//
+// It runs on every commit in an adopter's repository, and it word-split its staged-file list: a file
+// named "release notes.md" became two arguments, so formatting silently skipped it and `git add` was
+// handed two paths that do not exist. A file list that only breaks once somebody has a space in a
+// filename is a bug nobody is looking for on the day it appears.
+test("the shipped pre-commit hook survives a filename with a space", () => {
+  const hook = readFileSync(
+    join(dirname(fileURLToPath(import.meta.url)), "../plugins/harness-core/templates/husky/pre-commit"),
+    "utf8",
+  );
+  assert.match(hook, /-z\b/, "paths must be NUL-delimited");
+  assert.match(hook, /xargs -0/, "and consumed by something that respects the delimiter");
+  assert.doesNotMatch(hook, /\$files\s*$/m, "an unquoted, newline-joined list splits on spaces");
+
+  const root = makeRepo({ "package.json": "{}\n" });
+  try {
+    const git = (...a) => execFileSync("git", a, { cwd: root, stdio: "pipe", encoding: "utf8" });
+    git("init", "-q", "-b", "main");
+    git("config", "user.email", "probe@example.com");
+    git("config", "user.name", "probe");
+    run(root); // lands .husky/pre-commit
+    writeFileSync(join(root, "release notes.md"), "# notes\n");
+    git("add", "-A");
+    // Run the hook exactly as husky would. biome is absent here, so the format step no-ops; the
+    // assertion is that the PATH HANDLING survives, which is where the defect lived.
+    const out = execFileSync("sh", [join(root, ".husky/pre-commit")], { cwd: root, encoding: "utf8", stdio: "pipe" });
+    assert.equal(typeof out, "string");
+    assert.match(git("diff", "--cached", "--name-only"), /release notes\.md/, "the file must still be staged");
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
