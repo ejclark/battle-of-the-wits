@@ -65,7 +65,7 @@ Rank, best first (this ordering is the doctrine; deviating needs a stated reason
 1. **A gate or a script.** The drift becomes mechanically impossible or is caught in seconds. One
    build cost, free forever. Prefer *shortening detection lag* over preventing the specific bug —
    a gate that catches the whole class beats a fix for one instance.
-2. **A doctrine line** in `CLAUDE.md` / `docs/COACHES.md` / `docs/ENGINEERING.md` — loaded into
+2. **A doctrine line** in `CLAUDE.md` / `${CLAUDE_PLUGIN_ROOT}/docs/COACHES.md` / `${CLAUDE_PLUGIN_ROOT}/docs/ENGINEERING.md` — loaded into
    every future session's context, so it steers the next decision rather than sitting unread.
 3. **A ledger entry alone** — only when mechanizing costs more than the expected damage. Say so.
 

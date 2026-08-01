@@ -35,6 +35,6 @@ or redesign — you extract a cohesive seam into its own module and lock the win
 - **Never touch credentials, workflows, or anything outward-facing.** Structure only.
 - **Honor the inline-login-canvas caveat:** the JS in `authenticator.ts` is a TS template literal — no
   backticks/`${}` inside it. Extracting there means real `.ts` modules + a re-inline step, per
-  `docs/ENGINEERING.md`, not string juggling.
+  `https://github.com/ejclark/battle-of-the-wits/blob/main/plugins/harness-core/docs/ENGINEERING.md`, not string juggling.
 - **Report honestly.** If typecheck/lint/test/scan don't all go green, do not open the PR — say what
   failed and stop. A red decompose PR is worse than none.

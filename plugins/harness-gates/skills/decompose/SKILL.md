@@ -28,7 +28,7 @@ exports — so a smaller file doing many jobs outranks a bigger cohesive one. Ta
 1. **Read for a seam, not a line count.** Find a cohesive cluster that shares a responsibility and could
    be imported as a unit — the `escapeHtml`/`chip`/`tile` render helpers; one route handler; one shader;
    the payoff math. Split along the seam, never mid-idea.
-2. **Split toward the atomic grammar** (`docs/COACHES.md`): **atoms** (one job, no siblings' knowledge) →
+2. **Split toward the atomic grammar** (`https://github.com/ejclark/battle-of-the-wits/blob/main/plugins/harness-core/docs/COACHES.md`): **atoms** (one job, no siblings' knowledge) →
    **molecules** (a few atoms, one purpose: a card, the Eye) → **organisms** (a view, a scene). Atoms are
    the floor — go sub-atomic only when a concrete need calls (a second consumer wants half the atom),
    never speculatively. Over-splitting is the mirror slop: complexity moved into the wiring.
@@ -66,7 +66,7 @@ Small green PRs over one heroic cut.
 - **Never change behavior in a decompose PR.** No bug fixes or features riding along — a pure move keeps
   the diff reviewable and the revert safe.
 - **`authenticator.ts` caveat:** its inline login JS is a TS template literal — no backticks/`${}` inside
-  it. Extracting there means real `.ts` modules + a re-inline build step (`docs/ENGINEERING.md`), not
+  it. Extracting there means real `.ts` modules + a re-inline build step (`https://github.com/ejclark/battle-of-the-wits/blob/main/plugins/harness-core/docs/ENGINEERING.md`), not
   string juggling.
 - **PR title = Conventional-Commit subject**, lowercase-led (`refactor: extract … from …`); the squash
   title + description become `main`'s record.

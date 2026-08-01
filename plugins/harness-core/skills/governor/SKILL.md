@@ -77,6 +77,6 @@ Native auto-merge (not an in-CI REST merge) is deliberate: a GITHUB_TOKEN merge 
 ## Boundaries
 
 - **No new athletes from here.** The governor dispatches the existing roster; recruiting a new agent
-  follows the rule of three (docs/COACHES.md) and is a head-coach decision.
+  follows the rule of three (${CLAUDE_PLUGIN_ROOT}/docs/COACHES.md) and is a head-coach decision.
 - **Never bypass a gate, never `--no-verify`, never edit a budget upward on an athlete's behalf.**
 - **If in doubt about a PR's class, it does not auto-merge.** Default to human review.
