@@ -86,6 +86,34 @@ impersonal, it costs what a red gate costs rather than what a person costs — t
 say no first. Requires no new mechanism, which is most of its appeal. _(src: Claude · while: an
 adversarial review found this was the only unmechanised entry nobody had reached for)_
 
+**11. Antipatterns whose premise AI has quietly invalidated — audit the whole set.**
+Brooks's Law was the first one caught, and it did not fall over: it **re-partitioned**. Onboarding
+cost is orientation + first-pass verification + judgement + relationship; AI collapsed the first two
+toward zero and left the last two untouched, so the slope of the cost curve dropped sharply while its
+floor did not move at all. The floor now dominates, which means the classic advice ("adding people to
+a late project makes it later") is being applied to a cost structure that no longer exists.
+The generalisable move: **an antipattern is a claim about a cost ratio, and AI changed a lot of
+ratios.** Others worth the same treatment — "don't rewrite, refactor" (rewriting got cheap; verifying
+did not), "premature abstraction" (the cost of the wrong abstraction is now mostly the cost of finding
+it again), "documentation goes stale" (a doc that regenerates from source has a different half-life),
+"don't repeat yourself" (a copy you can re-derive is not the same liability as one you must maintain).
+The discipline that keeps this honest is the one that caught the first case: **name which ratio moved,
+and check whether the part that did not move is now the binding one.** An antipattern whose expensive
+half got cheap is not repealed — it is relocated, and it is most dangerous in the window where people
+still quote the old form. _(src: Eric · while: pushing back on the rope-team throughput prediction)_
+
+**12. Resilience is an axis Theory of Constraints does not price.**
+ToC optimises flow through a system it assumes will keep existing. It says nothing about variance, bus
+factor, or the probability the project survives its owner being unavailable for a quarter. A second
+contributor can be **throughput-negative and survival-positive simultaneously** — both true, not one
+consoling the other. Today every decision surface here scores on the throughput axis, because that is
+the axis with a theory attached, which is the streetlight effect in doctrine form. Open question worth
+real thought: is there an honest, derivable resilience measure? Candidates visible from committed
+state — how many principals have touched each district (bus factor per subsystem), how much of the
+system has exactly one author, how much reasoning exists only in one person's head versus in
+`LESSONS.md` and the ADRs. Pairs with #1, which needs the same principal×district matrix.
+_(src: Eric · while: the same pushback — "the system becomes more resilient at the same time")_
+
 ### Side quests (surfaced by Claude while working — proposals to prune)
 
 **3. Humans do not claim territory; athletes do.**

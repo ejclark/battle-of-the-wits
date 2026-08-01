@@ -108,16 +108,54 @@ export function outsideRadius(tier, files, desc) {
  * A corrupt roster also reads as empty. A permission file that can brick the tool is a worse failure
  * than one that is missing, and the zoning table stays readable either way.
  */
-export function roster(root) {
-  const file = join(root, ".harness/roster.json");
-  if (!existsSync(file)) return [];
+export function rosterState(root) {
+  const rel = ".harness/roster.json";
+  if (!existsSync(join(root, rel))) return { state: "absent", principals: [] };
+
+  // EXPOSED IS NOT THE SAME AS ABSENT, and conflating them is how the roster gets published.
+  //
+  // `.harness/` reaches an adopter's .gitignore only through `harness-bootstrap`. INSTALLING THE
+  // PLUGINS DOES NOT RUN IT. So a repository can hold a roster of real people that git is perfectly
+  // willing to commit, while every tool here cheerfully prints it — which is the harness assuming a
+  // property of ITS OWN repo is a property of the adopter's.
+  //
+  // Gate rule 4, applied to disclosure: a tool that cannot guarantee the data stays local must not
+  // display the data. Refusing to read is the only safe direction, because the alternative failure
+  // is unrecoverable and the cost of this one is a one-line fix.
+  if (exposed(root, rel)) return { state: "exposed", principals: [] };
+
   try {
-    const parsed = JSON.parse(readFileSync(file, "utf8"));
+    const parsed = JSON.parse(readFileSync(join(root, rel), "utf8"));
     const list = Array.isArray(parsed) ? parsed : (parsed.principals ?? []);
-    return list.filter((p) => p && typeof p.id === "string");
+    // THE SCHEMA IS CLOSED ON PURPOSE. Every entry is projected to exactly these four fields, so a
+    // `note: "still shaky on branches"` written in good faith is inert the moment it is saved.
+    // You cannot leak a field that no code reads, and a free-text field beside a person's name is
+    // the one shape the dignity rule cannot survive contact with.
+    return {
+      state: "ok",
+      principals: list
+        .filter((p) => p && typeof p.id === "string")
+        .map((p) => ({ id: p.id, kind: p.kind ?? "human", tier: p.tier ?? "visitor", identities: p.identities ?? [] })),
+    };
   } catch {
-    return [];
+    // A permission file that can brick the tool is a worse failure than one that is missing.
+    return { state: "corrupt", principals: [] };
   }
+}
+
+/** Would git commit this file if someone ran `git add -A`? No repository means no exposure path. */
+function exposed(root, rel) {
+  try {
+    execFileSync("git", ["check-ignore", "-q", "--", rel], { cwd: root, stdio: "ignore" });
+    return false; // exit 0 — ignored, and therefore safe
+  } catch (err) {
+    return err.status === 1; // 1 = not ignored; 128 = not a repository, which cannot leak
+  }
+}
+
+/** The principals, or none. Callers that need to explain WHY none should use `rosterState`. */
+export function roster(root) {
+  return rosterState(root).principals;
 }
 
 /**

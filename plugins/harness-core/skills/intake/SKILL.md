@@ -122,10 +122,20 @@ Three rules for the entry, and each one is load-bearing:
 1. **State it as what was seen, not as what to build.** *"Could not tell if the run passed"* is an
    observation that survives being solved five different ways. *"Add a status line"* is one of those
    five, pre-committed, before anyone checked the others.
-2. **Attribute it to them by name in the log.** The attribution *is* the credit. A contributor whose
-   observations are visibly in the backlog under their own name is participating in the system
-   whether or not they can write the fix — and `parseIdeas` already reads `src:`, so this is not a
-   courtesy, it is how the entry carries its provenance.
+2. **Attribute it to their ROSTER ID — never to a name, a handle, or an address.** The attribution
+   *is* the credit, and a contributor whose observations sit visibly in the backlog is participating
+   whether or not they can write the fix. `parseIdeas` already reads `src:`, so this is provenance
+   rather than courtesy.
+
+   But the idea log is **committed**, and in a public repository it is permanent. Each entry passes
+   the dignity rule on its own; **twenty of them do not.** *"Could not tell whether the run passed"*,
+   *"read it three times"*, *"gave up and asked"* — all correctly written about the system, all under
+   one real name — aggregate into a public capability profile of a private person, assembled one
+   innocent commit at a time. Nobody decides to publish it; it accretes.
+
+   A roster id breaks the aggregation at the source. `tony` is credit inside the project and nothing
+   to a stranger, the id→person mapping stays in `.harness/roster.json` where it is already local,
+   and every downstream surface that reads `src:` inherits the redaction for free.
 3. **Do not rank it yourself.** The log ranks by how many other ideas point at it. An observation
    nobody else's work touches was a one-off; one that keeps getting referenced was load-bearing and
    its author noticed something real. Let that resolve on its own rather than pre-judging it.

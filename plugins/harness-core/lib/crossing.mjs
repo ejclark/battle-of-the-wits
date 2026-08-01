@@ -23,6 +23,7 @@
 // DERIVED, NEVER INVENTED — the same rule the city and the map run on. The roster is real local state
 // or there is no campaign at all. A repository with one human gets silence rather than an encouraging
 // picture of a journey nobody is on.
+import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -38,6 +39,15 @@ import { join } from "node:path";
 function localRoster(root) {
   const file = join(root, ".harness/roster.json");
   if (!existsSync(file)) return [];
+  // Same refusal the standing report makes, for the same reason: `.harness/` reaches an adopter's
+  // .gitignore only through harness-bootstrap, and installing the plugins does not run it. A
+  // campaign that renders roster ids from a file git would happily commit is the harness helping to
+  // publish it. No repository at all means no exposure path, so that case reads normally.
+  try {
+    execFileSync("git", ["check-ignore", "-q", "--", ".harness/roster.json"], { cwd: root, stdio: "ignore" });
+  } catch (err) {
+    if (err.status === 1) return [];
+  }
   try {
     const parsed = JSON.parse(readFileSync(file, "utf8"));
     const list = Array.isArray(parsed) ? parsed : (parsed.principals ?? []);

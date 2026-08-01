@@ -15,7 +15,7 @@
 // asking "am I allowed to touch this?", usually while already unsure whether they belong. Every
 // line therefore states what it measured, what it did not, and what it is not claiming.
 import { descriptor } from "./descriptor.mjs";
-import { atLeast, defaultRef, eligibility, evidenceFor, roster, zoning } from "./principals.mjs";
+import { atLeast, defaultRef, eligibility, evidenceFor, rosterState, zoning } from "./principals.mjs";
 
 const ROOT = process.cwd();
 
@@ -35,7 +35,33 @@ function printZoning() {
 
 /** The standing table. Never sorted by anything — roster order, so this cannot read as a ranking. */
 function standingTable(only) {
-  const people = roster(ROOT);
+  const { state, principals: people } = rosterState(ROOT);
+
+  if (state === "exposed") {
+    // Refuses BEFORE printing a single name. `.harness/` reaches an adopter's .gitignore only via
+    // harness-bootstrap, and installing the plugins does not run it — so this repository can hold a
+    // roster of real people that git is willing to commit. Printing it would be the tool helping.
+    console.error(`
+  ✗ REFUSING TO READ THE ROSTER — .harness/roster.json is not gitignored here.
+
+  It names real people and their email addresses, and git would commit it on the next \`git add -A\`.
+  Publishing it is not undoable: not by a revert, not from forks, not from anyone's plugin cache.
+
+  Fix, then re-run:
+      echo '.harness/' >> .gitignore
+      git rm --cached -r --ignore-unmatch .harness/    # if it was already staged or committed
+
+  Nothing is wrong with your roster. This tool simply will not display data it cannot promise
+  stays local — the same rule every gate follows when it cannot measure honestly.
+`);
+    return 1;
+  }
+
+  if (state === "corrupt") {
+    console.error("\n  .harness/roster.json could not be parsed. Fix the JSON, or delete it to start over.\n");
+    return 1;
+  }
+
   if (!people.length) {
     console.log(`
   No roster — nothing to report, and nothing is wrong.

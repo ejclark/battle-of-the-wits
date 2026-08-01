@@ -241,6 +241,36 @@ exact resource that was already scarce, plus the orientation cost of getting the
 So the honest sequence is: **cost, then break-even, then gain** — and the whole design above is aimed
 at making the first phase short rather than pretending it does not exist.
 
+### Two corrections, because the paragraph above is the standard answer and the standard answer is now partly wrong
+
+**Brooks's Law is re-partitioned, not repealed.** Onboarding cost is not one thing. It is at least
+four, and they have stopped moving together:
+
+| Component | Delegable to an agent? | What happened to it |
+|---|---|---|
+| **Orientation** — what is this, where is what, how do I do X | **fully** | collapsed toward zero; used to be the largest share, and used to be the leader's |
+| **First-pass verification** — is this change correct | **mostly** | this is what the gates are; the fixed-line fraction |
+| **Judgement** — is this the right thing at all | **no** | unchanged |
+| **The relationship** — is this person motivated, does a "no" land well | **no** | unchanged, and arguably *increased* by having a contributor |
+
+The classical prediction assumed the whole cost lands on the constrained human. It no longer does.
+The **slope** of the cost curve dropped sharply; the **floor** did not move at all — and the floor is
+now what dominates. The useful consequence is that onboarding cost is no longer paid mostly in
+*teaching*, which compresses, but in *deciding*, which does not. Optimising the teaching further is
+optimising a non-constraint.
+
+**Resilience is a second axis, and Theory of Constraints does not price it.** ToC optimises flow
+through a system it *assumes will keep existing*. It has nothing to say about variance, bus factor,
+or the probability the project survives its owner losing interest, getting ill, or being busy for a
+quarter. A repository where one person holds every reason why anything is the way it is is fragile at
+any throughput.
+
+So a second human can be **throughput-negative and survival-positive at the same time**, and both are
+true simultaneously rather than one being the consolation for the other. The mistake is scoring the
+decision on the throughput axis alone, because that is the axis with a theory attached — which is
+exactly the streetlight effect. If the second axis were priced honestly, the cost phase would not
+need to be defended at all; it would be the premium on an insurance policy nobody argues about.
+
 Three things shorten it, and they are why the pieces are shaped the way they are:
 
 - **Work that does not route through the constraint.** The observation intake is the clearest case: a
@@ -259,6 +289,80 @@ to *feel* helpful rather than to subtract load — and the fix is to change what
 add process.
 
 ---
+
+## How this scales — team topology, and where the phase changes are
+
+The claim under test: **teams of 2–3 are great, and clusters of 2–3 teams is where you hit critical
+mass.** It survives, and the reason it survives is more useful than the numbers.
+
+Communication channels grow as `n(n−1)/2`. Clustering changes the exponent's base rather than the
+exponent, because each team presents *one* interface instead of every member presenting their own:
+
+| Shape | People | Channels | Flat equivalent |
+|---|---|---|---|
+| 1 team of 3 | 3 | 3 | 3 |
+| 2 teams of 3 | 6 | 7 | 15 |
+| **3 teams of 3** | **9** | **12** | **36** |
+| 4 teams of 3 | 12 | 18 | 66 |
+
+The interesting column is neither of those. It is **inter-team** channels, and it is where the phase
+change actually lives:
+
+| Teams | Inter-team channels | |
+|---|---|---|
+| 2 | 1 | one person holds it |
+| **3** | **3** | one person still holds it |
+| 4 | 6 | **needs a dedicated coordinator** |
+
+So the theory is right, and the two numbers are the *same* threshold applied twice: **a unit stops
+working when its internal channel count exceeds what one person can hold, which is about three.** A
+team of 3 has 3 internal channels and everyone can carry everyone's context; a team of 4 has 6 and
+needs a designated decider. A cluster of 3 teams has 3 interfaces and one person can hold them; a
+cluster of 4 has 6 and now someone's whole job is coordination.
+
+**Critical mass at 2–3 teams of 2–3 is precisely the largest organisation that needs no manager.**
+That is the mechanism, and it is why the number recurs at both levels rather than being two separate
+observations. Note also that 9 people is 12 channels — *more* than any one person can hold. The
+cluster works because **nobody holds all of it**: each person holds their team plus their team's
+interfaces. Anyone who insists on holding the whole graph re-creates the flat cost and becomes the
+constraint personally.
+
+### The correction this repository exists to test
+
+All of the above prices **human-to-human** channels, and it comes from an era in which coordination
+*was* conversation. Much of the coordination here is mediated by artifacts instead, and an artifact
+channel is `n×1`, not `n²` — each person coordinates with the system rather than with every other
+person:
+
+| Coordination question | Conversational form | Artifact form here |
+|---|---|---|
+| "are you touching this file?" | ask everyone | `harness-claim --list` |
+| "is this change acceptable?" | a review thread | the gates |
+| "what should I work on?" | a meeting | `harness-dungeon --today` |
+| "what am I allowed to touch?" | ask the owner | `harness-standing` |
+| "what did we decide and why?" | tribal memory | ADRs, `LESSONS.md`, `METAPHORS.md` |
+
+So the honest prediction is not that 2–3 × 2–3 is wrong. It is that **the ceiling is set by
+coordination cost, and this harness is a machine for moving coordination off the `n²` channels.** Two
+consequences follow, and the second is the one worth watching:
+
+1. The same cluster should carry more work than the classical numbers suggest — not more *people*
+   necessarily, but more throughput per person before the structure strains.
+2. **The "4 teams needs a coordinator" wall is liftable, because the coordinator need not be human.**
+   That is exactly what the foreman tier is. This is the one place where the AI version of the theory
+   diverges from the classical one rather than merely stretching it — and it comes with the warning
+   already in `COACHES.md`: a coordinator that only relays a decision made above it is a meeting with
+   a bill, and multiplying those reproduces the org chart in software at full token cost.
+
+**What would actually test this, rather than argue it:** the principal × district matrix — who touches
+what. If team boundaries and code boundaries coincide, the clustering is real and Conway is working
+for you. If everyone touches everything, you have one team wearing three names and are paying flat
+`n²` while believing you are not. That measurement is banked as idea #1 and is the single highest-value
+instrument this repository does not yet have.
+
+**Stated honestly: none of this is evidence yet.** This repository has one human. The mechanism is
+sound and checkable; the claim that it holds *here* has an n of 1, and saying otherwise would be the
+flattery every gate in this system exists to prevent.
 
 ## What not to build
 

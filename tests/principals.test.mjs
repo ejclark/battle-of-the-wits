@@ -15,7 +15,7 @@
 // with a REAL revert in it, because "counts commits" and "counts commits that survived" differ only
 // on a history where something was taken back.
 import assert from "node:assert/strict";
-import { writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { test } from "node:test";
 import {
@@ -27,6 +27,7 @@ import {
   outsideRadius,
   ratchetDelta,
   roster,
+  rosterState,
   zoning,
   zoningViolations,
 } from "../plugins/harness-gates/lib/principals.mjs";
@@ -120,6 +121,38 @@ test("a missing roster reads as empty, and a corrupt one does not wedge the tool
     ["a"],
     "both the array and the {principals:[…]} shape are accepted; entries without an id are not",
   );
+});
+
+test("a roster git would commit is refused, not read", () => {
+  // The hole this closes was live in every ADOPTER, not here. `.harness/` reaches their .gitignore
+  // only through harness-bootstrap, and installing the plugins does not run it — so the harness was
+  // treating a property of its own repository as a property of theirs.
+  const { root } = makeGitRepo({ "README.md": "x\n" });
+  mkdirSync(join(root, ".harness"), { recursive: true });
+  writeFileSync(join(root, ".harness/roster.json"), JSON.stringify([{ id: "someone", tier: "owner" }]));
+
+  const exposedState = rosterState(root);
+  assert.equal(exposedState.state, "exposed", "not-ignored must be distinguishable from absent");
+  assert.deepEqual(exposedState.principals, [], "and must yield nothing — refusing to read is the safe direction");
+
+  writeFileSync(join(root, ".gitignore"), ".harness/\n");
+  assert.equal(rosterState(root).state, "ok", "once ignored, it reads normally");
+  assert.equal(rosterState(root).principals.length, 1);
+});
+
+test("the roster schema is closed — a free-text note about a person cannot survive the read", () => {
+  // You cannot leak a field that no code reads. A `note:` written in good faith to help calibrate is
+  // exactly the shape the dignity rule cannot survive, so it is discarded structurally rather than
+  // forbidden by instruction.
+  const root = makeRepo({
+    ".harness/roster.json": JSON.stringify([
+      { id: "a", kind: "human", tier: "builder", identities: ["a@example.invalid"], note: "shaky on branches", realName: "A Person" },
+    ]),
+  });
+  const [p] = roster(root);
+  assert.deepEqual(Object.keys(p).sort(), ["id", "identities", "kind", "tier"]);
+  assert.equal(p.note, undefined);
+  assert.equal(p.realName, undefined);
 });
 
 test("an unknown principal is refused everything — zoning fails closed", () => {

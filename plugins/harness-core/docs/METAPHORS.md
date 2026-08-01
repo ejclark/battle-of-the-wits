@@ -147,6 +147,17 @@ dies under a serac.
 catches a published credential or a leaked confidence. The irreversible class has no belay, which is
 exactly why it is refused to every principal rather than granted to trusted ones — and it is the
 place where reasoning from the metaphor produces a confident, wrong answer.
+**And breaks a second way, which is newer and much easier to miss: it assumes the belayer is a
+climber.** The "roping in a second person slows the leader" prediction is made entirely of the
+leader's own attention holding the rope. When a capable agent absorbs the orientation, the
+explaining, and the first-pass review, the belay is held by something that **is not the constraint**,
+and the cost the prediction is built from never lands on the party's speed at all. Reasoning past
+this point yields the confident, wrong conclusion that a new contributor must always be a net drag.
+The source domain already contains the correction, and this entry under-applied its own import: on
+siege-style expeditions the fixed lines are placed by a *different* team, and the climber ascends a
+rope they neither placed nor hold. The accurate reading is that AI moved a large share of onboarding
+from *pitched* to *fixed line* — so Brooks's Law is **re-partitioned rather than repealed**, and what
+did not move (judgement, and the relationship) is what now dominates.
 
 ### The crossing — a mountain range and an ocean
 **From:** two expedition traditions that are peers in difficulty and opposites in structure.
