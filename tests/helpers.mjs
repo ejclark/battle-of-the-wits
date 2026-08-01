@@ -23,9 +23,10 @@ export function makeRepo(files = {}) {
 }
 
 /** Run a harness executable in `cwd`. A non-zero exit is a RESULT, not a throw — gates fail on purpose. */
-export function runTool(binPath, cwd, args = []) {
+export function runTool(binPath, cwd, args = [], env = {}) {
+  const opts = { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], env: { ...process.env, ...env } };
   try {
-    return { code: 0, out: execFileSync(binPath, args, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }) };
+    return { code: 0, out: execFileSync(binPath, args, opts) };
   } catch (err) {
     return { code: err.status ?? 1, out: `${err.stdout ?? ""}${err.stderr ?? ""}` };
   }
