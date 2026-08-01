@@ -152,6 +152,7 @@ Detail lives in folders; this is the map. Nothing below is needed to start.
 |---|---|
 | [`DESCRIPTOR.md`](plugins/harness-core/docs/DESCRIPTOR.md) | `harness.json` — the interface that makes this portable |
 | [`DISPATCH.md`](plugins/harness-gates/docs/DISPATCH.md) | The bracket every background agent runs inside |
+| [`ROADMAP.md`](docs/ROADMAP.md) | Where this is heading and why that order — the layer above the bank |
 | [`LESSONS.md`](docs/LESSONS.md) · [`IDEAS.md`](docs/IDEAS.md) · [`JOURNAL.md`](docs/JOURNAL.md) | Incidents with preventions · what is banked and unbuilt · the long record |
 
 **Drills** — ask in plain language, or invoke directly
