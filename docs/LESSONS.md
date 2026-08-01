@@ -301,3 +301,21 @@ Prevention ranks, best first:
 - **SIDE QUESTS:** a negative control is not ceremony. Both gates written tonight passed on first
   run; one of them was measuring nothing, and only the deliberate attempt to break it told them
   apart. **A gate nobody has seen refuse is a gate nobody knows works.**
+
+### The duplication gate started reporting its own fix as debt
+- **SHA:** `n/a`   **DATE:** 2026-08-01   **STATUS:** closed
+- **SIGNAL:** after the six copies of the descriptor preamble were consolidated into one module, the
+  gate still reported 25 duplicated definitions — and 15 of them were the *consolidation*: six files
+  each writing `const DESC = descriptor(ROOT)` and `const budget = readBudget(...)`.
+- **ROOT CAUSE:** the signal is "the same top-level name declared in N files", a proxy for "the same
+  implementation pasted N times". A local name bound to an imported symbol satisfies the proxy while
+  being the exact opposite of the thing it proxies for — the implementation lives in one place, which
+  is what DRY asks for. Left alone, the gate punishes the fix and rewards leaving the copies.
+- **PREVENTION:** gate — `definitions.mjs` excludes a `const` whose initializer's only call is to a
+  symbol imported into that same file. `function` and `class` are always definitions, because that is
+  where pasted code actually lives. Debt 25 → 10, with twelve cases, most of them adversarial.
+- **SIDE QUESTS:** the tempting alternative was renaming ~20 symbols across six files to satisfy the
+  counter — the same "gate distorting the codebase" this repo banked once already, at four renames.
+  When the counter and the code disagree at that scale, the counter is the thing to fix. The
+  discipline is that the fix must be a claim about STRUCTURE, checkable from source, not another list
+  of excused names: a list can be extended to excuse anything, and eventually is.
