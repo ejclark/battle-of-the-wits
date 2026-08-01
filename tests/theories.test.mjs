@@ -29,14 +29,17 @@ const STATUSES = ["untested", "holds", "shifted", "inverted", "unstated"];
  */
 function entries() {
   const register = DOC.slice(DOC.indexOf("## The register"));
-  return register
-    .split(/^\*\*/m)
-    .slice(1)
-    .map((chunk) => {
-      const head = chunk.match(/^(.+?)\*\*\s*·\s*`([a-z-]+)`/);
-      return head ? { claim: head[1], status: head[2], body: chunk } : null;
-    })
-    .filter(Boolean);
+  // Anchor on the FULL header shape — bold claim, separator, backticked status — and slice between
+  // occurrences. Splitting on a bare `^**` looks equivalent and is not: an emphasised sentence
+  // opening a body line silently cuts that entry in half, and the orphaned tail then fails the
+  // evidence check while the evidence sits two lines below the cut. Second time a parse bug here has
+  // read as a content failure; the anchor is now specific enough that prose cannot trip it.
+  const heads = [...register.matchAll(/^\*\*(.+?)\*\*\s*·\s*`([a-z-]+)`\s*$/gm)];
+  return heads.map((m, i) => ({
+    claim: m[1],
+    status: m[2],
+    body: register.slice(m.index, heads[i + 1]?.index ?? register.length),
+  }));
 }
 
 test("the register parses, and holds enough entries to be worth having", () => {

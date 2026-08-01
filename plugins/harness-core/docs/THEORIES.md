@@ -152,6 +152,28 @@ write it down — at a completely different cadence, and against a deadline nobo
 *Evidence:* this repo's `_why_` keys, `LESSONS.md` and `JOURNAL.md` all exist because the reasoning
 behind a decision does not survive the context it was made in.
 
+**Maximise utilisation — idle capacity is waste.** · `shifted`
+*Falsifier:* a fully-loaded system that absorbed an urgent late arrival without delaying anything
+already in flight.
+Queueing theory has always said the opposite of the intuition: as utilisation approaches 100%, wait
+time goes to infinity, so a line run at full tilt has *no* capacity for the unplanned. Kitchens solve
+this with a **short-order station** — a cook deliberately not committed to the main service, held for
+the late pivot and the order that must jump the queue. Idle by design, and the reason the line does
+not stall.
+**What moved is that the standby no longer has to idle.** Reserve capacity used to mean paying
+someone to wait; spawning a fresh agent is close to free and close to instant, so the slack can be
+held as *unclaimed concurrency* rather than as a parked worker. The principle survives intact and its
+cost went to nearly zero — which makes refusing to reserve it much harder to justify than it used to
+be.
+*Evidence:* this session, from the other side. Eight-plus mid-turn arrivals landed while work was in
+flight, and every one of them was **folded into whatever was already running** rather than handled on
+arrival — which is precisely the symptom of a line with no short-order station. Nothing was dropped,
+but each arrival waited on an unrelated task to reach a stopping point, and the person who sent it
+had no way to tell whether it had been seen.
+*Still untested here:* `fleet.mjs` caps concurrency at a number nobody derived, and nothing reserves
+a slot for an interrupt. Whether a held-back slot actually lowers end-to-end latency on this workload
+is unmeasured. *Pairs with idea 35.*
+
 ### Incentives and game theory
 
 **Goodhart's law — a measure that becomes a target stops being a good measure.** · `holds`

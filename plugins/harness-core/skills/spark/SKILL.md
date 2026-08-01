@@ -99,6 +99,41 @@ So: **states are transient, observed, and never written down. Types are none of 
 Nothing about anyone's state, register or gear is recorded in any file, ever. See the dignity rule in
 `${CLAUDE_PLUGIN_ROOT}/docs/CONTRIBUTORS.md`.
 
+## When the gaps do not land — the default rep
+
+Everything above is the right first move and it does not work on everybody. Some people cannot answer
+*"what's always slightly annoying?"* because they have no reference class yet — they have never built
+a thing, so nothing has annoyed them **in the way a builder gets annoyed.** Asking harder is not the
+fix; the questions are fine, the person simply has no data to answer from.
+
+Read that early — two or three gap questions producing polite shrugs — and switch. **Stop looking for
+an idea and hand over a rep.**
+
+The default is a **to-do list, in the browser, running on their machine today.** It is not a
+consolation prize and the reasons are specific:
+
+- **Everyone already knows the spec.** No time is spent deciding what it should do, which is exactly
+  the part they cannot do yet. All the effort lands on *making it exist.*
+- **It is visibly theirs within minutes.** Colours, wording, what happens when a task is done — a
+  to-do list has enormous surface for personal taste and almost none of it is hard. Personal taste is
+  where engagement actually starts, and it is the thing a tutorial never gives you.
+- **It ends at something on a screen that responds to them.** This is the whole point. `spark`'s own
+  diagnosis is that the missing leg is nearly always **competence**, and nothing supplies competence
+  like watching your own change render. A green test suite is legible to someone who already knows
+  what a test suite is; a page that reacts is legible to everybody.
+- **It bootstraps the loop it belongs to.** By the end they hold *the thing that stores what to build
+  next* — and the first entries write themselves, because building it produces them. *"It should
+  remember these when I reload."* *"I want to reorder them."* Each one is a real feature, correctly
+  sized, and **they thought of it**, which is the difference between a curriculum and a project.
+
+That last property is why this beats any other starter app. A calculator is finished when it works. A
+to-do list is finished when it works and then immediately suggests the next five things — so the
+first rep does not just build confidence, it **hands back a backlog they own.**
+
+Scaffold it through `/harness-core:launch`. Get to something rendering before adding anything at all;
+the reaction to *"that's on my screen because I typed that"* is the thing worth optimising for, and
+everything else can follow it.
+
 ## When an idea does arrive
 
 Do not scaffold it yet. Ask the two cheap questions first, because they cost a minute and a repository
