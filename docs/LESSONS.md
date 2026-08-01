@@ -195,3 +195,23 @@ Prevention ranks, best first:
   that covers one of two code paths reports the coverage of a suite that covers both.
 - **SIDE QUESTS:** worth a sweep for other "second mode" commands with no case at all — `--candidate`
   is the obvious next one, and it is what every athlete calls to pick its target.
+
+### The athletes' first command would have killed them, and nothing knew
+- **SHA:** `n/a`   **DATE:** 2026-08-01   **STATUS:** closed
+- **SIGNAL:** none available. Found by deliberately probing `--candidate` on all six gates after the
+  previous retro flagged it as the one untested second mode. No athlete has ever been dispatched, so
+  the surface had never been exercised even once.
+- **ROOT CAUSE:** `--candidate` is the machine interface — the first command every athlete and the
+  governor runs — and it was never specified, only implemented six times. `harness-incident-scan
+  --candidate` printed a bare diagnostic line and no JSON at all whenever it had no token or no
+  network (offline: always), and emitted a bare object rather than `{candidate}` when it did work.
+  An athlete parses stdout and reads `.candidate`; it is a language model following an instruction
+  file, not code with a try/catch. First command, SyntaxError, dead.
+- **PREVENTION:** gate + doctrine — the contract (exit 0, exactly one JSON object on stdout, a
+  `candidate` key that is an object or null, diagnostics to stderr) is written into `DISPATCH.md`
+  and asserted for all six gates in two conditions: a repo with real debt and a bare repo that
+  nothing can measure.
+- **SIDE QUESTS:** the pattern across four retros in one night is identical — **a surface nothing
+  exercises reports the confidence of one that is exercised.** Gates never wired, a config never
+  scoped, a command never run, and now an interface never called. Worth asking of anything before
+  its first real use: what has actually run this?

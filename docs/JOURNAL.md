@@ -338,3 +338,53 @@ the third variant of the same lesson in one night: **an unmeasured dimension is 
 
 Next obvious sweep: `--candidate` has no case either, and it is what every athlete calls to pick its
 target. An athlete has still never been dispatched, so nothing has noticed.
+
+---
+
+## 2026-08-01 (night, fourth) · The Candidate's Path
+
+Flagged at the end of the last dungeon as the obvious next sweep, and it turned out to be the most
+consequential one of the night — because it is the surface that decides whether the athletes work at
+all, and it had never been run.
+
+`--candidate` is the **machine interface**. It is the first command every athlete executes
+(`harness-arch-scan --candidate` → take `candidate.file`) and the first the governor runs when it
+dispatches one. It was never specified. It was implemented six times, and the six disagreed.
+
+The worst of them: `harness-incident-scan --candidate` printed a bare diagnostic line and **no JSON
+at all** whenever it had no token or no network — which, offline, is always. And when it did work it
+emitted the raw run object rather than `{candidate: …}`, so `/retro` reading `.candidate` would have
+gotten `undefined` either way.
+
+Nothing downstream is defensive, and that is not an oversight to fix downstream. An athlete is a
+language model following an instruction file, not code with a try/catch. A stray log line on stdout
+kills it on its first command, before it has claimed territory or opened anything.
+
+**The contract, now written into `DISPATCH.md` and asserted for all six gates:** exit 0, exactly one
+JSON object on stdout, a `candidate` key that is an object or `null`, diagnostics to stderr. `null`
+means *stand down*; it never means the command failed.
+
+Asserted in two conditions, and the second is the one that matters: a repo with real debt, and a
+**bare repo nothing can measure**. A gate that cannot find a target must still answer in the shape
+the caller was promised.
+
+### Four retros, one lesson
+
+The pattern across tonight is now unmistakable, and it is worth stating in its general form:
+
+> **A surface nothing exercises reports the confidence of one that is exercised.**
+
+- Three gates were shipped but never wired into the suite — nothing failed, because nothing looked.
+- Two config files were never scoped to the repo — an empty scope reads as a clean codebase.
+- `--update` was never run by any test — it crashed seconds after 108 tests passed.
+- `--candidate` was never called by anything — and it is the athletes' first command.
+
+Each one was individually invisible and collectively obvious. The useful question, asked of anything
+before its first real use: **what has actually run this?** Not "does it look right." Not "is it
+covered by the suite." What has run *this path*, in *this condition*.
+
+### Still standing
+
+An athlete has still never been dispatched. That was the right call while its first command was
+broken — and it is now, for the first time, a thing that could be tried rather than a thing that
+would have failed silently. Still Eric's call to make.

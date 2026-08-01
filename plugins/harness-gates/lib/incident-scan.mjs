@@ -1,15 +1,12 @@
 #!/usr/bin/env node
 // Incident fitness scan — the eye of the learning Coach.
 //
-// The dimension it watches: HOW LONG a process gap goes unrecognized. The motivating failure is
-// recorded in docs/LESSONS.md — branch protection silently broke `deploy` and nobody noticed for
-// four merges, because nothing in the system watches a red `main`. Every other eye looks at the
+// The dimension it watches: HOW LONG a process gap goes unrecognized. Every other eye looks at the
 // code; this one looks at the *process*. Its debt number: incidents nobody has learned from yet.
 //
 // Signal: a failed workflow run on `main` (the ground truth for "a gap escaped every net"). An
-// incident is CLOSED when docs/LESSONS.md carries an entry naming its commit sha. The budget is
-// the count of un-retro'd incidents and only ever ratchets DOWN — practically, it lives at 0: run
-// `/retro` on the finding, land the lesson, and the number returns to zero.
+// incident is CLOSED when docs/LESSONS.md carries an entry naming its commit sha. The budget only
+// ratchets DOWN and practically lives at 0: run `/retro`, land the lesson, back to zero.
 //
 //   harness-incident-scan              # report + enforce (exit 1 if incidents are unlearned)
 //   harness-incident-scan --update     # rewrite incident-budget.json (ratchet: only lower)
@@ -17,8 +14,7 @@
 //   harness-incident-scan --days 14    # lookback window (default 14)
 //
 // Resource doctrine (docs/COACHES.md): REST *core* bucket only — one request, no polling, no
-// GraphQL. Degrades to a clean no-op (exit 0) with no token or no network, so it never becomes a
-// flaky gate; the ledger's own well-formedness is checked offline, which is the part CI enforces.
+// GraphQL. Degrades to a clean no-op with no token or network, so it never becomes a flaky gate.
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -110,10 +106,15 @@ async function main() {
     return 1;
   }
 
+  // --candidate is a MACHINE contract: exactly one JSON object on stdout, always. Every diagnostic
+  // below goes to stderr in that mode, and every early return still emits the object — an athlete
+  // parsing stdout would otherwise take a SyntaxError on its very first command, offline.
+  const note = (msg) => (flag("--candidate") ? console.error(msg) : console.log(msg));
+  const bail = () => (flag("--candidate") ? console.log(JSON.stringify({ candidate: null, debt: 0 }, null, 2)) : undefined);
+
   if (!token) {
-    console.log(
-      "incident-scan: no GH_TOKEN/GITHUB_TOKEN — skipping the remote half (offline no-op).",
-    );
+    note("incident-scan: no GH_TOKEN/GITHUB_TOKEN — skipping the remote half (offline no-op).");
+    bail();
     return 0;
   }
 
@@ -121,9 +122,8 @@ async function main() {
   try {
     runs = await failedMainRuns();
   } catch (err) {
-    console.log(
-      `incident-scan: could not reach GitHub (${err.message}) — skipping (offline no-op).`,
-    );
+    note(`incident-scan: could not reach GitHub (${err.message}) — skipping (offline no-op).`);
+    bail();
     return 0;
   }
 
@@ -134,12 +134,12 @@ async function main() {
 
   if (flag("--candidate")) {
     const oldest = unlearned.sort((a, b) => a.date.localeCompare(b.date))[0];
-    console.log(JSON.stringify(oldest ?? null));
+    console.log(JSON.stringify({ candidate: oldest ?? null, debt: unlearned.length }, null, 2));
     return 0;
   }
 
-  console.log(`incident-scan: ${bySha.size} failed run(s) on main in the last ${days}d`);
-  for (const r of unlearned) console.log(`  UNLEARNED  ${r.sha}  ${r.date}  ${r.name}  ${r.title}`);
+  note(`incident-scan: ${bySha.size} failed run(s) on main in the last ${days}d`);
+  for (const r of unlearned) note(`  UNLEARNED  ${r.sha}  ${r.date}  ${r.name}  ${r.title}`);
 
   if (flag("--update")) {
     const next = Math.min(budget.unlearnedIncidents, unlearned.length);
