@@ -48,6 +48,24 @@ mechanic — and it makes the sequencing legible at a glance instead of buried i
   the player who blows up a raid that had prepared meticulously, so it names the failure, never the
   goal.
 
+## The persona is visible at the bottom
+
+`harness-bootstrap` installs a status line that renders the active persona, your depth, and the
+current chamber in its **own row above the built-in model and difficulty badges**:
+
+```
+⛬ dungeon · depth 2/5 · The Frozen Vault
+```
+
+Switch persona with the `persona` field in `harness.json` (`dungeon` · `coach` · `orchestra` ·
+`corporate` · `startup` · `senate`). It is **display-only** — those model and difficulty selectors are
+built-in UI, and a plugin's `settings.json` accepts only `agent` and `subagentStatusLine`, never the
+main `statusLine`. That is why the bootstrap writes it into the project's `.claude/settings.json`
+rather than shipping it as a plugin file, merging it in so existing hooks survive.
+
+It is a pure read surface derived from committed state, so it cannot drift — and it reads files only,
+never runs a scanner, because it executes on every render.
+
 ## When another persona fits better
 
 Swap when the problem's native domain solved something else: **orchestra** for synchronization

@@ -90,6 +90,32 @@ put(`${descriptor.testDir ?? "tests"}/arch/gates.spec.ts`, tpl("specs/gates.spec
 // ── the lessons ledger ─────────────────────────────────────────────────────────
 put("docs/LESSONS.md", tpl("common/docs/LESSONS.md"));
 
+// ── the persona status line ────────────────────────────────────────────────────
+// Written into the PROJECT's .claude/ rather than shipped as a plugin file: a plugin's own
+// settings.json accepts only `agent` and `subagentStatusLine`, never the main `statusLine`.
+// It renders in its own row above the built-in model/difficulty badges.
+put(".claude/harness-statusline.mjs", tpl("claude/harness-statusline.mjs"), { exec: true });
+
+// Merge the statusLine into .claude/settings.json without trampling existing hooks or keys.
+const settingsPath = join(ROOT, ".claude/settings.json");
+const settings = (() => {
+  try {
+    return JSON.parse(readFileSync(settingsPath, "utf8"));
+  } catch {
+    return {};
+  }
+})();
+if (settings.statusLine === undefined || force) {
+  settings.statusLine = { type: "command", command: "node .claude/harness-statusline.mjs" };
+  if (!dryRun) {
+    mkdirSync(dirname(settingsPath), { recursive: true });
+    writeFileSync(settingsPath, `${JSON.stringify(settings, null, 2)}\n`);
+  }
+  wrote.push(".claude/settings.json → statusLine");
+} else {
+  skipped.push(".claude/settings.json → statusLine (already set)");
+}
+
 // ── package.json: MERGE, never replace ─────────────────────────────────────────
 // A repo's package.json is its own; this adds the scripts and dev dependencies the process needs and
 // leaves everything else untouched. Existing keys always win — a project that already defines `lint`

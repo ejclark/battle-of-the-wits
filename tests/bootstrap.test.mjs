@@ -11,6 +11,8 @@ import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, rmSync
 import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { createRequire } from "node:module";
+const require = createRequire(import.meta.url);
 
 const BIN = join(dirname(fileURLToPath(import.meta.url)), "../plugins/harness-core/bin/harness-bootstrap");
 
@@ -216,5 +218,75 @@ test("steps needing repo admin are flagged as the user's call", () => {
     assert.match(out, /needs repo admin/, "credentialed steps must be marked, never silently assumed");
   } finally {
     rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("the status line is installed and .claude/settings.json is MERGED, not replaced", () => {
+  // The critical property: a repo's settings.json usually already carries hooks. Replacing it would
+  // silently disable them, and nothing would report the loss.
+  const existing = JSON.stringify(
+    { hooks: { UserPromptSubmit: [{ hooks: [{ type: "command", command: "echo mine" }] }] } },
+    null,
+    2,
+  );
+  const root = makeRepo({
+    "package.json": '{"name":"probe","version":"0.0.0"}\n',
+    ".claude/settings.json": `${existing}\n`,
+  });
+  try {
+    run(root);
+    const settings = JSON.parse(readFileSync(join(root, ".claude/settings.json"), "utf8"));
+    assert.ok(settings.hooks?.UserPromptSubmit, "pre-existing hooks must survive");
+    assert.equal(settings.hooks.UserPromptSubmit[0].hooks[0].command, "echo mine");
+    assert.equal(settings.statusLine.type, "command", "the status line must still be added");
+    assert.equal(existsSync(join(root, ".claude/harness-statusline.mjs")), true);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("an existing statusLine is a decision and wins", () => {
+  const root = makeRepo({
+    "package.json": '{"name":"probe","version":"0.0.0"}\n',
+    ".claude/settings.json": '{"statusLine":{"type":"command","command":"my-own-line"}}\n',
+  });
+  try {
+    const out = run(root);
+    const settings = JSON.parse(readFileSync(join(root, ".claude/settings.json"), "utf8"));
+    assert.equal(settings.statusLine.command, "my-own-line");
+    assert.match(out, /already set/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("the status line reports the persona and depth, and stays silent when unadopted", () => {
+  const { execFileSync: exec } = require("node:child_process");
+  const adopted = makeRepo();
+  const bare = makeRepo();
+  try {
+    run(adopted);
+    // Assert on content, not on escape sequences — the row is colourised, so raw matching would
+    // pin the ANSI codes rather than the meaning.
+    const strip = (s) => s.replace(/\x1b\[[0-9;]*m/g, "");
+    const line = strip(
+      exec("node", [join(adopted, ".claude/harness-statusline.mjs")], {
+        input: JSON.stringify({ workspace: { current_dir: adopted } }),
+        encoding: "utf8",
+      }),
+    );
+    assert.match(line, /dungeon/, "the active persona must be named");
+    assert.match(line, /depth 0\/5/, "depth must reflect real state, not an assumption");
+    assert.match(line, /The Threshold/, "the current chamber must be named");
+
+    // A repo that never adopted the harness has no descriptor — the row must be empty, not a guess.
+    const quiet = exec("node", [join(adopted, ".claude/harness-statusline.mjs")], {
+      input: JSON.stringify({ workspace: { current_dir: bare } }),
+      encoding: "utf8",
+    });
+    assert.equal(quiet.trim(), "", "no descriptor means no row");
+  } finally {
+    rmSync(adopted, { recursive: true, force: true });
+    rmSync(bare, { recursive: true, force: true });
   }
 });
