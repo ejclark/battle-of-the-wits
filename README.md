@@ -16,8 +16,21 @@ rather than a port.
 /reload-plugins
 ```
 
-Then, in any repository, ask for what you want in plain language — "run a governor cycle", "why did
-CI fail", "let's do a retro on that" — or invoke the drills directly.
+Then drop the whole engineering process into the repo:
+
+```shell
+harness-bootstrap --dry-run   # see the plan
+harness-bootstrap             # write it
+```
+
+That writes the CI pipeline, Conventional Commits + commitlint, semantic-release, Biome, the git
+hooks, the capability descriptor, the lessons ledger, and the quality gates wired **into your test
+suite** — then merges the scripts and dev dependencies into your `package.json` without touching
+anything you already had. It never clobbers an existing file, and it prints exactly which opinions
+it just imposed.
+
+After that, ask for what you want in plain language — "run a governor cycle", "why did CI fail",
+"let's do a retro on that" — or invoke the drills directly.
 
 ## What's in it
 
@@ -27,6 +40,7 @@ Works in any repository, in any language, with no configuration.
 
 | Drill | What it does |
 |---|---|
+| `/harness-core:bootstrap` | The one-shot — drops the entire process (CI, commits, releases, lint, hooks, gate wiring, ledger) into a repository. Never clobbers; declares what it imposes. |
 | `/harness-core:ears` | Turns a vague request into EARS-format requirements and scaffolds the matching specs. The upstream half of the BDD loop. |
 | `/harness-core:retro` | Turns a failure into a banked lesson: timeline, root cause, detection lag, and the cheapest prevention that makes the drift impossible. |
 | `/harness-core:governor` | One head-coach dispatch cycle — check WIP, take each gate's named target, dispatch an athlete in an isolated worktree, open its PR. |

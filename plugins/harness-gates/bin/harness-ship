@@ -65,7 +65,13 @@ cmd_open() {
 
   local branch; branch="$(git rev-parse --abbrev-ref HEAD)"
   [ "$branch" != "$base" ] || { echo "ship: refusing to open a PR from $base into itself" >&2; exit 1; }
-  git diff --quiet && git diff --cached --quiet || { echo "ship: uncommitted changes — commit first" >&2; exit 1; }
+  # Written as an explicit `if` rather than `A && B || C`: in the short-circuit form, a failure of
+  # the FIRST command also falls through to C, so the two dirty-tree cases were indistinguishable
+  # (shellcheck SC2015). Here the intent is unambiguous — either tree being dirty stops the ship.
+  if ! git diff --quiet || ! git diff --cached --quiet; then
+    echo "ship: uncommitted changes — commit first" >&2
+    exit 1
+  fi
 
   if [ "$verify" = 1 ]; then
     echo "ship: local verify (parity with CI — fail fast before spending a runner)…"

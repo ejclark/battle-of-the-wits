@@ -66,11 +66,14 @@ jobs:
       - name: Portability suite
         run: npm test
 
-      # A launcher with a syntax error is exactly as broken as a scanner with one.
-      - name: Shellcheck the launchers
+      # A launcher with a syntax error is exactly as broken as a scanner with one. The glob covers
+      # EVERY shipped executable — an earlier version matched only *-scan, which silently exempted
+      # harness-ship and would have exempted harness-bootstrap too. A gate with a hole in it reads
+      # green for the wrong reason.
+      - name: Shellcheck the shipped executables
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck
-          shellcheck plugins/harness-gates/bin/harness-*-scan
+          shellcheck plugins/*/bin/*
 
   release:
     name: release
