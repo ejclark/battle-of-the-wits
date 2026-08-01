@@ -143,6 +143,14 @@ The succession this system has actually walked, and where it plausibly goes:
 | **Knowing what is worth building** ← *plausibly next* | many good options, no way to rank them | ? |
 | **Knowing whether you were right** | shipped a lot, learned little | ? |
 
+**Recorded because the table was wrong, which is the useful part:** it named *knowing what is worth
+building* as plausibly next, and the constraint went somewhere else entirely. A **customer arrived**,
+and the binding thing became **stability of the surface they touch** — a constraint that was not in
+the succession at all. So: **constraint succession is not a queue.** An external event can promote
+one that was never next in line, and this table is a prompt to re-derive rather than a forecast to
+follow. That is the second time here — the first was *trust in the rails* — and both times the
+warning was already written down: a model of the constraint that nobody re-derives is just a slogan.
+
 The last two are worth staring at. When execution stops binding, **judgement about what deserves
 execution starts binding** — and judgement is the thing this harness deliberately refuses to
 mechanise, because a system that scored importance would be inventing a number. After that, the

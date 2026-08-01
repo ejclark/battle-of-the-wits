@@ -297,6 +297,85 @@ generalisable form: **before building an engine, check whether the model already
 engine.** Where it is, what is missing is a table and a rule. _(src: Eric · while: "this needs a
 tutorial engine … a bit of choose your own adventure")_
 
+**26. Adopt mise — after stability, not before it.**
+Recommended by a source the owner rates highly, and the honest check says the problem is real but is
+**not the one mise is usually sold for.** Node is already pinned by `.nvmrc` and every tool reads it.
+The genuine gap is **shellcheck**: `tests/shell.test.mjs` prints *"shellcheck not installed locally —
+skipped here; CI still enforces it"*, and `tests/parity.test.mjs` carries an explicit carve-out for
+the `apt-get` step that installs it. So CI installs a tool the local suite needs and does not have —
+the one place local verification is weaker than CI, in a repository that already banked the lesson
+that *a verification step existing only in CI turns a typo into a commit-push-wait cycle.* That lesson
+moved the CHECK into the suite and left the TOOL behind; mise closes it, cross-platform, from one
+config, alongside node.
+**Deliberately deferred**, and the reason is the constraint moving rather than the tool being wrong —
+see #27. **Boundary when it happens:** adopting it in THIS repo is repo state, the same class as
+`.nvmrc`. Shipping `mise.toml` in the templates is not — that imposes a toolchain on adopters, which
+is the one rule. **Falsifiable test to set before adopting:** does `npm test` stop printing
+"shellcheck not installed locally"? If it still does, it solved a problem we did not have.
+_(src: Eric · while: "I've heard a lot of excellent things from my mentor about MISE")_
+
+**27. The constraint moved to STABILITY the moment there was a customer — and the succession table
+guessed wrong.**
+`DECIDING.md` §4 tracks constraint succession and named *knowing what is worth building* as plausibly
+next after human attention. It was wrong, and the way it was wrong is the useful part: the constraint
+did not advance along the axis the table was watching. **A customer arrived, and the binding thing
+became stability of the surface they touch.**
+That is exactly what the Theory of Constraints entry in `METAPHORS.md` warns about — *"a model of the
+constraint that nobody re-derives is just a slogan"* — and it is the second time this project has
+recorded the constraint moving somewhere unpredicted (the first was trust in the rails). The
+generalisable form: **constraint succession is not a queue.** An external event can promote a
+constraint that was not next in line, and a table of expected succession is a prompt to re-derive
+rather than a forecast to follow.
+Practical consequence, immediately: process improvements that touch machinery a contributor will meet
+now wait behind stability, and that is a reordering rather than a rejection. _(src: Eric · while: "now
+that we have customer of our product we need to ensure product stability")_
+
+**28. `.nvmrc` says 24, `package.json` engines says >=22.**
+Two sources for one decision, disagreeing. Not currently breaking anything — `>=22` is satisfied by
+24 — but it is precisely the drift class this repository has gates for elsewhere, and the version
+someone's toolchain picks depends on which file it happens to read. Small, mechanical, and worth
+fixing before it is load-bearing. _(src: Claude · while: checking whether this repo has the problem
+mise solves)_
+
+**29. There is no update path for materialised files at all — evergreen starts here, not at breaking changes.**
+Tested rather than assumed. `harness-bootstrap` re-run against an adopter with existing files prints
+*"nothing to write — every file already exists · skipped (already present — yours wins)"*. **An
+adopter who ran it once has permanently frozen templates.** Not just for breaking changes — for any
+change. A `biome.json` deliberately mangled to look stale was left untouched.
+"Yours wins" is CORRECT for a file someone customised and must not be clobbered. The defect is that
+**the system cannot tell "customised" from "just old"**, so it treats every file as customised and
+nothing ever reaches anyone. That single missing distinction is what blocks the whole evergreen idea,
+and it is small: **record a checksum of what the harness WROTE, at write time.** Then three states
+become distinguishable — unmodified and current, unmodified and stale (safe to update), modified
+(never touch, offer a diff).
+Layering once the primitive exists, and the middle row is not negotiable:
+| File class | Auto-update? |
+|---|---|
+| config with no blast radius, unmodified (`biome.json`, `.npmrc`, `.nvmrc`) | yes |
+| **`.github/workflows/`, anything credential-adjacent** | **never — see #30** |
+| anything the adopter modified | never; show the diff, they decide |
+Trigger: the first template change that actually needs to reach an existing adopter. Today there are
+none, and there has never been a breaking change in this repository's history. _(src: Eric · while:
+"we need to be capable to automerge all forms of breaking changes")_
+
+**30. The evergreen-browser model is the opposite of auto-merging breaking changes.**
+Worth writing down because the analogy is good and points the other way. **Chrome is evergreen
+because it almost never breaks compatibility**, not because it ships breaks faster. Silent
+auto-update is the EASY half; the hard half is "don't break the web" — deprecation cycles measured in
+years, migration tooling, and telemetry from billions of installs telling them what would break
+before it does. Shipping breaking changes automatically without that machinery is not the Chrome
+model, it is the Chrome model with its expensive half removed.
+The achievable version of the same goal, and it is genuinely good: **a breaking change ships with its
+migration, or it does not ship.** The harness owns the migration; the adopter runs one command and is
+current. That is `ng update`, Next.js codemods, Rector — and unlike "automerge everything" it is
+gate-able: no `BREAKING CHANGE` footer merges without a migration step alongside it.
+**The hard boundary either way:** this harness writes `.github/workflows/`, and `harness-preflight`
+refuses workflow edits to EVERY principal including the owner, because that file decides what runs
+with the repository's credentials. An auto-update that silently rewrote an adopter's CI would be the
+harness doing, in someone else's repository and with their credentials, the exact thing it forbids
+everyone from doing in their own. Chrome does not have write access to your build system. Pairs with
+#29. _(src: Claude · while: checking the update path against the evergreen claim)_
+
 ### Side quests (surfaced by Claude while working — proposals to prune)
 
 **3. Humans do not claim territory; athletes do.**
