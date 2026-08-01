@@ -8,22 +8,15 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
+import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { makeRepo } from "./helpers.mjs";
 
 const BIN = join(dirname(fileURLToPath(import.meta.url)), "../plugins/harness-core/bin/harness-dungeon");
 const run = (cwd) => execFileSync(BIN, [], { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
 
-function makeRepo(files = {}) {
-  const root = mkdtempSync(join(tmpdir(), "botw-dungeon-"));
-  for (const [path, content] of Object.entries(files)) {
-    mkdirSync(dirname(join(root, path)), { recursive: true });
-    writeFileSync(join(root, path), content);
-  }
-  return root;
-}
 
 test("an untouched repo is at the door with every power locked", () => {
   const root = makeRepo({ "package.json": "{}\n" });
