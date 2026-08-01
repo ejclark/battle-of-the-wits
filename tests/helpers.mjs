@@ -31,3 +31,23 @@ export function runTool(binPath, cwd, args = [], env = {}) {
     return { code: err.status ?? 1, out: `${err.stdout ?? ""}${err.stderr ?? ""}` };
   }
 }
+
+/**
+ * A throwaway git repository on `main`, initialised and identified.
+ *
+ * With files, they are committed, so HEAD resolves and the tree is clean. With `{}` the repo is left
+ * UNBORN on purpose — that is a real state a tool meets (a fresh `git init`), and several cases exist
+ * to prove nothing crashes there.
+ */
+export function makeGitRepo(files = { "README.md": "probe\n" }) {
+  const root = makeRepo(files);
+  const git = (...a) => execFileSync("git", a, { cwd: root, stdio: "pipe", encoding: "utf8" });
+  git("init", "-q", "-b", "main");
+  git("config", "user.email", "probe@example.com");
+  git("config", "user.name", "probe");
+  if (Object.keys(files).length) {
+    git("add", "-A");
+    git("commit", "-qm", "init");
+  }
+  return { root, git };
+}

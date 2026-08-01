@@ -17,16 +17,11 @@ import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-// Named for what it is rather than `HERE`, which collided with the same one-liner in bootstrap.mjs.
-// Two modules each resolving their own directory is a coincidental name match, not a shared
-// abstraction waiting to be extracted — the fix is a distinct name, not a module.
+// Named for what it is rather than `HERE`: two modules each resolving their own directory is a
+// coincidental name match, not a shared abstraction waiting to be extracted.
 const THIS_DIR = dirname(fileURLToPath(import.meta.url));
 
-/**
- * Find a harness executable. On PATH when the plugin is installed; a sibling directory when running
- * from a checkout. Resolving both means the run works before and after installation, which matters
- * because the first thing anyone does is try it from a clone.
- */
+/** A harness executable: on PATH once installed, a sibling directory when run from a checkout. */
 function resolveTool(name) {
   const sibling = join(THIS_DIR, "../../harness-gates/bin", name);
   if (existsSync(sibling)) return sibling;
@@ -38,6 +33,7 @@ function resolveTool(name) {
 }
 
 const GATES = ["arch", "dupe", "dead", "spec-gap", "clone", "incident"];
+const ADOPT_BRANCH = "chore/adopt-the-harness";
 
 /** Run a step, capturing rather than inheriting output — the log is the report, not a scrollback. */
 function step(label, fn) {
@@ -71,9 +67,8 @@ export function autoAdopt(root, { ship = false } = {}) {
     console.log("  · no package.json — skipping install (nothing to install)");
   }
 
-  // 2 — THE GRANDFATHER STEP. Freeze today's debt so the gates block growth only. Skipping this is
-  // how adoption fails: the first PR goes red for pre-existing debt nobody caused, the gates get
-  // switched off, and they never come back on.
+  // 2 — THE GRANDFATHER STEP. Freeze today's debt so the gates block growth only. Skip it and the
+  // first PR goes red for debt nobody caused, the gates get switched off, and never come back on.
   const frozen = [];
   const unavailable = [];
   for (const gate of GATES) {
@@ -82,8 +77,8 @@ export function autoAdopt(root, { ship = false } = {}) {
       unavailable.push(gate);
       continue;
     }
-    // A gate that cannot measure (knip absent, no test tree) must not fail the run — it reports and
-    // exits clean, and its budget simply is not written. That dimension stays honestly unlit.
+    // A gate that cannot measure (knip absent, no test tree) must not fail the run: its budget is
+    // simply not written, and that dimension stays honestly unlit.
     const ok = step(`freeze ${gate}`, () => {
       run(tool, ["--update"], root);
       return existsSync(join(root, `${gate}-budget.json`)) ? "budget committed" : "nothing to measure — left unlit";
@@ -103,12 +98,23 @@ export function autoAdopt(root, { ship = false } = {}) {
     });
   }
 
-  // 4 — commit. Local and reversible, so it is part of the automated run.
-  const committed = step("commit", () => {
-    run("git", ["add", "-A"], root);
-    run("git", ["commit", "-m", "chore: adopt the engineering harness"], root);
-    return "chore: adopt the engineering harness";
+  // 4 — branch, THEN commit. This used to commit straight to the default branch, walking the adopter
+  // into a deadlock of its own making: the handover below tells them to require pull requests, and
+  // the adoption commit is then stranded where it can no longer be pushed. A bootstrap that violates
+  // the doctrine it installs teaches the adopter that the doctrine is optional.
+  const onBranch = step("branch", () => {
+    const current = run("git", ["rev-parse", "--abbrev-ref", "HEAD"], root).trim();
+    if (current !== "main" && current !== "master") return `already on ${current}`;
+    run("git", ["checkout", "-b", ADOPT_BRANCH], root);
+    return ADOPT_BRANCH;
   });
+  const committed =
+    onBranch &&
+    step("commit", () => {
+      run("git", ["add", "-A"], root);
+      run("git", ["commit", "-m", "chore: adopt the engineering harness"], root);
+      return "chore: adopt the engineering harness";
+    });
 
   console.log("");
   if (frozen.length) console.log(`  Frozen: ${frozen.join(", ")} — these budgets now block growth and only ratchet down.`);
@@ -126,6 +132,10 @@ export function autoAdopt(root, { ship = false } = {}) {
        on a branch that cannot be pushed.
     3. Turn the ruleset on only AFTER \`verify\` has gone green once. A required check
        that has never reported leaves every PR stuck on "waiting for status".
+
+  Expect \`harness-preflight\` to REFUSE this adoption commit. That is correct: adoption is the
+  one change that legitimately writes .github/workflows/ and .claude/settings.json, which is
+  exactly the class it exists to keep an agent out of. Review those two files yourself.
 `);
 
   if (ship && committed) {
@@ -137,8 +147,8 @@ export function autoAdopt(root, { ship = false } = {}) {
     });
     console.log("\n  Open the PR and arm auto-merge AT OPEN — the window closes once the PR is clean.\n");
   } else if (committed) {
-    console.log("  Committed locally. Nothing was pushed: a bootstrap must not put commits in someone's");
-    console.log("  repository uninvited. Re-run with --ship, or push yourself.\n");
+    console.log(`  Committed on ${ADOPT_BRANCH}. Nothing was pushed: a bootstrap must not put commits`);
+    console.log("  in someone's repository uninvited. Re-run with --ship, or push yourself.\n");
   }
 
   return { frozen, verified, committed };
