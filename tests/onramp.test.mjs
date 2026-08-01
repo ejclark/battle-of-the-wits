@@ -363,3 +363,18 @@ test("the setup paste is self-contained for a session that knows nothing", () =>
   const first = read("plugins/harness-core/templates/starter/FIRST-APP.md");
   assert.ok(first.includes(paste.trim()), "FIRST-APP.md ships a different setup paste from the README");
 });
+
+test("the patch-forward prompt refuses the things a stranger's session must not do", () => {
+  // It runs unattended on somebody else's machine, fixing this repository as it goes. Two rails
+  // matter more than everything else in it: never touch the irreversible class, and never guess.
+  const doc = read("plugins/harness-core/templates/starter/PATCH-FORWARD.md");
+  const paste = [...doc.matchAll(/```\n([\s\S]*?)```/g)][0]?.[1];
+  assert.ok(paste, "the paste is gone or its fence changed");
+
+  assert.match(paste, /\.github\/workflows\//, "the irreversible class must be named, not implied");
+  assert.match(paste, /credentials/, "and so must credentials");
+  assert.match(paste, /do not\s+guess/i, "a guessed fix that silences an error is worse than no fix — it hides the real one");
+  assert.match(paste, /whether the fault is mine, my machine's, or the\s+harness/, "an unattributed failure is read as self-inflicted every time");
+  assert.match(paste, /did NOT fix/, "what it could not fix must reach the PR too, or the report is a lie by omission");
+  assert.match(paste, /as you go|as you work/, "the record has to be built during the work — a reconstruction is missing what mattered");
+});
