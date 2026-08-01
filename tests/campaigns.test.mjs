@@ -91,7 +91,7 @@ test("a fully-measured, fully-met repo offers nothing rather than inventing work
   try {
     const out = today(root);
     assert.match(out, /None\./);
-    assert.match(out, /go build something new/);
+    assert.match(out, /go write an idea down/);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

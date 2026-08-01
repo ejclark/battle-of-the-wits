@@ -1057,3 +1057,55 @@ Duplication 10 → 14, recorded. `model.mjs` re-derives `descriptor`, `DEFAULT_C
 import would resolve only in a checkout of this repository. Unlike the *imagined* PATH boundary this
 gate's IGNORE list once defended, the plugin boundary is real. Everything that could genuinely be
 shared in this change was shared.
+
+---
+
+## 2026-08-01 · The Drawing Board — teaching the forge to propose a build
+
+Eric asked what the next dungeon was, so I ran the tool. It offered The Foundry (27 files, none over
+budget) and The Mirror Halls (14 duplicated definitions, all already recorded as justified). Every
+gate green, nothing urgent.
+
+That is an honest answer to a **narrower question than the one asked.** `harness-dungeon --today`
+reads budgets and unlit dimensions — both measures of debt — so it can only ever propose *cleaning*.
+Its own prompt is "what dungeons should I build today?" and it had no input capable of proposing a
+build. Meanwhile 45 banked ideas sat in `docs/IDEAS.md`, which nothing read.
+
+**A backlog nothing reads is not a backlog, it is a diary.**
+
+### The two rules that keep it from becoming a ranking engine
+
+The easy version of this feature is a scoring system, and it would be worse than nothing — a tool
+inventing authority it does not have, in a repository whose entire doctrine is that a number must
+come from somewhere real.
+
+1. **Nothing is invented.** A proposal is an idea a human wrote down, quoted back. The tool does not
+   generate ideas, score them on a scale it made up, or decide what matters.
+2. **The one derived signal is stated as a proxy.** Ideas reference each other — *"#7 attacked from
+   the opposite end"*, *"pairs with #30 as its first consumer"*. An idea that other ideas keep
+   pointing at is load-bearing in a way its author may not have noticed, and in-degree measures that
+   cheaply and checkably. The payoff line says **PROXY** and **not a verdict**, and there is a case
+   asserting it still does.
+
+Association density as a priority signal was itself a banked idea. This is the smallest honest
+version of it; a richer one (semantic clustering, "which ideas would this unlock") needs a model in
+the loop, and a tool that quietly needed a model in the loop would be a different product.
+
+### It found something neither of us would have named
+
+Run against the real log, the top of the board is **#9, load-bearing metaphors — a catalog, and a
+rubric for why they hold**, with twelve inbound references. Then *systems to develop* at ten, then
+*coordination as the sub-agent unlock* and *battle of the wits* at seven each.
+
+I would not have picked #9 from memory, and I doubt Eric would have either. That is the signal doing
+work rather than confirming a prior — which is the only reason to build it.
+
+**One thing to watch:** in-degree rewards age. An idea written first has had longest to accumulate
+mentions, and the count cannot see that bias. If the board starts looking suspiciously like the
+oldest entries, the metric has stopped being about importance and started being about seniority.
+
+### Placement is derived, not decided
+
+Real debt on the board, and The Drawing Board goes last: fix what is broken first. Everything green,
+and it leads — because then it is the only real answer. That is one line of code and it is the part
+that makes the whole thing not annoying.
