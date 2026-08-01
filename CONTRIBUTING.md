@@ -292,6 +292,25 @@ Things there that are genuinely missing, and each is one view:
 
 Pick one. Build it. If it works, open a pull request.
 
+## Labels, and why a script exists for two of them
+
+The issue forms apply `snag` and `idea`. A repository's labels live in its settings, and **nothing in
+a git clone carries them** — so an adopter gets the forms and not the labels, and GitHub does not
+complain. It accepts the form, files the issue, and applies nothing. Nothing is red; the label is
+simply never there, and anything built on top of it reads an empty set.
+
+So the labels are derived from the forms rather than kept in a list somebody has to remember:
+
+```
+npm run sync-labels -- owner/repo            # say what is missing; write nothing
+npm run sync-labels -- --check owner/repo    # exit 1 if any is missing
+npm run sync-labels -- --apply owner/repo    # create them (needs GITHUB_TOKEN with issues: write)
+```
+
+It **creates and never updates.** A label that already exists is left exactly as it is — its colour
+and description are somebody's choices, made in a UI, and a script that re-asserts them every run is
+one that argues with its owner until it gets switched off.
+
 **What still waits for Eric**, and will keep waiting: anything touching `.github/workflows/`,
 credentials, or permissions; and anything that is a *taste* call — product direction, naming, what
 the thing should feel like. Those are not gated on trust. They are gated on being irreversible or on
