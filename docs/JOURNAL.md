@@ -893,3 +893,49 @@ failing.
 
 CI's own glob is untouched — workflow files stay the human carve-out — but it no longer matters:
 `npm run verify` covers strictly more than the workflow does, which is what The Rehearsal was for.
+
+---
+
+## 2026-08-01 (night, fifteenth) · The Armoury
+
+Third stop in the templates sweep, and the directory keeps paying.
+
+`templates/common/claude/settings.json` was **never read by anything**. It also shipped a hooks entry
+running `.claude/hooks/intent-log.mjs` — a script this harness does not write. The `|| true` on the
+end meant it would have failed silently in every adopter's editor, forever, while an adopter reading
+the file would reasonably conclude there was an intent log.
+
+Dead code that the dead-code gate structurally cannot see, because `templates/` is excluded from
+knip — correctly. A template is source-shaped and is not this project's code; measuring it inflates
+every number and reports two deliberate variants of one file as duplication.
+
+**Second retro in a row where the finding was inside an exclusion.** The sentence that generalises:
+an exclusion *moves* responsibility, it does not remove it. Whatever is out of scope for the general
+gates needs a specific one, or it needs to not ship.
+
+### Deriving reachability from the loader
+
+The obvious gate — "every template must be written by the bootstrap" — needs a list of what the
+bootstrap writes, and a list would be maintained by the same person who just forgot to wire a
+template in.
+
+So it reads the loader's own `tpl(...)` calls, including the one that is a template literal
+(`tpl(\`husky/${hook}\`)` contributes the prefix `husky/`), plus any template path appearing as a
+string literal in lib — which is how `gateSpecFor` hands its choice to `tpl()`. Derived, not
+transcribed, in a directory where a transcription would go stale precisely when it mattered.
+
+Verified by putting the dead file back and watching two gates fail.
+
+### The fork nothing was watching
+
+`gates.spec.ts` and `gates.test.mjs` each list the six gates independently, and the bootstrap picks
+between them by detecting the adopter's test runner.
+
+Add a seventh gate to one and not the other, and **half of all adopters silently lose that
+dimension** — with the half selected by a property of their toolchain, which is the last thing
+anyone would think to check when a gate appears to be missing.
+
+They now have to agree, with a self-check that the parse found at least six gates, so a broken parse
+fails loudly rather than cheerfully agreeing that both templates are empty. That trick is becoming a
+habit worth naming: **every gate that counts things should assert it counted something.** The parity
+gate two dungeons ago passed by parsing nothing, and this one could have passed the same way.

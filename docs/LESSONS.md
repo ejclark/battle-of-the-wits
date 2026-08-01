@@ -404,3 +404,35 @@ Prevention ranks, best first:
 - **SIDE QUESTS:** two enumerations failed in one week — the athletes' command paths and this glob.
   A glob is an enumeration wearing a wildcard. When the scope is "everything of kind X", derive the
   list and assert the derivation found the kinds you expect.
+
+### A shipped template promised a hook the harness does not provide
+- **SHA:** `n/a`   **DATE:** 2026-08-01   **STATUS:** closed
+- **SIGNAL:** none. Found by inventorying `templates/` after the last two retros pointed there.
+  `common/claude/settings.json` was never read by any module, and it shipped a hooks entry running
+  `.claude/hooks/intent-log.mjs` — a script this harness does not write. The `|| true` meant it would
+  have failed silently in every adopter's editor, forever.
+- **ROOT CAUSE:** `templates/` is excluded from every gate, correctly — a template is source-shaped
+  but is not this project's code, and measuring it inflates every number. The exclusion is also why
+  knip could not see a dead file there, and why nothing could see that a shipped config referenced a
+  path that does not exist. The directory had no gates of its own, only an absence of them.
+- **PREVENTION:** gate — three, all category-scoped: every template must be reachable from the
+  bootstrap's own `tpl()` calls (derived from the loader, not a list); the two gate-spec templates
+  must name the same gates; and no template may reference a `.claude/hooks/` path. Verified by
+  restoring the dead file and watching two of them fail.
+- **SIDE QUESTS:** second retro in a row where the finding was inside an exclusion. An exclusion
+  moves responsibility, it does not remove it — whatever is out of scope for the general gates needs
+  a specific one, or it needs to not ship.
+
+### Two spec templates could drift, and the loser was chosen by toolchain
+- **SHA:** `n/a`   **DATE:** 2026-08-01   **STATUS:** closed
+- **SIGNAL:** noticed while inventorying templates — `gates.spec.ts` and `gates.test.mjs` each list
+  the six gates independently, and nothing compared them.
+- **ROOT CAUSE:** the bootstrap picks between them by detecting the adopter's test runner. Add a
+  seventh gate to one and not the other and half of all adopters silently lose that dimension — with
+  the half selected by a property of their toolchain, which is the last thing anyone would think to
+  check when a gate seems to be missing.
+- **PREVENTION:** gate — the two templates must name the same gates, with a self-check that the
+  parse found at least six so a broken parse fails loudly rather than agreeing that both are empty.
+- **SIDE QUESTS:** the same shape as the earlier "shipped template targeted a runner the repo does
+  not have" — a fork in the adoption path is a place where two things must stay equal, and equality
+  that nothing asserts is a coincidence with a shelf life.
