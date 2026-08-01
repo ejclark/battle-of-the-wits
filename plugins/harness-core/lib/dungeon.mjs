@@ -24,9 +24,11 @@
 //                reporting green for it.
 //
 // Honest limit, stated rather than hidden: this reads committed state. It does not re-run the gates.
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { detect, plan } from "./phases.mjs";
+import { forge } from "./forge.mjs";
+import { readJson } from "./state.mjs";
 
 const ROOT = process.cwd();
 
@@ -38,28 +40,21 @@ const CHAMBERS = [
   { name: "The Throne", phase: "5 · Autonomy" },
 ];
 
-const readJson = (p) => {
-  try {
-    return JSON.parse(readFileSync(join(ROOT, p), "utf8"));
-  } catch {
-    return null;
-  }
-};
 
 /** Bosses are measured, not invented: the biggest committed budgets are the biggest files. */
 function bosses() {
-  const arch = readJson("arch-budget.json") ?? {};
+  const arch = readJson(ROOT, "arch-budget.json") ?? {};
   const found = Object.entries(arch)
     .filter(([, cap]) => typeof cap === "number")
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5)
     .map(([file, cap]) => ({ kind: "god file", name: file, stat: `${cap} lines held` }));
 
-  const specGap = readJson("spec-gap-budget.json");
+  const specGap = readJson(ROOT, "spec-gap-budget.json");
   if (specGap && typeof specGap.untested === "number" && specGap.untested > 0) {
     found.push({ kind: "the unwatched", name: `${specGap.untested} modules with no spec`, stat: "spec gap" });
   }
-  const dupe = readJson("dupe-budget.json");
+  const dupe = readJson(ROOT, "dupe-budget.json");
   if (dupe && typeof dupe.duplicateDefs === "number" && dupe.duplicateDefs > 0) {
     found.push({ kind: "the twins", name: `${dupe.duplicateDefs} duplicated definitions`, stat: "duplication" });
   }
@@ -78,7 +73,7 @@ function loot(state, steps) {
 }
 
 /** What the repo genuinely cannot see. An unmeasured dimension is fog, never a pass. */
-function fog(state) {
+function fogOfWar(state) {
   const out = [];
   if (!existsSync(join(ROOT, "node_modules/knip")) && !existsSync(join(ROOT, "knip.json"))) {
     out.push("dead code — knip is not installed, so this dimension is unmeasured");
@@ -158,7 +153,7 @@ export function render() {
   }
   L.push("");
 
-  const f = fog(state);
+  const f = fogOfWar(state);
   if (f.length) {
     L.push("  ▸ FOG OF WAR — what cannot currently be seen");
     for (const x of f) L.push(`      · ${x}`);
@@ -171,4 +166,8 @@ export function render() {
   return L.join("\n");
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) console.log(render());
+if (import.meta.url === `file://${process.argv[1]}`) {
+  // `--new` forges a dungeon from measured debt; the default view is the adoption crawl.
+  const wantsNew = process.argv.includes("--new") || process.argv.includes("--forge");
+  console.log(wantsNew ? forge(process.cwd()) : render());
+}
