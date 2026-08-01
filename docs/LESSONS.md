@@ -520,3 +520,19 @@ Prevention ranks, best first:
   most-referenced idea was one neither of us would have named from memory. Worth watching whether it
   stays useful as the log grows, or degenerates into "whatever was written first has had longest to
   accumulate mentions", which is a bias the count cannot see.
+
+### Ranking ideas by impact and then asking which one to build spends the constraint twice
+- **SHA:** `n/a`   **DATE:** 2026-08-01   **STATUS:** closed
+- **SIGNAL:** Eric, immediately after The Drawing Board shipped: *"why wait for me to pursue ideas
+  that carry that much impact"*. Detection lag: one turn, and only because he said it.
+- **ROOT CAUSE:** the forge was built to rank banked ideas and then hand the list back for a decision.
+  But an idea in the log is intent that was **already expressed** — the decision was made when it was
+  written down. Asking again spends attention on a choice that is not open, which is the exact waste
+  Theory of Constraints names, committed by a feature built to serve that same doctrine. Ranking felt
+  like the safe half of the job; it was the half that did not require judgement.
+- **PREVENTION:** doctrine — `CLAUDE.md` now states the pickup bar: build a banked idea without
+  asking when it is structural or internal, specific enough that building is execution rather than
+  invention, and reversible. Below the bar it stays a proposal; product and visual work always waits,
+  because taste is not inferable from an in-degree count.
+- **SIDE QUESTS:** worth checking other places the system produces a *recommendation* where it could
+  produce an *outcome*. A recommendation is the polite shape and it is not always the useful one.

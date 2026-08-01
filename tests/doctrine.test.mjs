@@ -171,3 +171,29 @@ test("every relative link in a shipped doc resolves inside its plugin", () => {
       "Point at an absolute URL, or say the thing inline. A doc that ships must stand alone.",
   );
 });
+
+// Every catalogued skeleton must name where it stops.
+//
+// Rule 5 of the metaphor rubric, enforced rather than recommended: a metaphor whose breaking point
+// nobody has named cannot be over-driven, because nobody knows where the edge is. That failure has a
+// name in the catalog — METAPHOR CAPTURE, driving decisions past the isomorphic region because the
+// analogy is still producing fluent answers — and it is more dangerous for a skeleton than a skin,
+// since a wrong skeleton still produces plausible architecture.
+//
+// Same shape as the lessons ledger: an entry missing its PREVENTION is a war story, and an entry
+// here missing its breaking point is an anecdote.
+test("every catalogued metaphor names its breaking point", () => {
+  const doc = readFileSync(join(PLUGINS, "harness-core/docs/METAPHORS.md"), "utf8");
+  const catalog = doc.slice(doc.indexOf("## The catalog"));
+  const entries = catalog.split(/^### /m).slice(1);
+  assert.ok(entries.length >= 5, "the catalog parse found too few entries to be reading it right");
+  const unbounded = entries
+    .filter((e) => !/\*\*Breaks when:\*\*/.test(e))
+    .map((e) => e.split("\n")[0].trim());
+  assert.deepEqual(
+    unbounded,
+    [],
+    `catalogued without a stated breaking point:\n  ${unbounded.join("\n  ")}\n\n` +
+      "A skeleton nobody has bounded is the one that quietly captures a decision later.",
+  );
+});
