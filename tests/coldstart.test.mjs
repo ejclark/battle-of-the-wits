@@ -100,10 +100,16 @@ test("the gate template SKIPS a scanner that is absent and FAILS one that found 
   // NODE_TEST_CONTEXT must be stripped: node's runner sets it for its own children, and an inner
   // run that inherits it switches to the serialized child protocol — no "# skipped" summary at all,
   // so the assertions below would be reading the wrong format rather than the wrong outcome.
+  //
+  // `--test-reporter=tap` is pinned for the same reason, one layer up, and CI is what taught it: the
+  // default reporter changes with the node version — the runner emitted `ℹ skipped 6` where this
+  // machine emits `# skipped 6` — so an assertion on the default format tests the toolchain rather
+  // than the behaviour. It went red on a run where the behaviour was exactly right. Pin the format
+  // and the assertion means what it says.
   const bare = { ...process.env, PATH: dirname(process.execPath) };
   delete bare.NODE_TEST_CONTEXT;
   delete bare.NODE_OPTIONS;
-  const absent = execFileSync(process.execPath, ["--test"], { cwd: dir, encoding: "utf8", env: bare });
+  const absent = execFileSync(process.execPath, ["--test", "--test-reporter=tap"], { cwd: dir, encoding: "utf8", env: bare });
   assert.match(absent, /# skipped 6/, "a missing scanner must not report a pass or a failure");
   assert.match(absent, /NOTHING WAS MEASURED/, "a skip nobody can see the reason for is a false green");
   assert.doesNotMatch(absent, /# fail [1-9]/);
@@ -119,7 +125,7 @@ test("the gate template SKIPS a scanner that is absent and FAILS one that found 
   }
   let failed = "";
   try {
-    execFileSync(process.execPath, ["--test"], { cwd: dir, encoding: "utf8", env: { ...bare, PATH: `${bin}:${bare.PATH}` } });
+    execFileSync(process.execPath, ["--test", "--test-reporter=tap"], { cwd: dir, encoding: "utf8", env: { ...bare, PATH: `${bin}:${bare.PATH}` } });
     assert.fail("a scanner that ran and found debt must fail the suite");
   } catch (err) {
     failed = `${err.stdout ?? ""}${err.stderr ?? ""}`;
