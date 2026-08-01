@@ -605,3 +605,51 @@ Second time tonight that has been worth doing, and both times the gate was one I
 The extraction also collided a helper named `run` with `auto.mjs`'s, which the duplication gate
 caught in the same run. Renamed to `gitOut`, which is the better name anyway — the rename is
 descriptive, not a concession to the counter.
+
+---
+
+## 2026-08-01 (night, ninth) · The Rehearsal
+
+The side quest banked two dungeons ago: shellcheck ran only in CI, so a typo that a locally-installed
+tool would have caught in 200ms cost a push, a runner, and a red PR.
+
+The narrow fix landed then. The general rule is the dungeon: **every check CI runs should be
+reachable from the project's own command.** A step that exists only in CI does not make verification
+stricter, it makes it *slower* — and the wait is where people quietly stop verifying.
+
+So there is now one `npm run verify` that runs what CI runs, a `npm run commitlint` for the range
+check, and a gate that reads the workflow and asserts every command in the `verify` job is reachable
+locally — or declares itself CI-only in an allow-list **with a reason**, so the exceptions stay few
+and visible rather than accumulating unread.
+
+### The gate was the bug
+
+It passed on its first run. Then the negative control — pull the shellcheck entry out of the
+allow-list, expect a refusal — **stayed green**.
+
+The parser matched `run:` on a single line. A `run: |` block puts its commands on the *following*
+lines, which is exactly where shellcheck and the CLI validator live. So every multi-line step
+contributed nothing and the gate reported a clean sweep of a set it could not see.
+
+A gate written specifically to stop *"a dimension nobody measures"* was one. That is the whole night
+in a single artifact, and it is worth saying plainly rather than quietly fixing: **the failure mode
+does not spare the person who has spent all night naming it.**
+
+It now consumes block bodies by indentation and carries a self-check — if it cannot find the
+shellcheck step at all, it fails rather than passing, because a parser that finds nothing looks
+identical to a repository with nothing wrong.
+
+### Nine dungeons, one lesson, nine costumes
+
+- gates shipped but never wired into the suite
+- config files never scoped, so the detectors measured an empty directory
+- `--update` never run by any test — it crashed seconds after 108 passed
+- `--candidate` never called, and it is the athletes' first command
+- `harness-ship` never run, and it is their last
+- doctrine that shipped describing a different repository
+- a blast-radius check measured against a branch that may not be current
+- and a parity gate that parsed nothing and said everything was fine
+
+Each was invisible on its own. The general form, now stated in the ledger as many times as it has
+been earned: **a surface nothing exercises reports the confidence of one that is exercised.** The
+question that finds them is not "does this look right" — it is *what has actually run this?*
