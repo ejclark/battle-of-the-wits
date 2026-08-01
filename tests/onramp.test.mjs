@@ -309,3 +309,23 @@ test("no path CONTRIBUTING.md names is one a newcomer cannot find", () => {
   }
   assert.deepEqual(missing, [], `CONTRIBUTING.md names paths that do not exist: ${missing.join(", ")}`);
 });
+
+test("the stale-copy escape does not ask a non-technical person to type git", () => {
+  // The rule this project kept breaking on the person it was written for. Someone who does not use
+  // git cannot be unblocked by `git remote add … && git reset --hard`: not because pasting is hard,
+  // but because when it fails — and it will — they cannot tell a typo from a wrong assumption from
+  // a genuinely broken repository. A command is only useful to someone who can debug it.
+  const readme = read("README.md");
+  // Whitespace-normalised before matching: this prose is hard-wrapped at 100 columns, so any phrase
+  // long enough to be worth asserting on will eventually straddle a newline. Matching the rendered
+  // sentence rather than its current line breaks is the same lesson as everything else in this file.
+  const flat = (t) => t.replace(/\s+/g, " ");
+  const section = flat(readme.split("Already have a copy")[1]?.split("</details>")[0] ?? "");
+  assert.ok(section, "the stale-copy escape is gone — it is the most common state after a failed first try");
+
+  const raw = readme.split("Already have a copy")[1]?.split("</details>")[0] ?? "";
+  for (const block of raw.matchAll(/```[a-z]*\n([\s\S]*?)```/g)) {
+    assert.doesNotMatch(block[1], /^\s*git\s+\w/m, "the escape hands over a git command — describe the situation and let the tooling pick the commands");
+  }
+  assert.match(section, /zip download is not a clone/i, "it must name the thing that makes `pull` fail, or the failure reads as their mistake");
+});

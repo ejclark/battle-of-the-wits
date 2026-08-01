@@ -66,6 +66,27 @@ Same result, plus every drill below stays on tap in future sessions rather than 
 
 </details>
 
+<details>
+<summary><b>Already have a copy, and it is out of date or something went wrong?</b></summary>
+
+Do not try to work out the git commands. Paste this into a Claude Code session opened on the folder:
+
+```
+I have a copy of dungeon-crawler that is out of date or in a bad state — I may have
+downloaded it as a zip rather than cloning it.
+
+Work out whether my folder can be brought up to date or whether a fresh copy is
+cleaner and safer, tell me which you picked and why, then do it. Keep anything I
+have actually changed. Afterwards run the install and the checks, and show me the
+result plainly.
+```
+
+It will look at what you have rather than assuming, and say what it did. **A zip download is not a
+clone** — it has no connection to the original, so "just pull" often cannot work, and that is a
+property of the download and not a mistake you made.
+
+</details>
+
 **Contributing here instead?** [`CONTRIBUTING.md`](CONTRIBUTING.md) takes you from nothing to a
 merged change entirely on github.com — no install, no terminal, no git. **If anything above did not
 work for you, start there**: it is a complete path, not a consolation prize.
