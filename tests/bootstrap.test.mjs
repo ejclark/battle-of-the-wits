@@ -72,7 +72,11 @@ test("a real run lands the whole process", () => {
       assert.equal(existsSync(join(root, f)), true, `${f} should have been written`);
     }
     const pkg = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
-    assert.equal(pkg.scripts.verify, "npm run typecheck && npm run lint && npm test");
+    // This scratch repo has no tsconfig.json, so verify must NOT invoke tsc. The previous
+    // expectation here asserted the defect: a verify that died on TS5058, on the adopter's very
+    // first run, for a file they do not have. The tsconfig case is asserted separately below.
+    assert.equal(pkg.scripts.verify, "npm run lint && npm test");
+    assert.equal(pkg.scripts.typecheck, undefined, "no typecheck script without its config");
     assert.equal(pkg.scripts["arch:scan"], "harness-arch-scan");
     assert.ok(pkg.devDependencies["@biomejs/biome"], "biome must be added as a dev dependency");
     assert.equal(pkg.name, "probe", "existing package.json fields must survive");
@@ -96,7 +100,7 @@ test("it never clobbers a file the repo already has", () => {
     // An existing script is a decision; the merge must not overwrite it.
     const pkg = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
     assert.equal(pkg.scripts.lint, "my-own-linter", "an existing script must win over the template");
-    assert.ok(pkg.scripts.typecheck, "scripts the repo lacks are still added");
+    assert.ok(pkg.scripts.verify, "scripts the repo lacks are still added");
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
@@ -476,6 +480,23 @@ test("a CommonJS package gets .mjs, because ESM cannot live in its .js", () => {
   try {
     run(root);
     assert.equal(existsSync(join(root, "spec/arch/gates.test.mjs")), true);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("a repo WITH a tsconfig.json still gets its typecheck — the negative control", () => {
+  // Without this, the assertion above passes for the wrong reason: a bootstrap that never wrote a
+  // typecheck at all would satisfy it, and would silently weaken every TypeScript adopter.
+  const root = makeRepo({
+    "package.json": '{"name":"probe","version":"0.0.0"}\n',
+    "tsconfig.json": '{"compilerOptions":{"strict":true}}\n',
+  });
+  try {
+    run(root);
+    const pkg = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
+    assert.equal(pkg.scripts.typecheck, "tsc -p tsconfig.json --noEmit");
+    assert.match(pkg.scripts.verify, /npm run typecheck/);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

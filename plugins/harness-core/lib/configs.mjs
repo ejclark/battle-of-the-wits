@@ -83,11 +83,27 @@ export function renderJscpd(desc = {}) {
  * for something nobody caused, and the whole process gets switched off before it has proved anything.
  * The descriptor already says `sourceExt`; there was no excuse for guessing.
  */
-export function scriptsFor(desc = {}) {
+export function scriptsFor(desc = {}, { hasTsconfig = true } = {}) {
+  // THE SAME BUG, ONE LEVEL DOWN — and it shipped twice.
+  //
+  // The recorded fix for the first adoption was to stop guessing the LANGUAGE: read `sourceExt`
+  // rather than assume TypeScript. That was necessary and insufficient. Knowing the language does
+  // not tell you the toolchain is configured, and a repository can perfectly well hold `.ts` files
+  // with no `tsconfig.json` — mid-setup, bundler-managed, or config under another name.
+  //
+  // Run end-to-end from zero, `--auto` wrote a verify containing `tsc -p tsconfig.json --noEmit`
+  // into exactly that repo, and the adopter's FIRST verify failed with TS5058 on a file they do not
+  // have, in a script the harness had just written them. Same first impression, same lesson, second
+  // time.
+  //
+  // So the rule generalises past `sourceExt`: **do not emit a command whose config does not exist.**
+  // Omitting it silently would be the other failure — a verify that passes because it stopped
+  // checking — so the caller is told, and says so.
   const typescript = (desc.sourceExt ?? ".ts") === ".ts";
-  const checks = [typescript ? "npm run typecheck" : null, "npm run lint", "npm test"].filter(Boolean);
+  const typecheck = typescript && hasTsconfig;
+  const checks = [typecheck ? "npm run typecheck" : null, "npm run lint", "npm test"].filter(Boolean);
   return {
-    ...(typescript ? { typecheck: "tsc -p tsconfig.json --noEmit" } : {}),
+    ...(typecheck ? { typecheck: "tsc -p tsconfig.json --noEmit" } : {}),
     lint: "biome check .",
     "lint:fix": "biome check --write .",
     format: "biome format --write .",

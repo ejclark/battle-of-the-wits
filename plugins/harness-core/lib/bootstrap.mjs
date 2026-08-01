@@ -116,7 +116,10 @@ if (cs.skipped) skipped.push(cs.skipped);
 // ── package.json: merged, never replaced ───────────────────────────────────────
 // These two tables are the harness's OPINIONS and belong here; merge.mjs owns only the mechanism of
 // folding them in without trampling what the repo already decided.
-const SCRIPTS = scriptsFor(descriptor);
+// Repo STATE, not just the descriptor: a `.ts` project with no tsconfig.json must not be handed a
+// verify that runs tsc against a file it does not have.
+const HAS_TSCONFIG = existsSync(join(ROOT, "tsconfig.json"));
+const SCRIPTS = scriptsFor(descriptor, { hasTsconfig: HAS_TSCONFIG });
 
 const DEV_DEPS = {
   "@biomejs/biome": "^2.5.6",
@@ -158,6 +161,16 @@ if (pkgChanges.missing) {
 console.log(`
   Test runner detected: ${gateSpec.template.includes("test.mjs") ? "node --test" : "describe/it/expect"}  → wrote ${gateSpec.name}
 `);
+
+// Silently dropping the typecheck would be the other failure — a verify that passes because it
+// stopped checking. Say it, and say what turns it back on.
+if ((descriptor.sourceExt ?? ".ts") === ".ts" && !HAS_TSCONFIG) {
+  console.log(`  ⚠ TypeScript sources but no tsconfig.json — \`verify\` was written WITHOUT a typecheck
+      step, because a script that runs \`tsc -p tsconfig.json\` against a file you do not have fails
+      on your very first run, for something you did not do. Add a tsconfig.json and re-run with
+      --force to pick the typecheck back up.
+`);
+}
 
 console.log(`
   What this imposes — these are opinions, not laws. Disagree deliberately:
