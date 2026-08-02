@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
@@ -86,4 +86,28 @@ test("CI does not keep a second list of what to shellcheck", () => {
   const wf = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../.github/workflows/pipeline.yml"), "utf8");
   assert.doesNotMatch(wf, /^\s*shellcheck\s+\S/m, "CI is globbing for shellcheck again — the scope belongs in this file, not two places");
   assert.match(wf, /install -y -qq shellcheck/, "CI must still install it, or this whole dimension silently skips");
+});
+
+test("every launcher is executable, and that is structural rather than lucky", () => {
+  // Found the expensive way: one launcher shipped without its execute bit and every invocation of it
+  // died with "permission denied" — caught only because a portability case happened to run that one
+  // through the shell rather than importing the module. Every other launcher is 755 by luck of how
+  // it was created, which is not a property, it is a coincidence that has held so far.
+  //
+  // git tracks exactly one permission bit, so this is also what a fresh clone gets. The .cmd twins
+  // are deliberately NOT checked: Windows does not have a mode, and asserting one there would be
+  // testing the checkout rather than the file.
+  const mode = (p) => statSync(p).mode & 0o777;
+  let checked = 0;
+  for (const plugin of readdirSync(PLUGINS)) {
+    const dir = join(PLUGINS, plugin, "bin");
+    if (!existsSync(dir)) continue;
+    for (const name of readdirSync(dir).filter((f) => !f.endsWith(".cmd"))) {
+      const file = join(dir, name);
+      assert.ok(mode(file) & 0o100, `${plugin}/bin/${name} is not executable by its owner (${mode(file).toString(8)})`);
+      assert.ok(mode(file) & 0o001, `${plugin}/bin/${name} is not executable by others (${mode(file).toString(8)}) — a clone would inherit that`);
+      checked++;
+    }
+  }
+  assert.ok(checked > 20, `only ${checked} launchers checked — this stopped looking at most of them`);
 });

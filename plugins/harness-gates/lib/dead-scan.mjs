@@ -41,6 +41,30 @@ let report;
 try {
   report = JSON.parse(out);
 } catch {
+  // A GATE THAT CANNOT MEASURE MUST STILL ANSWER IN THE SHAPE IT PROMISED. This used to print prose
+  // and exit before the --candidate branch below, so a caller that asked for JSON got help text and
+  // a parse error at its own call site — the dead athlete the contract exists to prevent. It is the
+  // human path that is conditional here, not the machine one.
+  //
+  // `debt: null` and NOT 0, which is the whole rule in one field: 0 means "measured, and clean", and
+  // handing that to a caller who cannot see this message is the false green with a JSON wrapper on
+  // it. `measured` is stated on both paths rather than left for a caller to infer from a missing
+  // key, because an absent field reads as false to one reader and as unknown to the next.
+  if (process.argv.includes("--candidate")) {
+    console.log(
+      JSON.stringify(
+        {
+          candidate: null,
+          debt: null,
+          measured: false,
+          reason: "knip is not available in this repository, so dead code was not measured",
+        },
+        null,
+        2,
+      ),
+    );
+    process.exit(0);
+  }
   console.log("☠ Dead-code scan (knip) — SKIPPED");
   console.log("\n  knip is not available in this repository, so dead code was not measured.");
   console.log("  Install it to enable this gate:  npm i -D knip");
@@ -72,7 +96,8 @@ if (process.argv.includes("--candidate")) {
         types: (worst.types ?? []).map((x) => x.name),
       }
     : null;
-  console.log(JSON.stringify({ candidate: fileCand ?? exportCand, debt }, null, 2));
+  //  `measured: true` stated rather than implied — see the degradation path above.
+  console.log(JSON.stringify({ candidate: fileCand ?? exportCand, debt, measured: true }, null, 2));
   process.exit(0);
 }
 

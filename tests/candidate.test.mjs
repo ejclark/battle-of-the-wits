@@ -78,6 +78,18 @@ for (const gate of GATES) {
     const result = candidate(gate, bareRepo());
     assert.ok("candidate" in result);
     assert.ok(result.candidate === null || typeof result.candidate === "object");
+
+    // AND IT MUST NOT REPORT ZERO DEBT IT DID NOT MEASURE. This is the whole doctrine arriving at
+    // the machine interface: 0 means "measured, and clean", so a gate that could not run and
+    // answered 0 has told a caller the repository is clean — the false green with a JSON wrapper
+    // on it, aimed at the one consumer that cannot read the explanation on stdout.
+    //
+    // dead-scan really did this: it printed help text and exited before the --candidate branch,
+    // and the fix had to distinguish "no debt" from "no measurement" in the payload itself.
+    if (result.measured === false) {
+      assert.equal(result.debt, null, `${gate} reported debt ${result.debt} while saying it did not measure`);
+      assert.ok(typeof result.reason === "string" && result.reason.length > 0, `${gate} must say WHY it could not measure`);
+    }
   });
 }
 

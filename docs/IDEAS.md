@@ -638,6 +638,9 @@ cannot be trusted in either direction. _(src: Claude · while: wiring `standing.
 denied` — caught only because a portability case ran the launcher rather than the module. Every other
 launcher is `755` by luck of how it was created. A one-line assertion over `plugins/*/bin/*` would
 make that structural instead of lucky. _(src: Claude · while: the zoning portability case went red)_
+  **Built** — `tests/shell.test.mjs` asserts the owner *and* other execute bits on all 23 launchers,
+  verified against one stripped to `644`. Deliberately not the `.cmd` twins: Windows has no mode, so
+  asserting one there would test the checkout rather than the file.
 
 - **The gates do not look at `web/`.** `harness.json` names one `sourceDir` (`plugins`) and one
   `sourceExt` (`.mjs`), so the client-side app added for the dev server is measured by nothing —
