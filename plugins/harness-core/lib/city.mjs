@@ -12,7 +12,7 @@
 //
 // Self-contained by construction: inline SVG, inline CSS, no script, no font, no image. It opens from
 // disk, survives being emailed, and renders under a strict CSP — the same promise the map makes.
-import { repoModel } from "./model.mjs";
+import { repoModel, totalsOf } from "./model.mjs";
 import { esc } from "./render.mjs";
 
 const TILE_W = 54; // isometric tile width in px
@@ -138,8 +138,7 @@ function scene(model) {
 export function cityDocument(root, repoName) {
   const model = repoModel(root);
   const { grounds, buildings, labels, cursor } = scene(model);
-  const totalFiles = model.districts.reduce((n, d) => n + d.buildings.length, 0);
-  const over = model.districts.reduce((n, d) => n + d.over, 0);
+  const { files: totalFiles, over } = totalsOf(model.districts);
 
   // The viewBox is computed from the drawn extent rather than guessed, so a repo of any size fits
   // and neither a one-district project nor a fifty-district monorepo needs a magic number.

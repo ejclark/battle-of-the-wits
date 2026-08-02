@@ -8,16 +8,32 @@
 // the earliest it could possibly have asked. Worth noting rather than quietly obeying: the gate was
 // right, and it was right about a file whose whole purpose was to prevent that class of drift.
 import { execFileSync } from "node:child_process";
+import { writeFileSync } from "node:fs";
 import { basename, resolve } from "node:path";
 
 /** HTML-escape. Every value that reaches a page is untrusted — file names most of all. */
 export const esc = (s) =>
   String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 
-/** The `-o | --out PATH` both renderers accept, resolved against the cwd. */
+/** The `-o | --out PATH` every renderer accepts, resolved against the cwd. */
 export function outPath(argv, fallback) {
   const i = Math.max(argv.indexOf("-o"), argv.indexOf("--out"));
   return resolve(i >= 0 ? argv[i + 1] : fallback);
+}
+
+/**
+ * The whole body of a write-a-view CLI: parse `-o`, name the repo, render, write, say where.
+ *
+ * Extracted when the third renderer arrived and the duplication gate counted three identical CLI
+ * bodies — which is the gate doing its job at the earliest moment it could. Each launcher keeps its
+ * own file (a launcher must name a module), but the four lines inside were the same four lines, and
+ * a fourth rung would have made it five copies of a behaviour that has to stay identical: these
+ * commands are documented together and must not drift apart in how they take arguments.
+ */
+export function writeViewCli(argv, fallback, renderDoc, label) {
+  const out = outPath(argv, fallback);
+  writeFileSync(out, renderDoc(process.cwd(), repoNameOf(process.cwd())));
+  console.log(`✓ ${label} written — ${out}`);
 }
 
 /**

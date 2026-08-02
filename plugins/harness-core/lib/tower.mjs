@@ -21,7 +21,7 @@
 //
 // Self-contained by construction, same promise as the rungs below: inline SVG, inline CSS, no script,
 // no font, no image. It opens from disk, survives being emailed, and renders under a strict CSP.
-import { repoModel } from "./model.mjs";
+import { repoModel, totalsOf } from "./model.mjs";
 import { esc } from "./render.mjs";
 import { drum, faceNormal, facingCamera, makeCamera, paintOrder, quadPoint, ringPoints, shadeFace, svgFace, v3add, v3scale } from "./solid.mjs";
 
@@ -32,7 +32,7 @@ const TIER_MIN_H = 54;
 const TIER_MAX_H = 156;
 const PLINTH_H = 26; // the foundation the tower stands on, so it does not float
 const CROWN_H = 74; // the drum the Eye sits on
-const FLOOR = 21; // world units per window band — what gives a tier's height a unit
+const STOREY = 21; // world units per window band — what gives a tier's height a unit
 const MERLON_H = 13; // battlement height on an exposed ledge
 const LIGHT = [-0.55, 0.66, 0.5]; // sun over the viewer's left shoulder
 const SKIN = 0.6; // how far a window slot stands proud of its wall, in world units
@@ -99,7 +99,7 @@ export function tierPlan(model) {
  * ordering a fact about the geometry rather than a coin toss.
  */
 function slotsOn(quad, worldHeight, cls) {
-  const bands = Math.max(1, Math.floor(worldHeight / FLOOR) - 1);
+  const bands = Math.max(1, Math.floor(worldHeight / STOREY) - 1);
   const lift = v3scale(faceNormal(quad), SKIN);
   const at = (u, v) => v3add(quadPoint(quad, u, v), lift);
   const out = [];
@@ -313,8 +313,7 @@ export function towerDocument(root, repoName) {
   const vbW = Math.round(Math.max(...xs) - left + 24);
   const vbH = Math.round(Math.max(...ys) - topY + 24);
 
-  const totalFiles = model.districts.reduce((n, d) => n + d.buildings.length, 0);
-  const over = model.districts.reduce((n, d) => n + d.over, 0);
+  const { files: totalFiles, over } = totalsOf(model.districts);
   const empty = model.districts.length === 0;
 
   return `<!doctype html>

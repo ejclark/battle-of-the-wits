@@ -8,14 +8,7 @@
 // (`harness-city`) shows where the WEIGHT is, and this shows what is WATCHING — how many of the six
 // dimensions are measured, drawn as an aperture rather than reported as a ratio. All three read the
 // same derived model, so they cannot disagree about the repository.
-import { writeFileSync } from "node:fs";
-import { outPath, repoNameOf } from "./render.mjs";
+import { writeViewCli } from "./render.mjs";
 import { towerDocument } from "./tower.mjs";
 
-const out = outPath(process.argv.slice(2), "tower.html");
-const root = process.cwd();
-
-const repoName = repoNameOf(root);
-
-writeFileSync(out, towerDocument(root, repoName));
-console.log(`✓ tower written — ${out}`);
+writeViewCli(process.argv.slice(2), "tower.html", towerDocument, "tower");

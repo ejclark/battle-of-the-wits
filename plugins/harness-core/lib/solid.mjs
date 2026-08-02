@@ -15,8 +15,8 @@
 // A face is an array of `[x, y, z]` points, wound so its outward side is the one that faces out.
 // Y is up. Nothing here mutates its arguments.
 
-/** Vector difference. */
-export const v3sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+/** Vector difference. Not exported — every consumer so far wants a direction, and takes v3norm. */
+const v3sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
 
 /** Vector sum. */
 export const v3add = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];

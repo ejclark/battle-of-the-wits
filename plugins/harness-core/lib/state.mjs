@@ -25,7 +25,7 @@ import { join } from "node:path";
  * the committed budget; for incidents it is the lessons ledger, because a repository with nothing
  * written down is not learning, whatever else it has.
  */
-export const DIMENSIONS = [
+const DIMENSIONS = [
   { id: "arch", label: "file size", evidence: "arch-budget.json", fix: "harness-arch-scan --update" },
   { id: "dupe", label: "duplication", evidence: "dupe-budget.json", fix: "harness-dupe-scan --update" },
   { id: "dead", label: "dead code", evidence: "dead-budget.json", fix: "npm i -D knip, commit a knip.json, then harness-dead-scan --update" },

@@ -6,13 +6,7 @@
 //
 // Standalone output: no external stylesheet, font, or script, so it opens from disk and renders
 // under a strict CSP. A READ surface — regenerate any time; every element is derived from state.
-import { writeFileSync } from "node:fs";
 import { mapDocument } from "./cartography.mjs";
-import { outPath, repoNameOf } from "./render.mjs";
+import { writeViewCli } from "./render.mjs";
 
-const out = outPath(process.argv.slice(2), "dungeon-map.html");
-const root = process.cwd();
-const repoName = repoNameOf(root);
-
-writeFileSync(out, mapDocument(root, repoName));
-console.log(`✓ dungeon map written — ${out}`);
+writeViewCli(process.argv.slice(2), "dungeon-map.html", mapDocument, "dungeon map");

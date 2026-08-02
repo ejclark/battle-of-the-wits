@@ -105,6 +105,21 @@ export function districts(root) {
     .sort((a, b) => b.lines - a.lines);
 }
 
+/**
+ * What the districts add up to — the two numbers every view's lede opens with.
+ *
+ * In the model and not in the views, because a total is a CONCLUSION: two renderers that each
+ * summed for themselves would agree today and drift the day one of them starts excluding something.
+ * The clone gate flagged the second copy the moment the tower pasted the city's two reduce lines,
+ * which is the ladder's founding rule enforced at the smallest possible scale.
+ */
+export function totalsOf(districts) {
+  return {
+    files: districts.reduce((n, d) => n + d.buildings.length, 0),
+    over: districts.reduce((n, d) => n + d.over, 0),
+  };
+}
+
 /** One reading of the repository, for any view that wants to draw it. */
 export function repoModel(root) {
   return {
