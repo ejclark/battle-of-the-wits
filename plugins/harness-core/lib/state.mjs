@@ -73,14 +73,19 @@ export function bossList(root) {
     });
 
   const gap = readJson(root, "spec-gap-budget.json");
-  if (gap?.untested > 0)
+  // `untestedFiles` is the key spec-gap-scan WRITES. This read `untested` for its whole life, which
+  // is a key nothing has ever written — so The Unwatched never appeared, The Proving Grounds
+  // campaign never appeared, and because The Foundry is gated behind it, the one real prerequisite
+  // mechanic in the game never fired. Nothing went red: an undefined compared with > 0 is simply
+  // false, and a boss that never appears looks exactly like a repository with no spec gap.
+  if (gap?.untestedFiles > 0)
     out.push({
       kind: "spec-gap",
       id: "spec-gap",
       label: "The Unwatched",
-      detail: `${gap.untested} modules with no spec`,
+      detail: `${gap.untestedFiles} modules with no spec`,
       stat: "spec gap",
-      weight: gap.untested * 4,
+      weight: gap.untestedFiles * 4,
     });
 
   const clone = readJson(root, "clone-budget.json");

@@ -52,7 +52,7 @@ test("bosses come from committed budgets, biggest first", () => {
   const root = makeRepo({
     "package.json": "{}\n",
     "arch-budget.json": '{"src/small.ts":100,"src/huge.ts":2000,"src/mid.ts":500}',
-    "spec-gap-budget.json": '{"untested":7}',
+    "spec-gap-budget.json": '{"untestedFiles":7}',
   });
   try {
     const out = run(root);
@@ -167,7 +167,7 @@ test("the spec gap is marked as a prerequisite for the big decomposition", () =>
   const root = makeRepo({
     "package.json": "{}\n",
     "arch-budget.json": '{"big.ts":1500}',
-    "spec-gap-budget.json": '{"untested":9}',
+    "spec-gap-budget.json": '{"untestedFiles":9}',
   });
   try {
     const out = forgeRun(root);
@@ -183,7 +183,7 @@ test("a clean, fully-measured repo says so instead of inventing a fight", () => 
     "arch-budget.json": "{}",
     "dupe-budget.json": '{"duplicateDefs":0}',
     "dead-budget.json": "{}",
-    "spec-gap-budget.json": '{"untested":0}',
+    "spec-gap-budget.json": '{"untestedFiles":0}',
     "clone-budget.json": '{"clones":0}',
     "docs/LESSONS.md": "# Lessons\n",
   });
