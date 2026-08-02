@@ -42,14 +42,36 @@ const CHAMBERS = [
 ];
 
 
-/** Loot is capability. Each item names the chamber that unlocks it — nothing is granted early. */
-function loot(state, steps) {
-  const done = (phase) => steps.filter((s) => s.phase === phase).every((s) => s.done);
+/**
+ * Loot is capability. Each item names the chamber that unlocks it — nothing is granted early.
+ *
+ * THREE STATES, NOT TWO, and the third is the whole fix. `true` is held, `false` is genuinely not
+ * earned, and `null` is CANNOT BE SEEN FROM HERE — because merge-on-green and auto-merge are
+ * repository settings and a process reading files has no way to know. Reporting those as `locked`
+ * was a false RED, which is the same failure as a false green wearing the other colour: this
+ * repository has both capabilities live and its own dungeon called them locked.
+ *
+ * BUT `null` HAS TO BE EARNED TOO. In a repository that has done nothing, "not visible from here" is
+ * technically true and useless — the reader has not reached that chamber, and `locked` is both
+ * honest and the more informative word. So unknown is reported only once the party has actually
+ * arrived: every chamber before it cleared, and nothing observable left in this one to judge by.
+ */
+function loot(state, steps, depth) {
+  const phase = (p) => {
+    const own = steps.filter((s) => s.phase === p);
+    const visible = own.filter((s) => s.observable !== false);
+    if (!visible.length) {
+      //  Reached it? Then the answer is genuinely unknown. Not reached? Then it is locked.
+      const index = CHAMBERS.findIndex((c) => c.phase === p);
+      return index >= 0 && depth >= index ? null : false;
+    }
+    return visible.every((s) => s.done);
+  };
   return [
     { name: "Ratcheting gates", have: state.budgetsFrozen, from: "The Frozen Vault" },
     { name: "The full local gate (pre-push)", have: state.hooksLive, from: "The Threshold" },
-    { name: "Merge-on-green", have: done("4 · Enforce"), from: "The Warden's Gate" },
-    { name: "Autonomous athletes", have: done("5 · Autonomy"), from: "The Throne" },
+    { name: "Merge-on-green", have: phase("4 · Enforce"), from: "The Warden's Gate" },
+    { name: "Autonomous athletes", have: phase("5 · Autonomy"), from: "The Throne" },
   ];
 }
 
@@ -82,17 +104,32 @@ export function render() {
   // can be satisfied incidentally (a repo may already have budgets before it has a descriptor), and
   // counting that as depth would report progress the party has not actually made — you cannot be
   // past a door you never opened.
-  const isDone = (c) => steps.filter((s) => s.phase === c.phase).every((s) => s.done);
+  //
+  // And a step nobody can OBSERVE cannot hold a door shut. "npm run verify passed" is an event, a
+  // pull request is remote, and phases 4 and 5 are repository settings — none of them is written
+  // into a working tree. Counting them as unfinished capped this repository at depth 2 of 5 while it
+  // had every capability live, which is a false red: the statusline worked this out long ago and
+  // said "rest is repo settings"; this file had not caught up, and the two disagreed.
+  const observable = (c) => steps.filter((s) => s.phase === c.phase && s.observable !== false);
+  const isDone = (c) => {
+    const own = observable(c);
+    return own.length > 0 && own.every((s) => s.done);
+  };
   let depth = 0;
   while (depth < CHAMBERS.length && isDone(CHAMBERS[depth])) depth++;
+  //  Where the local read runs out: the first chamber with nothing observable left to judge.
+  const localCeiling = depth < CHAMBERS.length && observable(CHAMBERS[depth]).length === 0;
   const cleared = CHAMBERS.slice(0, depth);
   const current = CHAMBERS[depth];
-  const next = steps.find((s) => !s.done);
+  const next = steps.find((s) => !s.done && s.observable !== false) ?? steps.find((s) => !s.done);
   const L = [];
 
   L.push("");
   L.push(`  ⛬  THE DUNGEON — ${ROOT.split("/").pop()}`);
-  L.push(`     depth ${cleared.length} of ${CHAMBERS.length}   ·   ${current ? current.name : "cleared"}`);
+  L.push(
+    `     depth ${cleared.length} of ${CHAMBERS.length}   ·   ${current ? current.name : "cleared"}` +
+      (localCeiling ? "   ·   rest is repo settings" : ""),
+  );
   L.push("");
 
   L.push("  ▸ CLEARED");
@@ -119,8 +156,11 @@ export function render() {
   L.push("");
 
   L.push("  ▸ LOOT — capability, earned by clearing");
-  for (const item of loot(state, steps)) {
-    L.push(item.have ? `      ✦ ${item.name}` : `      · ${item.name}   — locked, clear ${item.from}`);
+  for (const item of loot(state, steps, depth)) {
+    //  null is "cannot be seen from here" — never rendered as locked, which would be a false red.
+    if (item.have === null) L.push(`      ? ${item.name}   — a repo setting; not visible from here`);
+    else if (item.have) L.push(`      ✦ ${item.name}`);
+    else L.push(`      · ${item.name}   — locked, clear ${item.from}`);
   }
   L.push("");
 

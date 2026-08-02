@@ -12,6 +12,27 @@ import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { makeRepo, bin, runLauncher } from "./helpers.mjs";
+import { plan } from "../plugins/harness-core/lib/phases.mjs";
+import { execFileSync } from "node:child_process";
+
+const REPO = join(dirname(fileURLToPath(import.meta.url)), "..");
+/** A repository that has done everything a working tree can record. Shared: two cases need the
+ *  identical fixture, and the clone gate caught the second copy the moment it existed. */
+const ADOPTED = {
+    "package.json": '{"scripts":{"verify":"npm test"}}\n',
+    "harness.json": '{"testDir":"tests"}',
+    "biome.json": "{}",
+    "tests/arch/gates.test.mjs": "// gates\n",
+    ".github/workflows/pipeline.yml": "name: Pipeline\n",
+    "node_modules/.keep": "",
+    ".husky/_/.keep": "",
+    "arch-budget.json": "{}",
+    "dupe-budget.json": '{"duplicateDefs":0}',
+    "dead-budget.json": "{}",
+    "spec-gap-budget.json": '{"untestedFiles":0}',
+    "clone-budget.json": '{"clones":0}',
+    "docs/LESSONS.md": "# Lessons\n",
+  };
 
 const BIN = bin("harness-core", "harness-dungeon");
 const run = (cwd) => runLauncher(BIN, [], { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
@@ -52,7 +73,7 @@ test("bosses come from committed budgets, biggest first", () => {
   const root = makeRepo({
     "package.json": "{}\n",
     "arch-budget.json": '{"src/small.ts":100,"src/huge.ts":2000,"src/mid.ts":500}',
-    "spec-gap-budget.json": '{"untested":7}',
+    "spec-gap-budget.json": '{"untestedFiles":7}',
   });
   try {
     const out = run(root);
@@ -167,7 +188,7 @@ test("the spec gap is marked as a prerequisite for the big decomposition", () =>
   const root = makeRepo({
     "package.json": "{}\n",
     "arch-budget.json": '{"big.ts":1500}',
-    "spec-gap-budget.json": '{"untested":9}',
+    "spec-gap-budget.json": '{"untestedFiles":9}',
   });
   try {
     const out = forgeRun(root);
@@ -183,13 +204,70 @@ test("a clean, fully-measured repo says so instead of inventing a fight", () => 
     "arch-budget.json": "{}",
     "dupe-budget.json": '{"duplicateDefs":0}',
     "dead-budget.json": "{}",
-    "spec-gap-budget.json": '{"untested":0}',
+    "spec-gap-budget.json": '{"untestedFiles":0}',
     "clone-budget.json": '{"clones":0}',
     "docs/LESSONS.md": "# Lessons\n",
   });
   try {
     const out = forgeRun(root);
     assert.match(out, /nothing here to fight/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+
+test("a capability that cannot be observed is UNKNOWN, never locked — once you have reached it", () => {
+  // The false RED, which is the same defect as a false green wearing the other colour.
+  //
+  // Merge-on-green and auto-merge are REPOSITORY SETTINGS. A process reading a working tree cannot
+  // see them, so phases.mjs marked them done:false forever — and this repository, which has both
+  // capabilities live, printed them as `locked` and reported depth 2 of 5. The loot table's own
+  // thesis is "loot that unlocks a real power is a mechanic"; a power that can never read as earned
+  // is not a mechanic, it is a decoration that lies.
+  const root = makeRepo(ADOPTED);
+  try {
+    const out = run(root);
+    assert.doesNotMatch(out, /Merge-on-green\s+— locked/, "a reached-but-unobservable capability must not read as locked");
+    assert.match(out, /Merge-on-green\s+—.*not visible from here/, "it must say it cannot be seen, and why");
+    assert.doesNotMatch(out, /✦ Merge-on-green/, "and it must not read as earned either — unknown is not a pass");
+    assert.match(out, /rest is repo settings/, "the ceiling on a local read must be stated, not implied by a stalled number");
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("depth is not capped by steps nobody can observe", () => {
+  // "npm run verify passed" is an EVENT and a pull request is REMOTE. Neither is written into a
+  // working tree, and counting them as unfinished held the door shut on every later chamber.
+  const steps = plan({
+    filesWritten: true, installed: true, hooksLive: true, budgetsFrozen: true,
+    budgetsAll: [], budgetsMissing: [], gatesWired: true, ledger: true, hasVerify: true,
+  });
+  const unobservable = steps.filter((s) => s.observable === false);
+  assert.ok(unobservable.length >= 3, "the unobservable steps must be marked as such, not left to look unfinished");
+  for (const s of unobservable) {
+    assert.ok(s.cmd, `${s.title} must still tell the reader what to do — unobservable is not invisible`);
+  }
+  const observable = steps.filter((s) => s.observable !== false);
+  assert.ok(observable.some((s) => s.done), "no observable step reports done for a fully-adopted repo — depth cannot move");
+});
+
+test("the two depth calculations agree, because they used to disagree", () => {
+  // dungeon.mjs capped at 2 while the statusline reached 3 and said "rest is repo settings". The
+  // statusline had the honest model all along. They are deliberately duplicated — the statusline is
+  // copied into a target repo and must not import from the plugin — so the only thing that can hold
+  // them together is a test that runs both.
+  const root = makeRepo(ADOPTED);
+  try {
+    const crawl = Number(run(root).match(/depth (\d+) of 5/)?.[1]);
+    const raw = execFileSync(process.execPath, [join(REPO, ".claude/harness-statusline.mjs")], {
+      cwd: root, encoding: "utf8",
+      input: JSON.stringify({ workspace: { current_dir: root } }),
+      stdio: ["pipe", "pipe", "ignore"],
+    });
+    const status = Number(raw.replace(new RegExp(String.fromCharCode(27) + "\\[[0-9;]*m", "g"), "").match(/depth (\d+)/)?.[1]);
+    assert.equal(crawl, status, `the crawl says depth ${crawl} and the statusline says ${status} for the same repo`);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

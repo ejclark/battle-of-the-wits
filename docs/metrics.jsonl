@@ -11,3 +11,5 @@
 {"at":"2026-08-01T21:29:42.286Z","kind":"ratchet","gate":"arch","direction":"up","files":1,"delta":7}
 {"at":"2026-08-01T23:16:46.523Z","kind":"ratchet","gate":"arch","direction":"up","files":1,"delta":19}
 {"at":"2026-08-02T00:45:18.637Z","kind":"ratchet","gate":"arch","direction":"up","files":1,"delta":24}
+{"at":"2026-08-02T01:23:22.183Z","kind":"ratchet","gate":"arch","direction":"up","files":2,"delta":6}
+{"at":"2026-08-02T01:29:48.725Z","kind":"ratchet","gate":"arch","direction":"up","files":2,"delta":50}

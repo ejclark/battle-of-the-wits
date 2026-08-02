@@ -67,16 +67,17 @@ function encounters(root) {
   }
 
   const gap = readJson(root, "spec-gap-budget.json");
-  if (gap?.untested > 0) {
+  //  `untestedFiles` is the key the scanner writes; this read a name nothing ever wrote. See state.mjs.
+  if (gap?.untestedFiles > 0) {
     out.push({
       kind: "swarm",
       name: "The Unwatched",
-      target: `${gap.untested} modules with no spec`,
+      target: `${gap.untestedFiles} modules with no spec`,
       stat: "spec gap",
       why: "Code nothing asserts on. Not a crisis on its own — it is what makes every OTHER fight riskier, because you cannot refactor what you cannot verify.",
       move: "test-backfiller — behavioural specs against observable behaviour, never a rewrite.",
       unlocks: "safe decomposition; this is the prerequisite the Colossus quietly depends on",
-      weight: gap.untested * 4,
+      weight: gap.untestedFiles * 4,
       before: "The Colossus",
     });
   }

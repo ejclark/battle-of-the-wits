@@ -57,21 +57,29 @@ export function plan(state) {
       phase: "3 · Freeze",
       title: "Confirm the full gate passes locally",
       cmd: "npm run verify",
+      // OBSERVABLE:FALSE — "the gate passed" is an EVENT, not a state a working tree records. Marked
+      // false forever, it capped depth at 2 and made every later chamber unreachable in a repo that
+      // had done everything. A step nobody can observe must not gate progress; it is an instruction.
       done: false,
+      observable: false,
       why: "CI is confirmation, not the first line of defense. A red gate here is cheaper than a red gate on a runner.",
     },
     {
       phase: "3 · Freeze",
       title: "Commit and open a PR",
       cmd: "git add -A && git commit -m 'chore: adopt the engineering harness' && git push",
+      //  A pull request is REMOTE state; reading files here cannot see one.
       done: false,
+      observable: false,
       why: "commitlint is live now, so the message must be a Conventional Commit. Budgets belong in this commit — they are the repo's state, and reviewing them is how the team agrees on the starting line.",
     },
     {
       phase: "4 · Enforce",
       title: "Require `verify` on main — after it has passed once",
       cmd: "(repo settings → branches → require status check: verify)",
+      //  A REPOSITORY SETTING. The statusline has said so all along; this file had not caught up.
       done: false,
+      observable: false,
       needsAdmin: true,
       critical: true,
       why: "Second ordering trap. Requiring a check that has never reported leaves every PR stuck on 'waiting for status' with no error to read. Let it go green once, then require it.",
@@ -80,7 +88,9 @@ export function plan(state) {
       phase: "5 · Autonomy",
       title: "Enable auto-merge, then let the athletes run",
       cmd: "(repo settings → allow auto-merge)  ·  then: /harness-core:governor",
+      //  Also a repository setting.
       done: false,
+      observable: false,
       needsAdmin: true,
       why: "Last on purpose. Autonomy is earned by verification, never assumed — the same bet as automerging dependency updates only once the tests are real. With the gates proven, the background agents can burn debt down without supervision.",
     },
