@@ -38,6 +38,7 @@
     "harness-map": "./plugins/harness-core/lib/map.mjs",
     "harness-preflight": "./plugins/harness-gates/lib/preflight.mjs",
     "harness-report": "./plugins/harness-core/lib/report.mjs",
+    "harness-sanitation": "./plugins/harness-gates/lib/sanitation.mjs",
     "harness-serve": "./plugins/harness-core/lib/serve.mjs",
     "harness-shape-scan": "./plugins/harness-gates/lib/shape.mjs",
     "harness-ship": "./plugins/harness-gates/bin/harness-ship",

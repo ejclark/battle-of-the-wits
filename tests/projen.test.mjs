@@ -176,14 +176,27 @@ test("biome.json matches the template the bootstrap path writes — one config, 
   const dir = scratch();
   odd(dir).synth();
 
-  const emitted = readFileSync(join(dir, "biome.json"), "utf8");
-  const template = readFileSync(
-    join(import.meta.dirname, "../plugins/harness-core/templates/node/biome.json"),
-    "utf8",
+  const emitted = readJson(dir, "biome.json");
+  const template = JSON.parse(
+    readFileSync(join(import.meta.dirname, "../plugins/harness-core/templates/node/biome.json"), "utf8"),
   );
   // Both paths exist until the marketplace retires. Two copies of one config is the drift this
   // repository has a gate for, so the component READS the template rather than restating it.
-  assert.equal(emitted.trimEnd(), template.trimEnd());
+  //
+  // Compared SEMANTICALLY, not byte for byte. The first version of this assertion pinned the exact
+  // serialisation, and it argued against a correct change: emitting a JsonFile rather than a TextFile
+  // is what makes `addOverride` work on this file at all. The property is "same config, both paths" —
+  // key order and whitespace were never part of it.
+  assert.deepEqual(emitted, template);
+});
+
+test("the escape hatch actually works on biome.json — a TextFile would have blocked it", () => {
+  const dir = scratch();
+  const project = odd(dir);
+  project.tryFindObjectFile("biome.json").addOverride("linter.rules.style.noDefaultExport", "off");
+  project.synth();
+
+  assert.equal(readJson(dir, "biome.json").linter.rules.style.noDefaultExport, "off");
 });
 
 test("biome and rstest arrive, and bring no second linter or runner with them", () => {

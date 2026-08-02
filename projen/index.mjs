@@ -31,6 +31,7 @@ import { Component, JsonFile, SampleFile, TextFile, typescript } from "projen";
 import { renderRstest } from "../plugins/harness-core/lib/configs.mjs";
 import { BIOME_SCRIPTS, GATE_SCRIPTS } from "../plugins/harness-core/lib/scripts.mjs";
 import { DEFAULTS } from "../plugins/harness-gates/lib/descriptor.mjs";
+import { lockedViolations } from "../plugins/harness-gates/lib/sanitation.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const template = (p) => readFileSync(join(HERE, "../plugins/harness-core/templates", p), "utf8");
@@ -101,8 +102,17 @@ function same(a, b) {
 export class BiomeComponent extends Component {
   constructor(project, options = {}) {
     super(project, "harness-biome");
-    new TextFile(project, "biome.json", {
-      lines: template("node/biome.json").split("\n"),
+    // A JsonFile, NOT a TextFile, and the difference is load-bearing rather than stylistic.
+    // `addOverride` — the escape hatch this design promises — only works on an ObjectFile, so a
+    // templated TextFile would have made biome.json the one config a consumer could not adjust
+    // without replacing wholesale. It also means SanitationComponent sees the MERGED result at
+    // synth, which is the only point where a consumer's override is visible.
+    //
+    // The cost is that the emitted file is re-serialised rather than byte-identical to the template.
+    // That is fine: the property worth defending is that both delivery paths carry the same config,
+    // and semantic equality says that better than a byte comparison ever did.
+    new JsonFile(project, "biome.json", {
+      obj: JSON.parse(template("node/biome.json")),
       readonly: true,
       marker: false, // JSON has no comment syntax; a marker key would not be schema
     });
@@ -183,8 +193,47 @@ export class ContextualSystemsComponent extends Component {
       marker: false,
       readonly: true,
     });
-    project.package.setScript("shape:scan", "harness-shape-scan");
+    // The script itself comes from GATE_SCRIPTS via GatesComponent — one definition, not two.
     project.addVerifyStep("npm run shape:scan");
+  }
+}
+
+/**
+ * Sanitation — the tiers that make "extensible" and "principled" stop being opposites.
+ *
+ * The override API is unrestricted by design, which is what makes projen usable and also exactly how
+ * weak config creeps in: any consumer can turn any rule off and synthesis will emit the weaker file
+ * forever, quietly. Three tiers fix that without dictating — LOCKED cannot be weakened, RATCHETED may
+ * be tightened but never loosened, and everything else is FREE.
+ *
+ * LOCKED is enforced HERE, during synthesis, because `postSynthesize` is the only point that sees the
+ * final rendered state — after every `addOverride` a consumer applied. Catching it later, in CI, would
+ * mean the weak config already exists on disk and somebody has already run against it.
+ *
+ * RATCHETED is enforced by `harness-sanitation` in the test suite instead, because it needs a budget
+ * file and an `--update` path, and because it must GRANDFATHER: a repository whose config is weaker
+ * than the harness would write gets today's number frozen as its baseline rather than a red build on
+ * day one. A config gate is the easiest of all to switch off, and one that opens by condemning
+ * shipped work gets switched off before it prevents anything.
+ */
+export class SanitationComponent extends Component {
+  constructor(project) {
+    super(project, "harness-sanitation");
+    project.addVerifyStep("npm run sanitation");
+  }
+
+  postSynthesize() {
+    const violations = lockedViolations(this.project.outdir);
+    if (!violations.length) return;
+
+    const lines = violations.map(
+      (v) => `  ✗ ${v.file} → ${v.path} is ${JSON.stringify(v.actual)}, must be ${JSON.stringify(v.expect)}\n     ${v.why}`,
+    );
+    // Loud and specific. A refusal that does not say WHICH principle and WHY reads as the tool being
+    // broken, and the next move is to delete the tool. If one of these is genuinely wrong for a real
+    // repository, that is evidence about the PRINCIPLE — promote it upstream rather than route around
+    // it, because routing around it is what this tier exists to make impossible.
+    throw new Error(`sanitation refused this configuration:\n\n${lines.join("\n")}\n`);
   }
 }
 
@@ -231,6 +280,7 @@ export class HarnessProject extends typescript.TypeScriptProject {
     new RstestComponent(this, options);
     new GatesComponent(this, options);
     new ContextualSystemsComponent(this, options);
+    new SanitationComponent(this);
   }
 
   /** Register a command that `verify` must run. Order is registration order; each must exit non-zero on failure. */

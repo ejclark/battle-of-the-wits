@@ -21,6 +21,8 @@ export const GATE_SCRIPTS = {
   "spec:gap": "harness-spec-gap-scan",
   "clone:scan": "harness-clone-scan",
   "incident:scan": "harness-incident-scan",
+  "shape:scan": "harness-shape-scan",
+  "sanitation": "harness-sanitation",
 };
 
 /**
