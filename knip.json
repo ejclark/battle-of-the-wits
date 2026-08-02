@@ -17,15 +17,20 @@
     "plugins/harness-gates/lib/spec-gap-scan.mjs",
     "plugins/harness-gates/lib/standing.mjs",
     "scripts/*.mjs",
-    "tests/**/*.test.mjs"
+    "tests/**/*.test.mjs",
+    "web/main.js",
+    "rspack.config.mjs"
   ],
   "project": [
     "plugins/*/lib/*.mjs",
     "scripts/*.mjs",
-    "tests/**/*.mjs"
+    "tests/**/*.mjs",
+    "web/**/*.js",
+    "rspack.config.mjs"
   ],
   "ignore": [
-    "plugins/harness-core/templates/**"
+    "plugins/harness-core/templates/**",
+    "web/dist/**"
   ],
   "ignoreDependencies": [
     "@commitlint/config-conventional",

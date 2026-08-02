@@ -639,6 +639,15 @@ denied` — caught only because a portability case ran the launcher rather than 
 launcher is `755` by luck of how it was created. A one-line assertion over `plugins/*/bin/*` would
 make that structural instead of lucky. _(src: Claude · while: the zoning portability case went red)_
 
+- **The gates do not look at `web/`.** `harness.json` names one `sourceDir` (`plugins`) and one
+  `sourceExt` (`.mjs`), so the client-side app added for the dev server is measured by nothing —
+  not size, not duplication, not copy-paste, not the spec gap. Knip was pointed at it, which covers
+  dead code and nothing else. This is unmeasured, not clean, and it is the same false green the
+  gates exist to prevent, arriving through a directory nobody told them about. The fix is a
+  descriptor that accepts more than one source root, which is a real change to `DESCRIPTOR.md` and
+  to every scanner that reads it. _(src: Claude · while: adding the rspack dev server, and noticing
+  the gates stayed green about 500 lines they had never read)_
+
 ## In progress
 
 _(nothing yet)_

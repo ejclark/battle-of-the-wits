@@ -167,6 +167,7 @@ request and reloads when the repo moves. Nothing installed, localhost only.
 
 ```
 npm start                                    # or: node plugins/harness-core/lib/serve.mjs
+npm run dev                                  # working ON the views: hot reload, needs an npm install
 ```
 
 The same line on every platform. Both forms run the module directly, so nothing depends on `PATH`, on
