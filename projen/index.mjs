@@ -269,8 +269,32 @@ export class HooksComponent extends Component {
   }
 }
 
-/** This package's own version, so an emitted `uses:` pins the ref it was installed at. */
+/**
+ * This package's own version, so an emitted `uses:` pins the ref it was installed at.
+ *
+ * The committed value is a PLACEHOLDER — semantic-release writes the real number into the workspace
+ * immediately before packing and never commits it back, so an installed copy carries the truth and a
+ * git checkout does not. That is fine for the case that matters (a consumer installs from npm) and
+ * dangerous for the case that does not: emitting `@v0.0.0-development` into somebody's CI would be a
+ * ref that resolves to nothing, discovered on their first pull request rather than here.
+ *
+ * So it refuses. A synthesizer that cannot name its own version has no business pinning one, and
+ * `harnessRef` is the deliberate override for anyone genuinely working from a checkout.
+ */
 const HARNESS_VERSION = JSON.parse(readFileSync(join(HERE, "../package.json"), "utf8")).version;
+const VERSION_IS_PLACEHOLDER = HARNESS_VERSION.startsWith("0.0.0-");
+
+function pinnedRef(explicit) {
+  if (explicit) return explicit;
+  if (VERSION_IS_PLACEHOLDER) {
+    throw new Error(
+      `cannot pin a harness ref: this copy reports version "${HARNESS_VERSION}", which is the ` +
+        "placeholder a git checkout carries rather than a published version. Install " +
+        `${HARNESS_PACKAGE} from npm, or pass harnessRef explicitly.`,
+    );
+  }
+  return `v${HARNESS_VERSION}`;
+}
 
 /**
  * The pipeline, CALLED rather than copied.
@@ -289,7 +313,7 @@ const HARNESS_VERSION = JSON.parse(readFileSync(join(HERE, "../package.json"), "
 export class WorkflowComponent extends Component {
   constructor(project, options = {}) {
     super(project, "harness-workflow");
-    const ref = options.harnessRef ?? `v${HARNESS_VERSION}`;
+    const ref = pinnedRef(options.harnessRef);
 
     new TextFile(project, ".github/workflows/verify.yml", {
       readonly: true,
@@ -330,7 +354,7 @@ export class WorkflowComponent extends Component {
 export class DockerComponent extends Component {
   constructor(project, options = {}) {
     super(project, "harness-docker");
-    const base = options.dockerBase ?? `ghcr.io/ejclark/dungeon-crawler/node-base:${HARNESS_VERSION}`;
+    const base = options.dockerBase ?? `ghcr.io/ejclark/dungeon-crawler/node-base:${pinnedRef(options.harnessRef).slice(1)}`;
 
     new TextFile(project, "Dockerfile", {
       readonly: true,

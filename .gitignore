@@ -19,3 +19,6 @@ city.html
 
 # Build output from `npm run build` — derived, never committed.
 web/dist/
+
+# Generated scan output — regenerated on every run, never a source of truth.
+report/

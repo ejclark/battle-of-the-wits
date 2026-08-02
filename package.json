@@ -1,6 +1,7 @@
 {
   "name": "@ejclark/dungeon-crawler",
-  "version": "0.1.0",
+  "//version": "NOT the published version. semantic-release computes it from commit history and writes it into the workspace immediately before packing, without committing it back — the ruleset forbids pushing a bump to main. A real number here would drift from the tags the moment one release lands, which is exactly why plugin manifests carry no version at all. The placeholder makes the field obviously not-a-claim instead of quietly wrong.",
+  "version": "0.0.0-development",
   "type": "module",
   "description": "A portable engineering harness for Claude Code: ratcheting quality gates, corrective drills, and the background athletes that burn structural debt down.",
   "keywords": [

@@ -81,7 +81,7 @@ test("a declared file that does not exist is reported, never assumed clean", () 
 
 test("the component seeds the ledger and declares its shape", () => {
   const dir = scratch();
-  new HarnessProject({ outdir: dir, name: "seeded", defaultReleaseBranch: "main" }).synth();
+  new HarnessProject({ outdir: dir, name: "seeded", defaultReleaseBranch: "main", harnessRef: "v9.9.9" }).synth();
 
   assert.ok(existsSync(join(dir, "docs/LESSONS.md")), "the ledger is seeded");
   const declared = JSON.parse(readFileSync(join(dir, "harness-shape.json"), "utf8"));
@@ -90,7 +90,7 @@ test("the component seeds the ledger and declares its shape", () => {
 
 test("a repo's own lessons SURVIVE re-synthesis — regeneration must not reach content", () => {
   const dir = scratch();
-  const make = () => new HarnessProject({ outdir: dir, name: "seeded", defaultReleaseBranch: "main" });
+  const make = () => new HarnessProject({ outdir: dir, name: "seeded", defaultReleaseBranch: "main", harnessRef: "v9.9.9" });
   make().synth();
 
   const path = join(dir, "docs/LESSONS.md");
@@ -103,7 +103,7 @@ test("a repo's own lessons SURVIVE re-synthesis — regeneration must not reach 
 
 test("end to end: the scanner reads the generated declaration and finds the planted extension", () => {
   const dir = scratch();
-  new HarnessProject({ outdir: dir, name: "seeded", defaultReleaseBranch: "main" }).synth();
+  new HarnessProject({ outdir: dir, name: "seeded", defaultReleaseBranch: "main", harnessRef: "v9.9.9" }).synth();
   mkdirSync(join(dir, "docs"), { recursive: true });
 
   const path = join(dir, "docs/LESSONS.md");

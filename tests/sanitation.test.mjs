@@ -100,7 +100,7 @@ test("a TIGHTENING passes, and --update ratchets DOWN only", () => {
 test("synthesis REFUSES a locked violation, naming which principle and why", () => {
   const dir = scratch();
   process.env.PROJEN_DISABLE_POST = "true"; // projen's own post step runs `npm install` first and would mask this
-  const project = new HarnessProject({ outdir: dir, name: "weakened", defaultReleaseBranch: "main" });
+  const project = new HarnessProject({ outdir: dir, name: "weakened", defaultReleaseBranch: "main", harnessRef: "v9.9.9" });
 
   // The consumer reaches for the documented escape hatch and turns the linter off.
   project.tryFindObjectFile("biome.json").addOverride("linter.enabled", false);
@@ -122,7 +122,7 @@ test("synthesis REFUSES a locked violation, naming which principle and why", () 
 test("a conforming project's sanitation hook is silent", () => {
   const dir = scratch();
   process.env.PROJEN_DISABLE_POST = "true";
-  const project = new HarnessProject({ outdir: dir, name: "sane", defaultReleaseBranch: "main" });
+  const project = new HarnessProject({ outdir: dir, name: "sane", defaultReleaseBranch: "main", harnessRef: "v9.9.9" });
   project.synth();
 
   const sanitation = project.components.find((c) => c.constructor.name === "SanitationComponent");

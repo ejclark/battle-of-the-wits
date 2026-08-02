@@ -27,6 +27,9 @@ function odd(outdir, extra = {}) {
     testDir: "spec",
     sourceExt: ".js",
     specSuffix: ".test.js",
+    // A checkout cannot know its published version, so it must be told. The refusal when it is NOT
+    // told is itself a case below — this default keeps every other fixture about its own subject.
+    harnessRef: "v9.9.9",
     ...extra,
   });
 }
@@ -44,7 +47,7 @@ test("a non-default layout reaches harness.json, so the gates measure the right 
 
 test("a conventional repo gets NO harness.json — defaults are documented, not restated", () => {
   const dir = scratch();
-  new HarnessProject({ outdir: dir, name: "conventional", defaultReleaseBranch: "main" }).synth();
+  new HarnessProject({ outdir: dir, name: "conventional", defaultReleaseBranch: "main", harnessRef: "v9.9.9" }).synth();
 
   assert.equal(
     existsSync(join(dir, "harness.json")),
@@ -59,6 +62,7 @@ test("only the keys that differ are written", () => {
     outdir: dir,
     name: "one-difference",
     defaultReleaseBranch: "main",
+    harnessRef: "v9.9.9",
     sourceDir: "app",
   }).synth();
 
@@ -155,7 +159,7 @@ test("verify names only the checks that exist — no typecheck in a JavaScript r
 
 test("a TypeScript repo does get the typecheck step", () => {
   const dir = scratch();
-  new HarnessProject({ outdir: dir, name: "ts-repo", defaultReleaseBranch: "main" }).synth();
+  new HarnessProject({ outdir: dir, name: "ts-repo", defaultReleaseBranch: "main", harnessRef: "v9.9.9" }).synth();
   const pkg = readJson(dir, "package.json");
 
   assert.equal(pkg.scripts.typecheck, "tsc -p tsconfig.json --noEmit");
@@ -258,8 +262,19 @@ test("the adopter's workflow CALLS the pipeline and pins an immutable ref", () =
   // A moving ref would let upstream change what runs with this repository's credentials at any
   // time — the harness doing, in someone else's repo, what its own preflight forbids here (idea #30).
   assert.doesNotMatch(uses[0], /@(main|master|HEAD)\s*$/, "a moving ref is a standing grant over the adopter's CI");
-  assert.match(uses[0], /@v\d+\.\d+\.\d+\s*$/, "pinned to an immutable release tag");
+  assert.match(uses[0], /@v9\.9\.9\s*$/, "pinned to the ref it was given");
   assert.ok(wf.split("\n").length < 25, "the adopter's file stays small enough to actually read");
+});
+
+test("a checkout REFUSES to pin a ref rather than inventing one", () => {
+  const dir = scratch();
+  // No harnessRef, and this package's committed version is the semantic-release placeholder. Emitting
+  // `@v0.0.0-development` would put a ref that resolves to nothing into somebody's CI, discovered on
+  // their first pull request instead of here.
+  assert.throws(
+    () => new HarnessProject({ outdir: dir, name: "no-ref", defaultReleaseBranch: "main" }).synth(),
+    /cannot pin a harness ref/,
+  );
 });
 
 test("the reusable pipeline exists upstream and declares workflow_call", () => {
