@@ -3,6 +3,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
+import { STARTER_KINDS } from "../plugins/harness-core/lib/starter.mjs";
 
 // `templates/` is the one directory every gate deliberately excludes — a template is source-shaped
 // but is not this project's code, and measuring it inflates every number. Correct for the scanners,
@@ -51,7 +52,10 @@ const HANDED_OVER = ["starter/FIRST-APP.md", "starter/PATCH-FORWARD.md"];
 // The starter app is written by `harness-starter`, not by the bootstrap — adopting the harness into
 // an existing repository must never drop a to-do app into it. Reached by a different command is
 // still reached; the rule is that nothing ships unreachable.
-const WRITTEN_BY_STARTER = (rel) => rel.startsWith("starter/todo/") || rel.startsWith("starter/hello/");
+// DERIVED FROM THE RUNGS, not a second list of them. Naming the prefixes here meant adding a rung
+// turned this suite red for a template that was perfectly reachable — the assertion was pinned to
+// how many rungs existed on the day it was written, rather than to the property it defends.
+const WRITTEN_BY_STARTER = (rel) => STARTER_KINDS.some((kind) => rel.startsWith(`starter/${kind}/`));
 
 test("every shipped template is reached by the bootstrap", () => {
   // A template nothing writes is dead weight that ships, and knip cannot see it here.

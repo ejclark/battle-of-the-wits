@@ -1,0 +1,9 @@
+{
+  "name": "hello",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "npx --yes serve . --listen 3000",
+    "test": "node --test \"tests/**/*.test.mjs\""
+  }
+}

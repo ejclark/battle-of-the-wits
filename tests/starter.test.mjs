@@ -11,7 +11,7 @@ import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { STARTER_SCRIPTS, initGit, starterFiles, writeStarter } from "../plugins/harness-core/lib/starter.mjs";
+import { STARTER_SCRIPTS, initGit, scriptsOf, starterFiles, writeStarter } from "../plugins/harness-core/lib/starter.mjs";
 
 const REPO = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -167,4 +167,82 @@ test("the documented test command actually runs the starter's suite, in a cold c
   });
   assert.match(out, /# fail 0/, `the command handed to every new project must pass:\n${out}`);
   assert.doesNotMatch(out, /# pass 0/, "…and it must actually have found the tests, not passed vacuously");
+});
+
+
+test("every rung ships a package.json, so nobody is asked to hand-assemble JSON", () => {
+  // THE DEFECT THIS CLOSES, stated plainly because it is the whole reason the rung system changed:
+  // the starter used to PRINT the scripts and leave the file uncreated, so a beginner's first
+  // command failed with ENOENT on a file they had never heard of. "Copy this fragment into a file
+  // that does not exist yet" is not an instruction somebody who has never written code can follow.
+  for (const kind of ["hello", "todo", "react"]) {
+    const dest = mkdtempSync(join(tmpdir(), `rung-${kind}-`));
+    writeStarter(dest, { kind });
+    const pkgPath = join(dest, "package.json");
+    assert.ok(existsSync(pkgPath), `${kind} must ship a package.json — printing one does not count`);
+    const pkg = JSON.parse(readFileSync(pkgPath, "utf8"));
+    assert.ok(pkg.scripts?.dev, `${kind} needs a dev script`);
+    assert.ok(pkg.scripts?.test, `${kind} needs a test script`);
+    assert.deepEqual(pkg.scripts, scriptsOf(kind), "the scripts must be read from the rung, not kept beside it");
+  }
+});
+
+test("the React rung is opt-in, and the frameworkless rungs stay free of it", () => {
+  // The no-bundler rule was never "bundlers are bad" — it is that one has to earn its place. That
+  // bargain only holds if the default rung stays clean: a beginner who wanted one page must not
+  // inherit a build step, an install, or 200 packages.
+  for (const kind of ["hello", "todo"]) {
+    const dest = mkdtempSync(join(tmpdir(), `bare-${kind}-`));
+    writeStarter(dest, { kind });
+    const pkg = JSON.parse(readFileSync(join(dest, "package.json"), "utf8"));
+    assert.equal(pkg.dependencies, undefined, `${kind} must need no install to run`);
+    assert.equal(pkg.devDependencies, undefined, `${kind} must need no build to run`);
+    assert.ok(!starterFiles(join(REPO, `plugins/harness-core/templates/starter/${kind}`)).some((f) => /rspack|vite|webpack/.test(f)), `a build config appeared in ${kind}`);
+  }
+});
+
+test("the React rung builds with rspack, the toolchain this project actually uses", () => {
+  // A starter that taught a different bundler from the harness around it would be teaching a fork —
+  // and the person it teaches is the one least able to tell the two apart.
+  const dest = mkdtempSync(join(tmpdir(), "react-rung-"));
+  writeStarter(dest, { kind: "react" });
+  const pkg = JSON.parse(readFileSync(join(dest, "package.json"), "utf8"));
+  assert.ok(pkg.dependencies.react, "the React rung must actually depend on React");
+  assert.ok(Object.keys(pkg.devDependencies).some((d) => d.startsWith("@rspack/")), "it must build with rspack");
+  for (const foreign of ["vite", "webpack", "parcel", "esbuild"]) {
+    assert.ok(!Object.keys({ ...pkg.dependencies, ...pkg.devDependencies }).some((d) => d.includes(foreign)), `${foreign} is not this project's toolchain`);
+  }
+  assert.ok(existsSync(join(dest, "rspack.config.mjs")));
+  // Fast Refresh emits $RefreshSig$ calls that only resolve with a plugin this rung does not carry,
+  // and without it the page renders BLANK with one console error — the worst possible first five
+  // minutes. Verified by hitting it: the config must not ask for what the deps cannot provide.
+  // Comments stripped first: the config EXPLAINS why refresh is off, and a naive scan of the file
+  // matches that explanation and fails on the very prose that documents the fix. Assert the code.
+  const config = readFileSync(join(dest, "rspack.config.mjs"), "utf8").replace(/^\s*\/\/.*$/gm, "");
+  assert.doesNotMatch(config, /refresh:\s*true/, "refresh needs @rspack/plugin-react-refresh, which this rung does not install");
+});
+
+test("every rung's suite passes from a cold copy, by running the command the rung ships", () => {
+  // Runs the string rather than matching it. The assertion this replaces matched /node --test/ and
+  // stayed green for the whole time the command was broken.
+  for (const kind of ["hello", "todo", "react"]) {
+    const dest = mkdtempSync(join(tmpdir(), `cold-${kind}-`));
+    writeStarter(dest, { kind });
+    const out = execSync(`${scriptsOf(kind).test} --test-reporter=tap`, {
+      cwd: dest,
+      encoding: "utf8",
+      env: { ...process.env, NODE_TEST_CONTEXT: undefined, NODE_OPTIONS: undefined },
+    });
+    assert.match(out, /# fail 0/, `${kind}'s own suite must pass before anything is written:\n${out}`);
+    assert.doesNotMatch(out, /# pass 0/, `${kind}'s suite must actually have found its tests`);
+  }
+});
+
+test("the React rung's logic has no React in it, which is why its tests need no browser", () => {
+  // The single most useful habit the starter transmits, and the reason `npm test` is instant: the
+  // rules live apart from the drawing. A component is a picture of the page; a decision is not.
+  const logic = readFileSync(join(REPO, "plugins/harness-core/templates/starter/react/src/greeting.js"), "utf8");
+  for (const forbidden of [/from "react"/, /useState/, /document\./, /jsx/i]) {
+    assert.ok(!forbidden.test(logic), `greeting.js references ${forbidden} — that is what would make its tests need setup`);
+  }
 });

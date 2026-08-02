@@ -3,6 +3,7 @@
 //
 //   harness-starter            # hello — one page, a picture from five words you pick
 //   harness-starter --todo     # the fuller app: create, delete, edit, with tests and requirements
+//   harness-starter --react    # React, with a dev server that opens the browser itself
 //   harness-starter --force    # overwrite existing files
 //   harness-starter --git      # …and make it a git repository, committed, ready to publish
 //
@@ -14,17 +15,18 @@
 // So this writes the boring half, and every interesting decision is left visibly undone: the styles
 // say to change them, the requirements say to add one, the tests say what shape a new one takes.
 //
-// WHAT IT DELIBERATELY DOES NOT DO. No bundler config, no framework, no build step. `index.html`
-// loads ES modules directly, which every browser has done for years, so `npx serve .` is the entire
-// toolchain. That is a real choice with a real trade-off, stated rather than hidden: a bundler earns
-// its place the moment you need one, and NOT before — installing 200 packages to render a list is
-// how a first project stops being fun on day one.
+// WHAT THE FIRST TWO RUNGS DELIBERATELY DO NOT DO. No bundler config, no framework, no build step.
+// `index.html` loads ES modules directly, which every browser has done for years, so `npx serve .`
+// is the entire toolchain. That is a real choice with a real trade-off, stated rather than hidden:
+// a bundler earns its place the moment you need one, and NOT before — installing 200 packages to
+// render a list is how a first project stops being fun on day one. The React rung is where one
+// earns it, and it is opt-in for exactly that reason.
 //
 // The logic file has no DOM in it, which is the load-bearing decision. It is why the tests need no
 // browser and no setup, and why they are three lines each — the thing that decides whether somebody
 // writes a second test is whether the first one was easy.
 import { execFileSync } from "node:child_process";
-import { copyFileSync, existsSync, mkdirSync, readdirSync, statSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -37,8 +39,21 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 // The order matters more than either template. Somebody who has seen their own words become a
 // picture will open the to-do app looking for what to change; somebody handed the to-do app first is
 // reading a codebase.
-const KINDS = { hello: "../templates/starter/hello", todo: "../templates/starter/todo" };
+// THE THIRD RUNG IS A FRAMEWORK, and it is the one place this file's no-bundler rule gives way.
+// The rule was never "bundlers are bad" — it is that one has to EARN its place, and React is the
+// moment it does: JSX is not JavaScript, so something must translate it, and pretending otherwise
+// would hand somebody a hand-rolled setup unlike every guide they will find. rspack, because that
+// is what this project builds with; a starter that taught a different toolchain from the harness
+// around it would be teaching a fork.
+const KINDS = {
+  hello: "../templates/starter/hello",
+  todo: "../templates/starter/todo",
+  react: "../templates/starter/react",
+};
 const SRC = join(HERE, KINDS.hello); //  the DEFAULT rung, and it is the lower one on purpose
+
+/** The rungs, by name. Exported so nothing downstream has to keep a second list of them. */
+export const STARTER_KINDS = Object.keys(KINDS);
 
 /** Every file in the starter, as paths relative to its root. */
 export function starterFiles(root = SRC) {
@@ -55,18 +70,20 @@ export function starterFiles(root = SRC) {
 }
 
 /**
- * The scripts a starter repo needs. `serve` is the whole toolchain, deliberately.
+ * The scripts a starter repo needs, READ FROM the rung's own package.json rather than kept beside
+ * it.
  *
- * The test command takes a GLOB, not the directory. `node --test tests/` reads as the obvious thing
- * and fails on Node 22 with `Cannot find module .../tests` — node treats the argument as a script to
- * run rather than a tree to search. So the very first `npm test` a beginner types returned an error
- * about a module they never wrote, at the exact moment the promise being made is "a green suite
- * before you have written anything". This is the command the harness's own package.json uses.
+ * Each rung now ships a real package.json, which is what closed the defect this constant used to
+ * embody: the starter PRINTED these lines and asked a beginner to transcribe them into a file that
+ * did not exist, so the first thing they typed — `npm run dev` — failed with ENOENT. A person who
+ * has never written code cannot be asked to hand-assemble JSON before anything has ever worked.
+ *
+ * Derived, so there is one copy. Two would drift, and the one that drifts is the one nobody runs.
  */
-export const STARTER_SCRIPTS = {
-  dev: "npx --yes serve . --listen 3000",
-  test: 'node --test "tests/**/*.test.mjs"',
-};
+export const scriptsOf = (kind = "hello") =>
+  JSON.parse(readFileSync(join(HERE, KINDS[kind] ?? KINDS.hello, "package.json"), "utf8")).scripts;
+
+export const STARTER_SCRIPTS = scriptsOf("hello");
 
 /**
  * Make `dest` a git repository with the starter as its first commit — the missing half of "a real
@@ -116,25 +133,43 @@ export function writeStarter(dest, { force = false, dryRun = false, kind = "hell
 // ── CLI ────────────────────────────────────────────────────────────────────────
 if (process.argv[1]?.endsWith("starter.mjs")) {
   const dryRun = process.argv.includes("--dry-run");
-  const kind = process.argv.includes("--todo") ? "todo" : "hello";
+  const kind = process.argv.includes("--react") ? "react" : process.argv.includes("--todo") ? "todo" : "hello";
   const { wrote, skipped } = writeStarter(process.cwd(), { force: process.argv.includes("--force"), dryRun, kind });
+  const label = { hello: "Hello", todo: "To-do", react: "React" }[kind];
 
-  console.log(`\n  ✦ ${kind === "hello" ? "Hello" : "To-do"} starter${dryRun ? " — DRY RUN, nothing written" : ""}\n`);
+  console.log(`\n  \u2726 ${label} starter${dryRun ? " \u2014 DRY RUN, nothing written" : ""}\n`);
   for (const f of wrote) console.log(`      + ${f}`);
-  for (const f of skipped) console.log(`      · ${f}  (already there — yours wins)`);
+  for (const f of skipped) console.log(`      \u00b7 ${f}  (already there \u2014 yours wins)`);
 
   if (process.argv.includes("--git") && !dryRun) {
     const { initialised, reason } = initGit(process.cwd());
-    console.log(initialised ? "\n      ✓ git repository, first commit made — every change from here is undoable" : `\n      · ${reason} — left untouched`);
-    console.log("\n  Give it a home on GitHub when you want one:\n");
-    console.log("      harness-new <name> --push .\n");
+    console.log(initialised ? "\n      \u2713 git repository, first commit made \u2014 every change from here is undoable" : `\n      \u00b7 ${reason} \u2014 left untouched`);
+  }
+
+  // THE NEXT COMMAND, NOT THE NEXT CHORE. This used to print a fragment of JSON and ask the reader
+  // to put it in a file that did not exist. Every rung now ships its own package.json, so what
+  // follows is something to type rather than something to assemble.
+  if (kind === "react") {
+    console.log(`
+  Two commands, and the second one opens your browser:
+
+      npm install     \u2192  once, to fetch React and the build
+      npm run dev     \u2192  the page opens by itself, and stays open while you work
+
+  Then change something. The heading in src/App.jsx, a colour in src/style.css. Save, and the page
+  updates \u2014 that loop, change and look, is the whole job and it never gets more complicated.
+
+  src/greeting.js has NO React in it, and that is the one decision here worth copying: the rules
+  live apart from the drawing, which is why \`npm test\` needs no browser and each test is three lines.
+`);
+    process.exit(0);
   }
 
   if (kind === "hello") {
     console.log(`
-      "dev": "${STARTER_SCRIPTS.dev}"   →  then open the address it prints
+      npm run dev     \u2192  then open the address it prints
 
-  Change the heading. Change a colour in style.css. Reload. That loop — change, reload, look — is the
+  Change the heading. Change a colour in style.css. Reload. That loop \u2014 change, reload, look \u2014 is the
   whole job, and it never gets more complicated than it is right now.
 
   The picture is drawn from the five words at the top of art.mjs. Change one and reload; it will be a
@@ -143,24 +178,17 @@ if (process.argv[1]?.endsWith("starter.mjs")) {
   Cannot think of five words? STUCK.md asks you five questions instead, and the answers ARE the input.
   Nobody else's page will look like yours.
 
-  Ready for something that does more? \`harness-starter --todo\`.
+  Ready for something that does more? \`harness-starter --todo\`, or \`--react\` for a framework.
 `);
     process.exit(0);
   }
 
   console.log(`
-  Add these to package.json scripts:
-
-      "dev":  "${STARTER_SCRIPTS.dev}"
-      "test": "${STARTER_SCRIPTS.test}"
-
-  Then:
-
-      npm test        →  8 tests, all passing, before you have written anything
-      npm run dev     →  open the address it prints
+      npm test        \u2192  8 tests, all passing, before you have written anything
+      npm run dev     \u2192  open the address it prints
 
   A green suite on the first run is not a formality. It means the thing you are about to change is
-  known-good right now, so anything that breaks next is something you did — which is the only way a
+  known-good right now, so anything that breaks next is something you did \u2014 which is the only way a
   test suite is ever actually useful.
 
   REQUIREMENTS.md says what each test is checking and why four of the nine cases are about things

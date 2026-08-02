@@ -123,12 +123,41 @@ These need repository-admin credentials. Name them precisely; "configure your re
 Anything touching credentials, workflow permissions or org settings stays with the owner. Never walk
 someone through granting themselves access.
 
+## 4b · End at a page, not at a green check
+
+**Only when the project is an app** — skip this entirely for a library or a CLI, where there is
+nothing to open and inventing something to show would be theatre.
+
+```bash
+harness-starter --react --git      # or --todo, or bare for the frameworkless page
+npm install                        # the React rung only; the other two need nothing
+npm run dev                        # opens the browser itself
+```
+
+**Do not stop at step 3.** A green check is legible to somebody who already knows what a check is.
+For everybody else the tangible outcome — the one that decides whether they come back tomorrow — is
+*a thing on screen that changed because they typed something*, and the distance between those two
+outcomes is most of what makes early engagement stick. The missing leg when a beginner stalls is
+almost always **competence**, and nothing supplies competence like seeing your own change render.
+
+So the last thing you do is not a report. Ask them to change one line — the heading in `src/App.jsx`,
+a colour in `src/style.css` — and wait while they watch the page update. That loop is the product.
+Everything above it is scaffolding that exists to make the loop safe.
+
+**Pick the rung for the person, not for the project.** Somebody who has never built anything gets the
+bare rung: one page, no install, a picture drawn from five words they chose. `--react` is for someone
+who has a reason to want components — and it costs an `npm install` and a build step, which is a real
+price and the reason it is not the default.
+
 ## 5 · Hand back the loop, not a finished project
 
 The repository now defends itself. What it does not have is momentum, so end by pointing at the
 thing that produces work rather than at a checklist:
 
 > **Read something → hit a snag → fix it or log it → ship it → read the next thing.**
+
+If step 4b ran, the loop is already turning and they have seen it turn once. Name it as the same
+loop rather than a new one — *change, look, ship* is what they just did, at a smaller scale.
 
 And name the first snag they will hit, because there always is one: `harness.json` ships with
 documented defaults that describe a conventional TypeScript project. If theirs is not that, the

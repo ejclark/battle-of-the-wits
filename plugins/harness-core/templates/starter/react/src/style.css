@@ -1,0 +1,32 @@
+/* CHANGE THESE. That is what they are for — every value here is a guess somebody made in a minute,
+   and none of it is precious. Pick a colour you like and reload. */
+:root {
+  --ink: #16181a;
+  --paper: #fbfbf9;
+  --accent: #b4552d;
+  --line: #0002;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --ink: #eceae4; --paper: #14161a; --line: #fff2; }
+}
+
+body { margin: 0; background: var(--paper); color: var(--ink);
+       font: 17px/1.6 ui-serif, Georgia, serif; }
+main { max-width: 34rem; margin: 4rem auto; padding: 0 1.5rem; }
+h1 { font-size: 1.9rem; line-height: 1.2; margin: 0 0 1.5rem; }
+h2 { font-size: 1.1rem; margin: 2.5rem 0 .75rem; }
+label { display: block; font-size: .85rem; letter-spacing: .04em; text-transform: uppercase;
+        opacity: .7; margin-bottom: 1rem; }
+input { display: block; width: 100%; margin-top: .4rem; padding: .6rem .7rem; font: inherit;
+        color: inherit; background: transparent; border: 1px solid var(--line); border-radius: 6px; }
+input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+form { display: flex; gap: .5rem; align-items: flex-start; }
+form input { margin-top: 0; }
+button { font: inherit; padding: .6rem 1rem; color: inherit; background: transparent;
+         border: 1px solid var(--line); border-radius: 999px; cursor: pointer; }
+button:hover { border-color: var(--accent); color: var(--accent); }
+ul { list-style: none; padding: 0; margin: 1rem 0 0; }
+li { display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+     padding: .6rem 0; border-bottom: 1px solid var(--line); }
+li button { padding: .1rem .55rem; line-height: 1.2; }
+.hint { font-size: .9rem; opacity: .65; }
