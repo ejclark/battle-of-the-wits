@@ -2,6 +2,11 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { exercisedByExecution, launcherAliases } from "../plugins/harness-gates/lib/references.mjs";
 import { makeRepo } from "./helpers.mjs";
+import { existsSync, readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const REPO = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 // The spec-gap gate's second relationship: a spec that RUNS a thin launcher is exercising the module
 // that launcher execs. Getting this wrong in either direction is expensive — too loose and the gate
@@ -59,4 +64,34 @@ test("a spec that mentions no launcher exercises nothing", () => {
 
 test("a missing source tree is empty, not a crash", () => {
   assert.equal(launcherAliases(makeRepo({}), "plugins").size, 0);
+});
+
+test("every file a diagram names is a file that exists", () => {
+  // A diagram is a claim about how this project is put together, and it goes stale exactly the way
+  // prose does — except nobody re-reads a picture they have already understood once. The nodes name
+  // real modules; if one is renamed and the diagram is not, this is what says so.
+  //
+  // Deliberately not a check that the ARROWS are right: no test can know that, and pretending to
+  // would be worse than the gap. What it can check is that the boxes point at things.
+  const docs = ["CONTRIBUTING.md", "README.md", "docs/ROADMAP.md"];
+  let checked = 0;
+  for (const doc of docs) {
+    const body = readFileSync(join(REPO, doc), "utf8");
+    for (const block of [...body.matchAll(/```mermaid\n([\s\S]*?)```/g)].map((m) => m[1])) {
+      for (const file of block.match(/[\w./-]+\.mjs\b/g) ?? []) {
+        // Bare module names in a label — resolve them against the places modules live here.
+        const candidates = [
+          join(REPO, file),
+          join(REPO, "plugins/harness-core/lib", file),
+          join(REPO, "plugins/harness-gates/lib", file),
+        ];
+        assert.ok(candidates.some((p) => existsSync(p)), `a diagram in ${doc} names "${file}", which does not exist`);
+        checked++;
+      }
+      // A fenced mermaid block that declares no diagram type is a broken render on GitHub, and it
+      // looks like a code block full of arrows rather than an error anybody would notice.
+      assert.match(block.trim(), /^(flowchart|graph|sequenceDiagram|stateDiagram|classDiagram|erDiagram|journey|gantt|pie|mindmap|timeline)\b/, `a mermaid block in ${doc} has no diagram type`);
+    }
+  }
+  assert.ok(checked > 0, "this test found no diagram files to check — it has stopped testing anything");
 });

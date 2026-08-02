@@ -289,6 +289,34 @@ runs the data server and a bundler together, and editing anything under `web/` u
 without a reload. Both read the same model from the same place, and a test fails if the two
 stylesheets drift apart.
 
+```mermaid
+flowchart LR
+  subgraph SRC["your repository"]
+    FILES["budget files<br/>docs/metrics.jsonl"]
+    GIT["git history"]
+  end
+
+  FILES --> MODEL
+  GIT --> MODEL
+  MODEL["the model<br/>state.mjs · overview.mjs · history.mjs"]
+
+  MODEL --> HTML["server-rendered HTML<br/>shell.mjs"]
+  MODEL --> JSON["/api/state"]
+
+  HTML -->|"npm start"| B1["browser<br/>no install, no build"]
+  JSON -->|"npm run dev"| RS["rspack dev server<br/>hot reload"]
+  RS --> B2["browser<br/>editing web/"]
+
+  classDef ship stroke:#2f6f5e,stroke-width:2px;
+  classDef dev stroke:#b4552d,stroke-width:2px;
+  class HTML,B1 ship;
+  class JSON,RS,B2 dev;
+```
+
+Green is the shipped path and the one every adopter has. Orange needs `npm install` and exists so a
+view can be *changed* without reloading the page. **One model feeds both** — that is what stops them
+telling different stories about the same repository.
+
 Everything it shows is derived from data already in the
 repository — gates, budgets, the run ledger, the structural model — so a new view is *reading*
 something that exists, never inventing a source. It is new, so there is no legacy to break; it is
