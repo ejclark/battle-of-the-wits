@@ -54,10 +54,18 @@ export function starterFiles(root = SRC) {
   return out.sort();
 }
 
-/** The scripts a starter repo needs. `serve` is the whole toolchain, deliberately. */
+/**
+ * The scripts a starter repo needs. `serve` is the whole toolchain, deliberately.
+ *
+ * The test command takes a GLOB, not the directory. `node --test tests/` reads as the obvious thing
+ * and fails on Node 22 with `Cannot find module .../tests` — node treats the argument as a script to
+ * run rather than a tree to search. So the very first `npm test` a beginner types returned an error
+ * about a module they never wrote, at the exact moment the promise being made is "a green suite
+ * before you have written anything". This is the command the harness's own package.json uses.
+ */
 export const STARTER_SCRIPTS = {
   dev: "npx --yes serve . --listen 3000",
-  test: "node --test tests/",
+  test: 'node --test "tests/**/*.test.mjs"',
 };
 
 /**

@@ -9,6 +9,37 @@
     "url": "git+https://github.com/ejclark/dungeon-crawler.git"
   },
   "license": "MIT",
+  "bin": {
+    "harness-arch-scan": "./plugins/harness-gates/lib/arch-scan.mjs",
+    "harness-bootstrap": "./plugins/harness-core/lib/bootstrap.mjs",
+    "harness-city": "./plugins/harness-core/lib/city-cli.mjs",
+    "harness-claim": "./plugins/harness-gates/lib/claims.mjs",
+    "harness-clone-scan": "./plugins/harness-gates/lib/clone-scan.mjs",
+    "harness-dead-scan": "./plugins/harness-gates/lib/dead-scan.mjs",
+    "harness-dispatch": "./plugins/harness-gates/lib/dispatch.mjs",
+    "harness-dungeon": "./plugins/harness-core/lib/dungeon.mjs",
+    "harness-dupe-scan": "./plugins/harness-gates/lib/dupe-scan.mjs",
+    "harness-fleet": "./plugins/harness-gates/lib/fleet.mjs",
+    "harness-freshness": "./plugins/harness-gates/lib/freshness.mjs",
+    "harness-gear": "./plugins/harness-core/lib/gear.mjs",
+    "harness-import": "./plugins/harness-core/lib/import-repo.mjs",
+    "harness-incident-scan": "./plugins/harness-gates/lib/incident-scan.mjs",
+    "harness-log": "./plugins/harness-gates/lib/log-cli.mjs",
+    "harness-map": "./plugins/harness-core/lib/map.mjs",
+    "harness-new": "./plugins/harness-core/lib/new-repo-cli.mjs",
+    "harness-preflight": "./plugins/harness-gates/lib/preflight.mjs",
+    "harness-report": "./plugins/harness-core/lib/report.mjs",
+    "harness-serve": "./plugins/harness-core/lib/serve.mjs",
+    "harness-ship": "./plugins/harness-gates/bin/harness-ship",
+    "harness-spec-gap-scan": "./plugins/harness-gates/lib/spec-gap-scan.mjs",
+    "harness-standing": "./plugins/harness-gates/lib/standing.mjs",
+    "harness-starter": "./plugins/harness-core/lib/starter.mjs",
+    "harness-tower": "./plugins/harness-core/lib/tower-cli.mjs"
+  },
+  "files": [
+    "plugins/**",
+    "!plugins/**/templates/**/node_modules"
+  ],
   "engines": {
     "node": ">=24"
   },

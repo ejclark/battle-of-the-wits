@@ -4,6 +4,7 @@ import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
+import { binMap, launchers } from "../scripts/sync-launchers.mjs";
 
 // Shellcheck, in the suite rather than only in CI.
 //
@@ -15,6 +16,7 @@ import { test } from "node:test";
 // the project's own command. A verification step that only exists in CI turns a typo into a
 // commit-push-wait cycle, and the wait is where people stop verifying.
 const PLUGINS = join(dirname(fileURLToPath(import.meta.url)), "../plugins");
+const REPO = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 const filesIn = (dir) => {
   try {
@@ -110,4 +112,60 @@ test("every launcher is executable, and that is structural rather than lucky", (
     }
   }
   assert.ok(checked > 20, `only ${checked} launchers checked — this stopped looking at most of them`);
+});
+
+// ── installable as a dependency ───────────────────────────────────────────────
+//
+// The container pulls a repository in and works on it here, but that repository's OWN CI has no
+// `/plugin install` and no CLAUDE_PLUGIN_ROOT. A git dependency is how the central gates reach it,
+// and these are the properties that make that work rather than appear to.
+
+test("every launcher is a package bin, and the map is generated rather than remembered", () => {
+  const pkg = JSON.parse(readFileSync(join(REPO, "package.json"), "utf8"));
+  const want = binMap(launchers());
+  assert.deepEqual(pkg.bin, want, "run `node scripts/sync-launchers.mjs` — a command missing from `bin` vanishes on install");
+  assert.equal(Object.keys(pkg.bin).length, launchers().length, "one bin entry per launcher, no more and no fewer");
+});
+
+test("a bin entry points at the MODULE, because npm's .bin is a symlink", () => {
+  // THE TRAP THIS AVOIDS. npm links node_modules/.bin/<name> → the target. The shell launchers
+  // resolve $0's directory and look for `../lib/<module>.mjs`, which under that symlink resolves to
+  // `node_modules/lib` — absent. Node resolves a module's relative imports from its REAL path, so
+  // linking the module directly is immune. Nothing about this fails loudly: the gate is simply not
+  // there, in somebody else's CI, which is where nobody is watching.
+  const pkg = JSON.parse(readFileSync(join(REPO, "package.json"), "utf8"));
+  for (const [name, target] of Object.entries(pkg.bin)) {
+    const isShellProgram = launchers().find((l) => l.name === name)?.module === null;
+    if (isShellProgram) {
+      assert.match(target, /\/bin\//, `${name} is a shell program and must link to its script`);
+      continue;
+    }
+    assert.match(target, /\/lib\/[\w.-]+\.mjs$/, `${name} must link to its module, not to the shell launcher`);
+    assert.ok(existsSync(join(REPO, target)), `${name} points at ${target}, which does not exist`);
+  }
+});
+
+test("everything a bin points at is directly executable — it carries a shebang", () => {
+  // A module linked into .bin is run by the OS, not by `node <path>`. Without the shebang the
+  // symlink is an unrunnable text file, and the error names a shell syntax error in JavaScript.
+  const pkg = JSON.parse(readFileSync(join(REPO, "package.json"), "utf8"));
+  for (const target of Object.values(pkg.bin)) {
+    const first = readFileSync(join(REPO, target), "utf8").split("\n")[0];
+    assert.match(first, /^#!/, `${target} is linked into .bin but has no shebang`);
+    // The exec bit, for the same reason the launchers have one and a banked idea made it
+    // structural there: committed 644, the symlink is unrunnable and every invocation is
+    // "Permission denied" — on a machine that is not this one.
+    assert.ok(statSync(join(REPO, target)).mode & 0o111, `${target} is linked into .bin but is not executable`);
+  }
+});
+
+test("the published package carries the plugins and none of this repository's own state", () => {
+  // An adopter installing the harness must not receive OUR budgets, OUR tests or OUR web app —
+  // that is the one rule this whole repository runs on, at the point where it would travel.
+  const pkg = JSON.parse(readFileSync(join(REPO, "package.json"), "utf8"));
+  assert.ok(Array.isArray(pkg.files) && pkg.files.length, "an unset `files` ships the entire checkout");
+  assert.ok(pkg.files.some((f) => f.startsWith("plugins")), "the plugins are the product");
+  for (const ours of ["tests", "web", "arch-budget.json", "docs"]) {
+    assert.ok(!pkg.files.includes(ours), `${ours} is this repository's own state and must not ship`);
+  }
 });

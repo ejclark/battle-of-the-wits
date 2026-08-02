@@ -6,7 +6,7 @@
 // decides whether they believe suites are worth writing.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
+import { execFileSync, execSync } from "node:child_process";
 import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
@@ -65,7 +65,6 @@ test("the starter needs no build step and says so", () => {
   assert.match(lib, /No bundler config, no framework, no build step/);
   assert.ok(!starterFiles().some((f) => /webpack|rspack|vite|rollup|babel/.test(f)), "a build config appeared in the starter");
   assert.match(STARTER_SCRIPTS.dev, /serve/);
-  assert.match(STARTER_SCRIPTS.test, /node --test/);
 
   // The logic file must stay free of the DOM. That separation is why the tests need no browser, and
   // it is the single most useful habit the starter is trying to transmit.
@@ -140,4 +139,32 @@ test("--git leaves the starter undoable, and never touches existing history", ()
   // on everything they do next rather than a placeholder they silently inherit.
   const config = execFileSync("git", ["-C", dest, "config", "--local", "--list"], { encoding: "utf8" });
   assert.doesNotMatch(config, /starter@localhost/, "the placeholder identity must not persist into the repo");
+});
+
+
+test("the documented test command actually runs the starter's suite, in a cold copy", () => {
+  // ASSERT THE PROPERTY, NOT ONE RENDERING OF IT. This case replaces `assert.match(
+  // STARTER_SCRIPTS.test, /node --test/)`, which stayed green for the whole time the command was
+  // BROKEN: `node --test tests/` matches that regex and fails on Node 22 with `Cannot find module
+  // .../tests`, because node reads a bare directory as a script to run rather than a tree to search.
+  // A beginner's very first `npm test` returned an error about a file they never wrote, at exactly
+  // the moment the starter promises "a green suite before you have written anything".
+  //
+  // So this runs the string. A command nobody executes is documentation, and documentation is where
+  // this defect lived.
+  const dest = mkdtempSync(join(tmpdir(), "starter-cmd-"));
+  writeStarter(dest, {});
+  // Run the string THROUGH A SHELL, which is what `npm test` does with it. Splitting it on spaces
+  // and handing the pieces to execFileSync would test a command nobody runs — the quoting around
+  // the glob is part of what makes it work.
+  const out = execSync(`${STARTER_SCRIPTS.test} --test-reporter=tap`, {
+    cwd: dest,
+    encoding: "utf8",
+    // NODE_TEST_CONTEXT must go, or the nested runner emits a serialized stream for its parent
+    // instead of TAP and this reads as empty output. The cold-copy case above strips it for the
+    // same reason — the second place that needed it, which is how a lesson becomes a habit.
+    env: { ...process.env, NODE_TEST_CONTEXT: undefined, NODE_OPTIONS: undefined },
+  });
+  assert.match(out, /# fail 0/, `the command handed to every new project must pass:\n${out}`);
+  assert.doesNotMatch(out, /# pass 0/, "…and it must actually have found the tests, not passed vacuously");
 });

@@ -81,9 +81,59 @@ export function cmdBody(module, name = "this command") {
   ].join("\r\n"); //  CRLF: a .cmd with bare LF misparses on some Windows shells
 }
 
+/**
+ * The `bin` map package.json needs so the harness is installable as a git dependency — the only way
+ * an imported project reaches the central gates from ITS CI, where `/plugin install` does not exist.
+ *
+ * POINTED AT THE MODULE, NOT AT THE SHELL LAUNCHER, and that is the whole correctness of it. npm
+ * links `node_modules/.bin/<name>` as a symlink; the shell launchers resolve `$0`'s directory and
+ * look for `../lib/<module>.mjs`, which under that symlink is `node_modules/lib` — a path that does
+ * not exist. The modules carry their own `#!/usr/bin/env node`, and node resolves a module's
+ * relative imports from its REAL path, so linking them directly is immune to the symlink entirely.
+ *
+ * A launcher with no module is a real shell program (`harness-ship`), which has no `../lib` to
+ * resolve and is therefore safe to link as itself.
+ *
+ * GENERATED, for the same reason the twins are: twenty-five entries maintained by hand is
+ * twenty-five chances to add a command and forget it, and the one that is missing is invisible
+ * until somebody's CI runs exactly that gate.
+ */
+export function binMap(found = launchers()) {
+  const out = {};
+  for (const l of found) {
+    out[l.name] = l.module ? `./plugins/${l.plugin}/lib/${l.module}` : `./plugins/${l.plugin}/bin/${l.name}`;
+  }
+  return Object.fromEntries(Object.entries(out).sort(([a], [b]) => a.localeCompare(b)));
+}
+
+// ── CLI ────────────────────────────────────────────────────────────────────────
+//
+// GUARDED, and the guard is load-bearing rather than tidy. Without it, merely IMPORTING this module
+// ran the sync — so `tests/shell.test.mjs`, which imports `binMap` to check package.json against it,
+// silently REPAIRED package.json at import time and then asserted it was correct. Three planted
+// defects passed that suite before this line existed. A test that fixes the thing it is checking is
+// not a weak test, it is an inverted one: it is greenest exactly when the code is most broken.
+if (process.argv[1]?.endsWith("sync-launchers.mjs")) {
 const check = process.argv.includes("--check");
 const found = launchers();
 const stale = [];
+
+// package.json's bin map, synced by the same run and checked by the same flag.
+const pkgPath = join(REPO, "package.json");
+const pkg = JSON.parse(readFileSync(pkgPath, "utf8"));
+const wantBin = binMap(found);
+const binDrifted = JSON.stringify(pkg.bin ?? {}) !== JSON.stringify(wantBin);
+if (binDrifted && !check) {
+  pkg.bin = wantBin;
+  writeFileSync(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`);
+}
+if (binDrifted && check) {
+  console.error("✗ package.json `bin` is out of step with the launchers.\n");
+  console.error("  Run `node scripts/sync-launchers.mjs`. A launcher missing from `bin` is a command");
+  console.error("  that vanishes when the harness is installed as a dependency — which is exactly");
+  console.error("  where nobody is watching, because it is somebody else's CI.");
+  process.exit(1);
+}
 
 for (const l of found) {
   const twin = `${l.path}.cmd`;
@@ -117,3 +167,4 @@ console.log(
       ? `✓ wrote ${stale.length} twin(s); ${found.length} launchers covered`
       : `✓ nothing to do — all ${found.length} twins current`,
 );
+}
