@@ -39,6 +39,7 @@
     "harness-preflight": "./plugins/harness-gates/lib/preflight.mjs",
     "harness-report": "./plugins/harness-core/lib/report.mjs",
     "harness-serve": "./plugins/harness-core/lib/serve.mjs",
+    "harness-shape-scan": "./plugins/harness-gates/lib/shape.mjs",
     "harness-ship": "./plugins/harness-gates/bin/harness-ship",
     "harness-spec-gap-scan": "./plugins/harness-gates/lib/spec-gap-scan.mjs",
     "harness-standing": "./plugins/harness-gates/lib/standing.mjs",

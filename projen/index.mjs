@@ -27,7 +27,7 @@
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { Component, JsonFile, TextFile, typescript } from "projen";
+import { Component, JsonFile, SampleFile, TextFile, typescript } from "projen";
 import { renderRstest } from "../plugins/harness-core/lib/configs.mjs";
 import { BIOME_SCRIPTS, GATE_SCRIPTS } from "../plugins/harness-core/lib/scripts.mjs";
 import { DEFAULTS } from "../plugins/harness-gates/lib/descriptor.mjs";
@@ -136,6 +136,59 @@ export class RstestComponent extends Component {
 }
 
 /**
+ * The shape of `docs/LESSONS.md`, which is the worked example of a contextual system.
+ *
+ * These field names are already the file's own documented format and are already parsed by
+ * `harness-incident-scan`. Declaring them here does not invent structure — it makes the structure
+ * that existed only in prose into something a scanner can check, and something a NEW field can be
+ * noticed against.
+ */
+export const LESSONS_SHAPE = {
+  entryDepth: 3,
+  fields: ["SHA", "DATE", "STATUS", "SIGNAL", "ROOT CAUSE", "PREVENTION", "SIDE QUESTS"],
+};
+
+/**
+ * Contextual systems — SEEDED files, the second of the two file classes.
+ *
+ * The distinction this component exists for: the harness owns their SHAPE and must never own their
+ * CONTENT. `SampleFile` writes the file once if it is absent and never touches it again, so a
+ * repository's own lessons, ideas and backlog are permanently its own — regeneration cannot reach
+ * them the way it reaches `biome.json`.
+ *
+ * What IS generated is the declaration: `harness-shape.json` says what structure each system has, so
+ * `harness-shape-scan` can tell an added ENTRY (content — invisible, none of our business) from an
+ * added FIELD OR SECTION (shape — somebody extended the system itself, which is a promotion
+ * candidate). That distinction is what makes "content stays local" a property of the code rather
+ * than a promise nobody can check.
+ */
+export class ContextualSystemsComponent extends Component {
+  constructor(project, options = {}) {
+    super(project, "harness-contextual-systems");
+
+    const systems = options.contextualSystems ?? {
+      "docs/LESSONS.md": { schema: LESSONS_SHAPE, seed: template("common/docs/LESSONS.md") },
+    };
+
+    const declared = {};
+    for (const [path, { schema, seed }] of Object.entries(systems)) {
+      // SampleFile, never TextFile: this file's content belongs to the repository the moment it
+      // exists. A regenerated LESSONS.md would delete the incidents it was created to remember.
+      if (seed !== undefined) new SampleFile(project, path, { contents: seed });
+      declared[path] = schema;
+    }
+
+    new JsonFile(project, "harness-shape.json", {
+      obj: { systems: declared },
+      marker: false,
+      readonly: true,
+    });
+    project.package.setScript("shape:scan", "harness-shape-scan");
+    project.addVerifyStep("npm run shape:scan");
+  }
+}
+
+/**
  * A repository running the harness.
  *
  * Every `false` below is a measurement, not a preference — see the header and `docs/adr/0001`.
@@ -177,6 +230,7 @@ export class HarnessProject extends typescript.TypeScriptProject {
     new BiomeComponent(this, options);
     new RstestComponent(this, options);
     new GatesComponent(this, options);
+    new ContextualSystemsComponent(this, options);
   }
 
   /** Register a command that `verify` must run. Order is registration order; each must exit non-zero on failure. */

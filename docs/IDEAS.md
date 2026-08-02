@@ -651,6 +651,24 @@ make that structural instead of lucky. _(src: Claude · while: the zoning portab
   to every scanner that reads it. _(src: Claude · while: adding the rspack dev server, and noticing
   the gates stayed green about 500 lines they had never read)_
 
+**45. Eleven bare catches have a fallback indistinguishable from a real answer — audit them.**
+Banked straight out of the incident it caused. `renderDescriptor` called a function it had stopped
+importing; the `ReferenceError` landed in a `catch {}` whose fallback was `null`, which is a
+**legitimate value** there. A crash became "this repo has no test script", and the only thing that
+noticed was a planted test. The narrowed catch fixes that one site; a grep says there are at least
+eleven more of the same shape across `plugins/*/lib` — `return null`, `return {}`, `return []` behind
+a bare catch.
+Not all of them are wrong. `overview.mjs` says so explicitly and correctly: *"a corrupt line is one
+bad record, not a reason to report nothing."* The ones to hunt are narrower — where the fallback is
+also what SUCCESS looks like, so a defect and a legitimate absence are indistinguishable afterwards.
+That is the same family as `cmd | tail` reporting exit 0 on a red gate, hit live in the same session.
+**Cheapest prevention is probably one helper, not eleven edits:** most of these are "read a file,
+parse it, tolerate missing or malformed". A shared `readJsonOr(path, fallback)` that swallows
+`SyntaxError` and `ENOENT` but rethrows `ReferenceError`/`TypeError` would collapse the duplication
+the dupe gate would flag anyway AND make the wrong version unavailable. Worth doing when something
+else already touches those files, rather than as a flag-day sweep.
+_(src: Claude · while: banking the lesson from the catch that hid a missing import)_
+
 ## In progress
 
 _(nothing yet)_
