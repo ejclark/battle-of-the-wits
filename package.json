@@ -1,6 +1,6 @@
 {
   "name": "@ejclark/dungeon-crawler",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "type": "module",
   "description": "A portable engineering harness for Claude Code: ratcheting quality gates, corrective drills, and the background athletes that burn structural debt down.",
   "keywords": [
