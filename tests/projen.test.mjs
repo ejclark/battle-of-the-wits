@@ -129,6 +129,72 @@ test("a generated descriptor is restored after a hand edit — the artifact is n
   assert.equal(readJson(dir, "harness.json").sourceDir, "lib", "regeneration is what enforces, not the mode bit");
 });
 
+test("the rstest glob follows the descriptor — planted: a repo whose specs are NOT tests/**.spec.ts", () => {
+  const dir = scratch();
+  odd(dir).synth(); // spec/ + .test.js
+
+  const cfg = readFileSync(join(dir, "rstest.config.ts"), "utf8");
+  // THE PLANTED VIOLATION. A renderer that ignored the descriptor emits `tests/**/*.spec.ts`, which
+  // matches nothing in this layout. The runner then collects zero tests and reports a GREEN suite —
+  // a false green produced by the harness's own scaffolding, which is the failure this repo exists
+  // to prevent and has already shipped twice one layer down.
+  assert.match(cfg, /include:\s*\["spec\/\*\*\/\*\.test\.js"\]/, "the glob must name the real layout");
+  assert.doesNotMatch(cfg, /tests\/\*\*/, "the default glob would match nothing here");
+});
+
+test("verify names only the checks that exist — no typecheck in a JavaScript repo", () => {
+  const dir = scratch();
+  odd(dir).synth(); // sourceExt .js
+  const pkg = readJson(dir, "package.json");
+
+  assert.equal(pkg.scripts.typecheck, undefined, "a repo with no TypeScript gets no tsc step");
+  assert.doesNotMatch(pkg.scripts.verify, /typecheck/, "verify must not call a script that is absent");
+  assert.match(pkg.scripts.verify, /npm run lint/);
+  assert.match(pkg.scripts.verify, /npm test/);
+});
+
+test("a TypeScript repo does get the typecheck step", () => {
+  const dir = scratch();
+  new HarnessProject({ outdir: dir, name: "ts-repo", defaultReleaseBranch: "main" }).synth();
+  const pkg = readJson(dir, "package.json");
+
+  assert.equal(pkg.scripts.typecheck, "tsc -p tsconfig.json --noEmit");
+  assert.match(pkg.scripts.verify, /npm run typecheck/);
+});
+
+test("verify chains with && — a pipe would report a failing check as success", () => {
+  const dir = scratch();
+  odd(dir).synth();
+  const verify = readJson(dir, "package.json").scripts.verify;
+
+  // A pipeline exits with the LAST command's status, so `check | tail` is green on a red check.
+  assert.doesNotMatch(verify, /\|/, "verify must never pipe a check anywhere");
+  assert.match(verify, /&&/, "steps are chained so the first failure stops the run");
+});
+
+test("biome.json matches the template the bootstrap path writes — one config, two delivery paths", () => {
+  const dir = scratch();
+  odd(dir).synth();
+
+  const emitted = readFileSync(join(dir, "biome.json"), "utf8");
+  const template = readFileSync(
+    join(import.meta.dirname, "../plugins/harness-core/templates/node/biome.json"),
+    "utf8",
+  );
+  // Both paths exist until the marketplace retires. Two copies of one config is the drift this
+  // repository has a gate for, so the component READS the template rather than restating it.
+  assert.equal(emitted.trimEnd(), template.trimEnd());
+});
+
+test("biome and rstest arrive, and bring no second linter or runner with them", () => {
+  const dir = scratch();
+  odd(dir).synth();
+  const deps = readJson(dir, "package.json").devDependencies ?? {};
+
+  assert.ok(deps["@biomejs/biome"], "biome is the lint and format answer");
+  assert.ok(deps["@rstest/core"], "rstest is the runner");
+});
+
 test("harness.json is written read-only, so a hand edit is awkward before it is reverted", () => {
   const dir = scratch();
   odd(dir).synth();

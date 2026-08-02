@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { renderJscpd, renderKnip, scriptsFor } from "../plugins/harness-core/lib/configs.mjs";
+import { renderJscpd, renderKnip } from "../plugins/harness-core/lib/configs.mjs";
+import { scriptsFor } from "../plugins/harness-core/lib/scripts.mjs";
 
 // knip and jscpd are the only two gates whose SCOPE lives in a config file rather than in the
 // scanner's own code. A copied template pointed both at `src/`, so a repository declaring any other

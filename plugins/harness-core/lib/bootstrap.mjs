@@ -15,10 +15,11 @@
 //   1. Never clobber. An existing file is a decision someone made; it is reported as skipped.
 //   2. Say what it imposes. These are opinions (Conventional Commits, semantic-release, ratcheting
 //      gates), not laws — named in the summary so you disagree deliberately, not three weeks later.
-import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync, chmodSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync, chmodSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { renderDescriptor, renderJscpd, renderKnip, scriptsFor } from "./configs.mjs";
+import { renderDescriptor, renderJscpd, renderKnip } from "./configs.mjs";
+import { scriptsFor } from "./scripts.mjs";
 import { detect, gateSpecFor } from "./detect.mjs";
 import { plan, render } from "./phases.mjs";
 import { mergeClaudeSettings, mergeGitignore, mergePackageJson } from "./merge.mjs";

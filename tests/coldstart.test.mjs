@@ -27,7 +27,7 @@ import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSyn
 import { tmpdir } from "node:os";
 import { join, dirname, delimiter } from "node:path";
 import { fileURLToPath } from "node:url";
-import { NPM_STUB_TEST, effectiveTestScript, scriptsFor } from "../plugins/harness-core/lib/configs.mjs";
+import { NPM_STUB_TEST, effectiveTestScript, scriptsFor } from "../plugins/harness-core/lib/scripts.mjs";
 import { mergePackageJson } from "../plugins/harness-core/lib/merge.mjs";
 import { gateSpecFor } from "../plugins/harness-core/lib/detect.mjs";
 

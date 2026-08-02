@@ -9,7 +9,7 @@
 // that silently overwrites them is worse than a tool that does nothing.
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { NPM_STUB_TEST } from "./configs.mjs";
+import { NPM_STUB_TEST } from "./scripts.mjs";
 
 /**
  * Fold the harness's ignore rules into an existing .gitignore, or write one.

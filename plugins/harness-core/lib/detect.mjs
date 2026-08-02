@@ -6,7 +6,7 @@
 // fix is the decomposition it was pointing at, not a negotiated number.
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { effectiveTestScript } from "./configs.mjs";
+import { effectiveTestScript } from "./scripts.mjs";
 
 const BUDGETS = [
   "arch-budget.json",

@@ -14,31 +14,13 @@
 // So these are templates only in spirit. The shape is fixed here; every path in it comes from the
 // descriptor, so there is no copy to drift.
 
+// `renderDescriptor` needs to know what the repo's test script really is — script-domain knowledge,
+// which lives in scripts.mjs since the split. The dependency runs one way only; scripts.mjs imports
+// nothing.
+import { effectiveTestScript } from "./scripts.mjs";
+
 /** Extension without the leading dot — `.ts` → `ts`. */
 const ext = (e) => e.replace(/^\./, "");
-
-// WHAT `npm init` WRITES IS NOT A DECISION SOMEONE MADE.
-//
-// The never-clobber rule is right, and this is the one place it was wrong. `npm init -y` seeds
-// `"test": "echo \"Error: no test specified\" && exit 1"`, and the bootstrap read that as a choice to
-// be respected — so a cold adoption left the adopter's very first `npm run verify` RED, on a script
-// the harness itself had just wired into `verify`.
-//
-// Worse, the damage was not confined to `verify`. `gateSpecFor` infers the test RUNNER from this same
-// string; the placeholder does not match `node --test`, so it concluded describe/it/expect, wrote
-// `gates.spec.ts` into a plain JavaScript repository, and the gate file was never collected by
-// anything. Gates present, gates inert, suite green — the exact false green this project exists to
-// prevent, produced by its own bootstrap for the third recorded time.
-//
-// One string, three failures. So the placeholder is recognised in ONE place and both readers consult
-// it. It is matched EXACTLY: a test script an adopter actually wrote is still untouchable.
-export const NPM_STUB_TEST = /^echo\s+"Error: no test specified"\s*&&\s*exit\s+1\s*$/;
-
-/** The test command this repo really has — treating npm's placeholder as the absence it is. */
-export function effectiveTestScript(pkg = {}) {
-  const declared = pkg?.scripts?.test;
-  return declared && !NPM_STUB_TEST.test(declared) ? declared : null;
-}
 
 /**
  * knip.json — the dead-code detector's module graph.
@@ -142,7 +124,16 @@ export function renderDescriptor(root, { readdirSync, existsSync, readFileSync }
   let realTest = null;
   try {
     realTest = effectiveTestScript(JSON.parse(readPkg(`${root}/package.json`)));
-  } catch {
+  } catch (err) {
+    // NARROWED, because the broad form already cost a silent defect. Splitting `effectiveTestScript`
+    // into its own module left this call with no import, and the bare `catch` turned that
+    // ReferenceError into `realTest = null` — which is a legitimate value here. So a crash became a
+    // repo that "has no test script", the suffix flipped to `.test.mjs`, and the gate file was named
+    // for a runner the repo does not use. Wrong data, no error, and only a planted test caught it.
+    //
+    // A missing or malformed package.json is the case this was written for and stays tolerated. A
+    // ReferenceError or TypeError is a defect in THIS file and must be loud.
+    if (err instanceof ReferenceError || err instanceof TypeError) throw err;
     realTest = null;
   }
   const typescript = sourceExt === ".ts" && realTest !== null && !/\bnode\s+--test\b/.test(realTest);
@@ -163,52 +154,23 @@ export function renderDescriptor(root, { readdirSync, existsSync, readFileSync }
 }
 
 /**
- * The scripts table the bootstrap merges into `package.json`.
+ * rstest.config.ts — the test runner's scope, rendered from the descriptor.
  *
- * `typecheck` is CONDITIONAL, and finding that out cost the first adoption into a repository shaped
- * differently from this one. A JavaScript project got `tsc -p tsconfig.json --noEmit` and a `verify`
- * that ran it, so the adopter's very first `npm run verify` failed — on a file they do not have, for
- * a language they do not use, in a script the harness had just written for them.
- *
- * That is the same failure the grandfather step exists to prevent, one layer up: go red immediately
- * for something nobody caused, and the whole process gets switched off before it has proved anything.
- * The descriptor already says `sourceExt`; there was no excuse for guessing.
+ * Same reasoning as `renderKnip` and `renderJscpd`: a runner pointed at a spec glob that does not
+ * match this repo's layout collects zero tests and reports a green suite, which is the false green
+ * this project exists to prevent. So `testDir` and `specSuffix` come from the descriptor rather than
+ * from an assumption that everyone uses `tests/**\/*.spec.ts`.
  */
-export function scriptsFor(desc = {}, { hasTsconfig = true } = {}) {
-  // THE SAME BUG, ONE LEVEL DOWN — and it shipped twice.
-  //
-  // The recorded fix for the first adoption was to stop guessing the LANGUAGE: read `sourceExt`
-  // rather than assume TypeScript. That was necessary and insufficient. Knowing the language does
-  // not tell you the toolchain is configured, and a repository can perfectly well hold `.ts` files
-  // with no `tsconfig.json` — mid-setup, bundler-managed, or config under another name.
-  //
-  // Run end-to-end from zero, `--auto` wrote a verify containing `tsc -p tsconfig.json --noEmit`
-  // into exactly that repo, and the adopter's FIRST verify failed with TS5058 on a file they do not
-  // have, in a script the harness had just written them. Same first impression, same lesson, second
-  // time.
-  //
-  // So the rule generalises past `sourceExt`: **do not emit a command whose config does not exist.**
-  // Omitting it silently would be the other failure — a verify that passes because it stopped
-  // checking — so the caller is told, and says so.
-  const typescript = (desc.sourceExt ?? ".ts") === ".ts";
-  const typecheck = typescript && hasTsconfig;
-  const checks = [typecheck ? "npm run typecheck" : null, "npm run lint", "npm test"].filter(Boolean);
-  return {
-    ...(typecheck ? { typecheck: "tsc -p tsconfig.json --noEmit" } : {}),
-    // Offered, not imposed: `mergePackageJson` keeps a real test script and only displaces npm's
-    // placeholder. `node --test` is the zero-dependency choice — nothing to install, and it exits 0
-    // on a repo with no tests yet, so day one is green rather than red-for-no-reason.
-    test: "node --test",
-    lint: "biome check .",
-    "lint:fix": "biome check --write .",
-    format: "biome format --write .",
-    verify: checks.join(" && "),
-    prepare: "husky",
-    "arch:scan": "harness-arch-scan",
-    "dupe:scan": "harness-dupe-scan",
-    "dead:scan": "harness-dead-scan",
-    "spec:gap": "harness-spec-gap-scan",
-    "clone:scan": "harness-clone-scan",
-    "incident:scan": "harness-incident-scan",
-  };
+export function renderRstest(desc = {}) {
+  const tests = desc.testDir ?? "tests";
+  const spec = desc.specSuffix ?? ".spec.ts";
+  return `import { defineConfig } from "@rstest/core";
+
+// Generated from harness.json — edit .projenrc.ts, not this file.
+export default defineConfig({
+  globals: true,
+  testEnvironment: "node",
+  include: ["${tests}/**/*${spec}"],
+});
+`;
 }

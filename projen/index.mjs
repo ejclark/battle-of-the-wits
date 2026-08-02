@@ -24,8 +24,16 @@
 //   · GENERATED — rewritten every synth, content belongs upstream. `harness.json` is one.
 //   · SEEDED — written once, NEVER clobbered, content belongs to the repo. Budgets, IDEAS.md,
 //     LESSONS.md. The harness owns their SHAPE and validates it; it must never own what is in them.
-import { Component, JsonFile, typescript } from "projen";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { Component, JsonFile, TextFile, typescript } from "projen";
+import { renderRstest } from "../plugins/harness-core/lib/configs.mjs";
+import { BIOME_SCRIPTS, GATE_SCRIPTS } from "../plugins/harness-core/lib/scripts.mjs";
 import { DEFAULTS } from "../plugins/harness-gates/lib/descriptor.mjs";
+
+const HERE = dirname(fileURLToPath(import.meta.url));
+const template = (p) => readFileSync(join(HERE, "../plugins/harness-core/templates", p), "utf8");
 
 /** The npm package a consuming repository installs to get the gates on `node_modules/.bin`. */
 export const HARNESS_PACKAGE = "@ejclark/dungeon-crawler";
@@ -33,22 +41,9 @@ export const HARNESS_PACKAGE = "@ejclark/dungeon-crawler";
 /** Descriptor keys a consumer may set. Anything absent takes the documented default — never inference. */
 const DESCRIPTOR_KEYS = Object.keys(DEFAULTS);
 
-/**
- * The gate scripts, as PLAIN npm scripts pointing at `node_modules/.bin`.
- *
- * Not projen Tasks — see the header. And not `npx harness-…` either: `npx` re-resolves the package on
- * every invocation, which is a network round trip on a cold cache and another ~600ms when it is warm.
- * The bin is already on PATH inside an npm script, so the bare name is both the fastest form and the
- * one that fails loudly if the dependency is missing rather than silently fetching something.
- */
-export const GATE_SCRIPTS = {
-  "arch:scan": "harness-arch-scan",
-  "dupe:scan": "harness-dupe-scan",
-  "clone:scan": "harness-clone-scan",
-  "dead:scan": "harness-dead-scan",
-  "spec:gap": "harness-spec-gap-scan",
-  "incident:scan": "harness-incident-scan",
-};
+// Re-exported, never redefined. Both delivery paths name the same six commands, and the gate that
+// catches a second copy of them is one of the six.
+export { GATE_SCRIPTS };
 
 /**
  * Emits `harness.json` — the capability descriptor every scanner reads.
@@ -93,6 +88,54 @@ function same(a, b) {
 }
 
 /**
+ * Biome — lint and format, one tool and one config file.
+ *
+ * projen ships no Biome component (projen/projen#3966, open since Nov 2024), so this is written here
+ * and is upstreamable once it has earned it. The config itself is NOT restated: it is the same
+ * `templates/node/biome.json` the bootstrap path already writes, read rather than copied, so the two
+ * delivery paths cannot drift while both exist.
+ *
+ * Biome replaces eslint AND prettier — which is why `HarnessProject` turns both off. Two linters
+ * disagreeing about one file is worse than either alone.
+ */
+export class BiomeComponent extends Component {
+  constructor(project, options = {}) {
+    super(project, "harness-biome");
+    new TextFile(project, "biome.json", {
+      lines: template("node/biome.json").split("\n"),
+      readonly: true,
+      marker: false, // JSON has no comment syntax; a marker key would not be schema
+    });
+    project.addDevDeps(`@biomejs/biome@${options.biomeVersion ?? "^2.5.6"}`);
+    for (const [name, exec] of Object.entries(BIOME_SCRIPTS)) project.package.setScript(name, exec);
+    project.addVerifyStep("npm run lint");
+  }
+}
+
+/**
+ * rstest — the test runner, scoped by the descriptor.
+ *
+ * Also has no projen component. The config is RENDERED from `testDir`/`specSuffix` rather than
+ * templated, because a runner pointed at a glob that matches nothing collects zero tests and reports
+ * a green suite. That is the exact false green the gates exist to prevent, produced by the harness's
+ * own scaffolding — and it has already happened twice here at one layer down (see `configs.mjs`).
+ */
+export class RstestComponent extends Component {
+  constructor(project, options = {}) {
+    super(project, "harness-rstest");
+    new TextFile(project, "rstest.config.ts", {
+      lines: renderRstest(project.descriptor).split("\n"),
+      readonly: true,
+      marker: false, // the rendered file carries its own "edit .projenrc.ts" line
+    });
+    project.addDevDeps(`@rstest/core@${options.rstestVersion ?? "^0.11.4"}`);
+    project.package.setScript("test", "rstest run");
+    project.package.setScript("test:watch", "rstest watch");
+    project.addVerifyStep("npm test");
+  }
+}
+
+/**
  * A repository running the harness.
  *
  * Every `false` below is a measurement, not a preference — see the header and `docs/adr/0001`.
@@ -113,6 +156,39 @@ export class HarnessProject extends typescript.TypeScriptProject {
       DESCRIPTOR_KEYS.map((k) => [k, options[k] ?? DEFAULTS[k]]),
     );
 
+    // VERIFY NAMES ONLY THE CHECKS THAT EXIST.
+    //
+    // `configs.mjs` records this lesson at one layer down, learned twice: `--auto` wrote
+    // `tsc -p tsconfig.json --noEmit` into a repository with no tsconfig, and the adopter's FIRST
+    // verify failed on a file they did not have, in a script the harness had just written them.
+    // The rule generalises past `sourceExt` — do not emit a command whose config does not exist — so
+    // each component contributes its own step and `verify` is composed from what is actually here.
+    // The other failure mode is a verify that passes because it stopped checking, which is why the
+    // steps are collected rather than guessed.
+    this.verifySteps = [];
+
+    if (this.descriptor.sourceExt === ".ts") {
+      // Safe to assert unconditionally: TypeScriptProject always writes a tsconfig.json, so unlike
+      // the bootstrap path there is no repository shape where this command has no config to read.
+      this.package.setScript("typecheck", "tsc -p tsconfig.json --noEmit");
+      this.addVerifyStep("npm run typecheck");
+    }
+
+    new BiomeComponent(this, options);
+    new RstestComponent(this, options);
     new GatesComponent(this, options);
+  }
+
+  /** Register a command that `verify` must run. Order is registration order; each must exit non-zero on failure. */
+  addVerifyStep(step) {
+    this.verifySteps.push(step);
+  }
+
+  preSynthesize() {
+    super.preSynthesize();
+    // Chained with `&&`, never piped. A pipeline exits with the LAST command's status, so
+    // `check | tail` reports success for a failing check — the trap skynet's ENGINEERING.md names
+    // and the reason this is composed here rather than left to a consumer to assemble.
+    this.package.setScript("verify", this.verifySteps.join(" && "));
   }
 }
