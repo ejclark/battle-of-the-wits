@@ -143,9 +143,15 @@ test("the sparkline is baselined at zero, so a small move is not drawn as a clif
 
 test("a long history is WINDOWED, and the page says so rather than pretending", () => {
   // A truncated series rendered as if it were the whole story is a picture that lies. No silent caps.
-  const root = planted(Array.from({ length: WINDOW + 3 }, (_, i) => ({ "arch-budget.json": { "a.mjs": 500 - i } })));
-  const s = budgetSeries(root, "arch");
-  assert.equal(s.points.length, WINDOW, "the walk is bounded");
+  // The WINDOW is injectable, so this plants 8 commits against a window of 5 rather than 43 against
+  // the real one. Same property — a history longer than the bound is cut and says so — at a seventh
+  // of the cost. Creating 43 real git commits to prove an off-by-one made this the slowest test in
+  // the suite at ~6s, which is a toll every future run pays for nothing.
+  const WIN = 5;
+  const root = planted(Array.from({ length: WIN + 3 }, (_, i) => ({ "arch-budget.json": { "a.mjs": 500 - i } })));
+  const s = budgetSeries(root, "arch", { window: WIN });
+  assert.equal(s.points.length, WIN, "the walk is bounded");
+  assert.ok(WINDOW > 0, "the shipped default is still a real bound");
   assert.equal(s.truncated, true);
   assert.match(historyDocument(root, "acme", { series: [s] }), /more history behind this window/i);
 

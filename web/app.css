@@ -1,0 +1,314 @@
+/* THE CHASSIS, AS A REAL STYLESHEET.
+ *
+ * Same design system the server-rendered views use — the tokens in lib/shell.mjs — expressed here as
+ * a file rspack can hot-swap. Editing a token updates the page without a reload, which is the whole
+ * reason a bundler is in this repository at all.
+ *
+ * The values are deliberately identical to shell.mjs. Two stylesheets that drift are the defect the
+ * chassis was extracted to end, so if you change one, change the other — tests/frontend.test.mjs
+ * fails when the palettes disagree. */
+
+:root {
+  --paper: #fbfbf9;
+  --card: #ffffff;
+  --ink: #16181a;
+  --dim: #6c7378;
+  --rule: #e4e2dc;
+  --accent: #b4552d;
+  --accent-soft: #b4552d1a;
+  --good: #2f6f5e;
+  --warn: #b0602c;
+  --crit: #a33a2c;
+  --quiet: #6c7378;
+  --shadow: 0 1px 2px #16181a0a;
+  --serif: ui-serif, Georgia, "Times New Roman", serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #14161a;
+    --card: #191c21;
+    --ink: #eceae4;
+    --dim: #8b9296;
+    --rule: #282c33;
+    --accent: #e08a5c;
+    --accent-soft: #e08a5c1f;
+    --good: #5fd7af;
+    --warn: #e0985d;
+    --crit: #e57b6a;
+    --quiet: #8b9296;
+    --shadow: none;
+  }
+}
+
+:root[data-theme="dark"] {
+  --paper: #14161a;
+  --card: #191c21;
+  --ink: #eceae4;
+  --dim: #8b9296;
+  --rule: #282c33;
+  --accent: #e08a5c;
+  --accent-soft: #e08a5c1f;
+  --good: #5fd7af;
+  --warn: #e0985d;
+  --crit: #e57b6a;
+  --quiet: #8b9296;
+  --shadow: none;
+}
+
+:root[data-theme="light"] {
+  --paper: #fbfbf9;
+  --card: #ffffff;
+  --ink: #16181a;
+  --dim: #6c7378;
+  --rule: #e4e2dc;
+  --accent: #b4552d;
+  --accent-soft: #b4552d1a;
+  --good: #2f6f5e;
+  --warn: #b0602c;
+  --crit: #a33a2c;
+  --quiet: #6c7378;
+  --shadow: 0 1px 2px #16181a0a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 16px/1.55 var(--serif);
+  -webkit-font-smoothing: antialiased;
+}
+
+.boot {
+  max-width: 52rem;
+  margin: 4rem auto;
+  padding: 0 1.5rem;
+  color: var(--dim);
+}
+
+.wrap {
+  max-width: 52rem;
+  margin: 0 auto;
+  padding: 0 1.5rem 4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+header.rail {
+  border-bottom: 1px solid var(--rule);
+  padding: 1.75rem 0 0;
+}
+.rail .id {
+  display: flex;
+  align-items: baseline;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+.rail h1 {
+  font-size: 1.4rem;
+  margin: 0;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+.rail .where {
+  font: 0.7rem/1 var(--mono);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.rail p.blurb {
+  margin: 0.5rem 0 0;
+  color: var(--dim);
+  font-size: 0.93rem;
+  max-width: 34rem;
+}
+
+nav.views {
+  display: flex;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+  margin-top: 1.15rem;
+}
+nav.views button {
+  font: 0.78rem/1 var(--mono);
+  letter-spacing: 0.06em;
+  color: var(--dim);
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  padding: 0.6rem 0.8rem;
+  border-radius: 2px 2px 0 0;
+  cursor: pointer;
+}
+nav.views button:hover {
+  color: var(--ink);
+  background: var(--accent-soft);
+}
+nav.views button[aria-current="page"] {
+  color: var(--ink);
+  border-bottom-color: var(--accent);
+}
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+  gap: 0.75rem;
+}
+.tile {
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: 0.85rem 0.95rem;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.tile .k {
+  font: 0.66rem/1 var(--mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.tile .v {
+  font: 1.55rem/1 var(--serif);
+  font-variant-numeric: tabular-nums;
+}
+.tile .n {
+  font-size: 0.8rem;
+  color: var(--dim);
+}
+.tile.good .v {
+  color: var(--good);
+}
+.tile.warn .v {
+  color: var(--warn);
+}
+.tile.crit .v {
+  color: var(--crit);
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: 1.1rem 1.3rem;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+.card > .head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+h2 {
+  font: 0.7rem/1 var(--mono);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--dim);
+  margin: 0;
+}
+.card p {
+  margin: 0;
+  color: var(--dim);
+  font-size: 0.9rem;
+  max-width: 38rem;
+}
+.card p b {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.chip {
+  font: 0.68rem/1 var(--mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.28rem 0.55rem;
+  border: 1px solid currentColor;
+  border-radius: 2px;
+  white-space: nowrap;
+}
+.good {
+  color: var(--good);
+}
+.warn {
+  color: var(--warn);
+}
+.crit {
+  color: var(--crit);
+}
+.quiet {
+  color: var(--quiet);
+}
+
+.scroll {
+  overflow-x: auto;
+}
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.88rem;
+}
+th {
+  font: 0.66rem/1 var(--mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--dim);
+  font-weight: 400;
+}
+td,
+th {
+  text-align: left;
+  padding: 0.45rem 0.7rem 0.45rem 0;
+  border-bottom: 1px solid var(--rule);
+  vertical-align: top;
+}
+tr:last-child td {
+  border-bottom: 0;
+}
+td.name {
+  font: 0.85rem/1.4 var(--mono);
+}
+td.n,
+th.n {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--dim);
+  white-space: nowrap;
+}
+
+.spark {
+  margin: 0.2rem 0;
+}
+
+footer.note {
+  color: var(--dim);
+  font-size: 0.85rem;
+  border-top: 1px solid var(--rule);
+  padding-top: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}

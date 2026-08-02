@@ -14,6 +14,8 @@
   },
   "scripts": {
     "start": "node plugins/harness-core/lib/serve.mjs",
+    "dev": "node scripts/dev.mjs",
+    "build": "rspack build",
     "test": "node --test \"tests/**/*.test.mjs\"",
     "validate": "node scripts/validate-manifests.mjs && node scripts/sync-launchers.mjs --check",
     "check-versions": "node scripts/check-versions.mjs",
@@ -24,6 +26,9 @@
   "devDependencies": {
     "@commitlint/cli": "^20.1.0",
     "@commitlint/config-conventional": "^20.0.0",
+    "@rspack/cli": "2.1.7",
+    "@rspack/core": "2.1.7",
+    "@rspack/dev-server": "2.1.0",
     "knip": "^6.31.0",
     "semantic-release": "^25.0.0"
   }

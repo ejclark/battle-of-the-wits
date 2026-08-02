@@ -24,6 +24,7 @@
 // install before it renders anything is a visualiser nobody opens twice.
 import { spawn } from "node:child_process";
 import { createServer } from "node:http";
+import { stateOf } from "./api.mjs";
 import { cityDocument } from "./city.mjs";
 import { historyDocument } from "./history.mjs";
 import { mapDocument } from "./cartography.mjs";
@@ -88,6 +89,10 @@ Bound to localhost only.</small></p>${LIVE}`;
 export function handle(root, url) {
   const repoName = repoNameOf(root);
   if (url === "/rev") return { type: "text/plain", body: revision(root) };
+  // The model as data, for the client-side app and for anything else that wants the numbers without
+  // scraping a page. Same derivation the server-rendered views use — two readers of the same repo
+  // that disagreed would be worse than either one alone.
+  if (url === "/api/state") return { type: "application/json", body: JSON.stringify(stateOf(root)) };
   const view = VIEWS[url];
   if (!view) return { status: 404, type: "text/html", body: `<p>No such view. <a href="/">Back</a>.</p>` };
 

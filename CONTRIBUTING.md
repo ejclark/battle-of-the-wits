@@ -279,8 +279,15 @@ consolation. Ask Claude to **"start the local view"**, or run it yourself — th
 platform, because both forms run the module directly and nothing depends on `PATH` or a `.cmd` twin:
 
 ```
-npm start                                    # or: node plugins/harness-core/lib/serve.mjs
+npm start                                    # look at it — no install, no build, server-rendered
+npm run dev                                  # change it — hot reload, after one npm install
 ```
+
+`npm start` is the path every adopter is on: they install the plugins and have no build step, so the
+views are rendered on the server and need nothing. `npm run dev` is for working **on** a view — it
+runs the data server and a bundler together, and editing anything under `web/` updates the page
+without a reload. Both read the same model from the same place, and a test fails if the two
+stylesheets drift apart.
 
 Everything it shows is derived from data already in the
 repository — gates, budgets, the run ledger, the structural model — so a new view is *reading*
