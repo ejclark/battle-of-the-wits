@@ -1,7 +1,6 @@
 {
   "name": "@ejclark/dungeon-crawler",
   "version": "1.0.0",
-  "private": true,
   "type": "module",
   "description": "A portable engineering harness for Claude Code: ratcheting quality gates, corrective drills, and the background athletes that burn structural debt down.",
   "keywords": [
@@ -15,6 +14,9 @@
     "url": "git+https://github.com/ejclark/dungeon-crawler.git"
   },
   "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "engines": {
     "node": ">=24"
   },
