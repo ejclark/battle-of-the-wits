@@ -194,6 +194,7 @@ export function historyView(state) {
 const SERVER_VIEWS = [
   { path: "/map", label: "Map", blurb: "the repository as territory" },
   { path: "/city", label: "City", blurb: "the repository as a skyline" },
+  { path: "/tower", label: "Tower", blurb: "what is watching, and how much of it can be seen" },
 ];
 
 const VIEWS = [

@@ -4,6 +4,7 @@
     "plugins/harness-core/lib/bootstrap.mjs",
     "plugins/harness-core/lib/dungeon.mjs",
     "plugins/harness-core/lib/map.mjs",
+    "plugins/harness-core/lib/tower-cli.mjs",
     "plugins/harness-gates/lib/arch-scan.mjs",
     "plugins/harness-gates/lib/claims.mjs",
     "plugins/harness-gates/lib/clone-scan.mjs",

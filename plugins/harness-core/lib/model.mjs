@@ -11,7 +11,7 @@
 // measure is reported as UNLIT rather than as zero. A city with no dark quarters would be a lie.
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
-import { bossList, readJson, unlitDimensions } from "./state.mjs";
+import { bossList, dimensionStanding, readJson, unlitDimensions } from "./state.mjs";
 
 const DEFAULT_CAP = 500; // a file with no budget entry may not exceed this
 const WARN_AT = 300; // worth watching even when within budget
@@ -112,5 +112,10 @@ export function repoModel(root) {
     rooms: rooms(root),
     bosses: bossList(root),
     unlit: unlitDimensions(root),
+    // Both halves of the same reading. `unlit` is what a view needs to refuse to render a dark
+    // dimension as clean; `standing` is what a view needs to draw COVERAGE, which is a ratio and
+    // therefore needs the denominator. A rung that counted the lit ones itself would be a second
+    // opinion about what this repository measures, and the whole ladder rests on there being one.
+    standing: dimensionStanding(root),
   };
 }

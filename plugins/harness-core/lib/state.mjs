@@ -10,8 +10,32 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
-/** The six dimensions this harness measures. One list, because two lists silently disagree. */
-export const GATES = ["arch", "dupe", "dead", "spec-gap", "clone", "incident"];
+/**
+ * The six dimensions this harness measures — id, human label, the file that proves it is measured,
+ * and the command that lights it if it is not.
+ *
+ * ONE TABLE, because two lists silently disagree. The ids and the labels used to be exactly that:
+ * a `GATES` array here and a second, parallel list of `[budget, label, fix]` triples inside
+ * `unlitDimensions` below, in the same order, with nothing keeping them in step. Nobody had to be
+ * careless for those to drift — adding a seventh dimension to one and not the other is a one-line
+ * omission that no test would have caught, and the symptom would have been a count of six against a
+ * list of seven on two different surfaces.
+ *
+ * `evidence` is the file whose existence means the dimension is measured. For five of them that is
+ * the committed budget; for incidents it is the lessons ledger, because a repository with nothing
+ * written down is not learning, whatever else it has.
+ */
+export const DIMENSIONS = [
+  { id: "arch", label: "file size", evidence: "arch-budget.json", fix: "harness-arch-scan --update" },
+  { id: "dupe", label: "duplication", evidence: "dupe-budget.json", fix: "harness-dupe-scan --update" },
+  { id: "dead", label: "dead code", evidence: "dead-budget.json", fix: "npm i -D knip, commit a knip.json, then harness-dead-scan --update" },
+  { id: "spec-gap", label: "the spec gap", evidence: "spec-gap-budget.json", fix: "harness-spec-gap-scan --update" },
+  { id: "clone", label: "copy-paste", evidence: "clone-budget.json", fix: "harness-clone-scan --update" },
+  { id: "incident", label: "incidents", evidence: "docs/LESSONS.md", fix: "harness-bootstrap writes docs/LESSONS.md — nothing is learning today" },
+];
+
+/** The dimension ids, in order. Derived, so it cannot fall out of step with the table above. */
+export const GATES = DIMENSIONS.map((d) => d.id);
 
 /** Read a JSON file under `root`, or null. Budgets are routinely absent; that is data, not an error. */
 export function readJson(root, path) {
@@ -105,19 +129,17 @@ export function bossList(root) {
  * harness exists to prevent — so the fix travels with the finding.
  */
 export function unlitDimensions(root) {
-  const has = (p) => existsSync(join(root, p));
-  const out = [];
-  for (const [budget, label, fix] of [
-    ["arch-budget.json", "file size", "harness-arch-scan --update"],
-    ["dupe-budget.json", "duplication", "harness-dupe-scan --update"],
-    ["dead-budget.json", "dead code", "npm i -D knip, commit a knip.json, then harness-dead-scan --update"],
-    ["spec-gap-budget.json", "the spec gap", "harness-spec-gap-scan --update"],
-    ["clone-budget.json", "copy-paste", "harness-clone-scan --update"],
-  ]) {
-    if (!has(budget)) out.push({ label, fix });
-  }
-  if (!has("docs/LESSONS.md")) {
-    out.push({ label: "incidents", fix: "harness-bootstrap writes docs/LESSONS.md — nothing is learning today" });
-  }
-  return out;
+  return DIMENSIONS.filter((d) => !existsSync(join(root, d.evidence))).map(({ label, fix }) => ({ label, fix }));
+}
+
+/**
+ * Every dimension, each marked lit or unlit — what `unlitDimensions` reports, without discarding the
+ * half that passed.
+ *
+ * The unlit half is what the map and the forge need, because a fix only travels with a finding. A
+ * picture of *coverage* needs both halves: six dimensions with two dark is a different image from
+ * two dimensions with two dark, and a list that only carries the failures cannot tell them apart.
+ */
+export function dimensionStanding(root) {
+  return DIMENSIONS.map((d) => ({ ...d, lit: existsSync(join(root, d.evidence)) }));
 }

@@ -30,6 +30,7 @@ import { historyDocument } from "./history.mjs";
 import { mapDocument } from "./cartography.mjs";
 import { overviewDocument } from "./overview.mjs";
 import { gitOut, repoNameOf } from "./render.mjs";
+import { towerDocument } from "./tower.mjs";
 
 const HOST = "127.0.0.1"; //  never a public interface — see above; deliberately not configurable
 
@@ -66,6 +67,7 @@ const VIEWS = {
   "/map": { title: "Map", render: mapDocument },
   "/history": { title: "History", render: historyDocument },
   "/city": { title: "City", render: cityDocument },
+  "/tower": { title: "Tower", render: towerDocument },
 };
 
 /**
@@ -168,7 +170,8 @@ if (process.argv[1]?.endsWith("serve.mjs")) {
     console.log("      /         what the instruments say");
     console.log("      /history  what each budget looked like before today");
     console.log("      /map      the repository as territory");
-    console.log("      /city     the repository as a skyline\n");
+    console.log("      /city     the repository as a skyline");
+    console.log("      /tower    the repository as a watchtower — what is measured, and what is not\n");
     console.log("  Live: every view re-derives on request and the page reloads when the repo moves.");
     console.log("  Localhost only, by construction — a map names every file and its debt.\n");
     if (openTab) openBrowser(`http://${HOST}:${port}/`);
