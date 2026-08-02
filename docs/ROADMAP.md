@@ -65,6 +65,41 @@ Named because each is one view over data that exists: incidents over time (#37),
 from git, which gate fires most, a single file's story. The fleet — more than one repository at once
 (#38) — is the one real design here, and it is the shared prerequisite nobody has drawn yet.
 
+## Also — a release says what to do about it, not just what changed
+
+**Done when:** a session that runs `harness-freshness`, finds itself behind, and reads the release
+notes can perform the update without a human explaining anything — including knowing when it *must*
+act rather than *may*.
+**Blocked on:** nothing mechanical. It needs a decision about what a release is allowed to ask of an
+adopter, which is Eric's, and that decision is the actual work.
+
+**This is not reality today, and the gap is narrower than it looks.** Detection already exists:
+[`plugins/harness-gates/lib/freshness.mjs`](../plugins/harness-gates/lib/freshness.mjs) answers *am I behind* on two
+independent clocks — the checkout, and the SHA-tracked plugins that update on their own schedule.
+What is missing is the other half. A release note currently reads:
+
+    ### Features
+    * import a real repository, to find out whether any of this travels (#61) (ce05e8f)
+
+That is a commit subject. It says what changed and nothing about what the reader must DO — and the
+reasoning that would answer it is written down, just not there: it lives in the commit body and the
+pull request, and `release-notes-generator` takes only the subject line.
+
+Three things it needs, in the order they get useful:
+
+1. **A footer convention for actions**, the way `BREAKING CHANGE:` already works — a release that
+   adds a budget file, moves a descriptor key, or requires re-running the bootstrap should say so in
+   the commit that does it, because that is the only moment anyone knows.
+2. **Those footers rendered into the notes** rather than dropped. This is `writerOpts` on
+   [`.releaserc.json`](../.releaserc.json) and nothing more.
+3. **Something machine-readable**, so a session compares what it has against what a release requires
+   instead of parsing prose. The plugins carry no `version` field on purpose, so the identifier a
+   session actually holds is a commit SHA — and the notes already print one.
+
+The failure this defends against is specific: an adopter three versions behind, whose gates quietly
+stopped measuring a dimension because a descriptor key was renamed, and whose green suite is
+therefore a false green. Nothing today would tell them.
+
 ## Later — the harness is proven somewhere it did not grow
 
 **Done when:** a repository nobody here works in has adopted it and kept it.
