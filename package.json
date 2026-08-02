@@ -1,9 +1,15 @@
 {
-  "name": "dungeon-crawler",
+  "name": "@ejclark/dungeon-crawler",
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "A portable engineering harness for Claude Code, distributed as a plugin marketplace.",
+  "description": "A portable engineering harness for Claude Code: ratcheting quality gates, corrective drills, and the background athletes that burn structural debt down.",
+  "keywords": [
+    "claude-code",
+    "quality-gates",
+    "architecture-fitness",
+    "engineering-harness"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ejclark/dungeon-crawler.git"
@@ -12,6 +18,43 @@
   "engines": {
     "node": ">=24"
   },
+  "//bin": "Points at the .mjs modules, NOT the sh launchers in plugins/*/bin. npm generates its own cross-platform shims from a shebang, so a consumer needs no .cmd twin — that apparatus exists for the plugin marketplace, which resolves differently. harness-ship is the exception: it is a bash program rather than a launcher, and stays POSIX-only as the ROADMAP already says.",
+  "bin": {
+    "harness-arch-scan": "./plugins/harness-gates/lib/arch-scan.mjs",
+    "harness-bootstrap": "./plugins/harness-core/lib/bootstrap.mjs",
+    "harness-city": "./plugins/harness-core/lib/city-cli.mjs",
+    "harness-claim": "./plugins/harness-gates/lib/claims.mjs",
+    "harness-clone-scan": "./plugins/harness-gates/lib/clone-scan.mjs",
+    "harness-dead-scan": "./plugins/harness-gates/lib/dead-scan.mjs",
+    "harness-dispatch": "./plugins/harness-gates/lib/dispatch.mjs",
+    "harness-dungeon": "./plugins/harness-core/lib/dungeon.mjs",
+    "harness-dupe-scan": "./plugins/harness-gates/lib/dupe-scan.mjs",
+    "harness-fleet": "./plugins/harness-gates/lib/fleet.mjs",
+    "harness-freshness": "./plugins/harness-gates/lib/freshness.mjs",
+    "harness-gear": "./plugins/harness-core/lib/gear.mjs",
+    "harness-import": "./plugins/harness-core/lib/import-repo.mjs",
+    "harness-incident-scan": "./plugins/harness-gates/lib/incident-scan.mjs",
+    "harness-log": "./plugins/harness-gates/lib/log-cli.mjs",
+    "harness-map": "./plugins/harness-core/lib/map.mjs",
+    "harness-preflight": "./plugins/harness-gates/lib/preflight.mjs",
+    "harness-report": "./plugins/harness-core/lib/report.mjs",
+    "harness-serve": "./plugins/harness-core/lib/serve.mjs",
+    "harness-ship": "./plugins/harness-gates/bin/harness-ship",
+    "harness-spec-gap-scan": "./plugins/harness-gates/lib/spec-gap-scan.mjs",
+    "harness-standing": "./plugins/harness-gates/lib/standing.mjs",
+    "harness-starter": "./plugins/harness-core/lib/starter.mjs"
+  },
+  "exports": {
+    ".": "./plugins/harness-core/lib/api.mjs",
+    "./core/*": "./plugins/harness-core/lib/*",
+    "./gates/*": "./plugins/harness-gates/lib/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "plugins/",
+    "docs/",
+    ".claude-plugin/"
+  ],
   "scripts": {
     "start": "node plugins/harness-core/lib/serve.mjs",
     "dev": "node scripts/dev.mjs",
