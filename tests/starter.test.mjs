@@ -7,11 +7,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { STARTER_SCRIPTS, starterFiles, writeStarter } from "../plugins/harness-core/lib/starter.mjs";
+import { STARTER_SCRIPTS, initGit, starterFiles, writeStarter } from "../plugins/harness-core/lib/starter.mjs";
 
 const REPO = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -118,4 +118,26 @@ test("the stuck path hands over material rather than suggestions", () => {
   assert.ok([...stuck.matchAll(/^\d\. \*\*/gm)].length >= 5, "fewer than five questions — the word list needs five");
   assert.match(stuck, /answers are the input|answers ARE the input/i, "it has to say the answers are used, or it reads as a warm-up");
   assert.match(stuck, /WORDS = \[/, "it must show exactly where the answers go");
+});
+
+test("--git leaves the starter undoable, and never touches existing history", () => {
+  // The promise the starter makes is that this is somewhere safe to experiment, and an app you
+  // cannot undo a change to is not that. It is also what turns `harness-new --push` from an error
+  // into a next step — the gap that made publishing a starter a manual git lesson.
+  const dest = mkdtempSync(join(tmpdir(), "starter-git-"));
+  writeStarter(dest, {});
+  assert.equal(initGit(dest).initialised, true);
+  assert.ok(existsSync(join(dest, ".git")), "harness-new --push needs a repository to push");
+  const files = execFileSync("git", ["-C", dest, "show", "--name-only", "--format=", "HEAD"], { encoding: "utf8" });
+  assert.match(files, /index\.html/, "the first commit must contain the starter, not be empty");
+
+  // Somebody running the starter inside existing work is not asking for their history to be touched.
+  const again = initGit(dest);
+  assert.equal(again.initialised, false);
+  assert.match(again.reason, /already a git repository/);
+
+  // And the identity is per-commit, not written into the new repo — the person's own name must land
+  // on everything they do next rather than a placeholder they silently inherit.
+  const config = execFileSync("git", ["-C", dest, "config", "--local", "--list"], { encoding: "utf8" });
+  assert.doesNotMatch(config, /starter@localhost/, "the placeholder identity must not persist into the repo");
 });

@@ -4,6 +4,7 @@
 //   harness-starter            # hello — one page, a picture from five words you pick
 //   harness-starter --todo     # the fuller app: create, delete, edit, with tests and requirements
 //   harness-starter --force    # overwrite existing files
+//   harness-starter --git      # …and make it a git repository, committed, ready to publish
 //
 // WHY A SCAFFOLD RATHER THAN INSTRUCTIONS. `FIRST-APP.md` teaches the arc and is the right artifact
 // for someone learning what the steps ARE. But somebody who has never built anything cannot type a
@@ -22,6 +23,7 @@
 // The logic file has no DOM in it, which is the load-bearing decision. It is why the tests need no
 // browser and no setup, and why they are three lines each — the thing that decides whether somebody
 // writes a second test is whether the first one was easy.
+import { execFileSync } from "node:child_process";
 import { copyFileSync, existsSync, mkdirSync, readdirSync, statSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -59,6 +61,29 @@ export const STARTER_SCRIPTS = {
 };
 
 /**
+ * Make `dest` a git repository with the starter as its first commit — the missing half of "a real
+ * first app on disk".
+ *
+ * NOT a second verb, and the distinction matters because this file's neighbours are strict about it:
+ * `harness-import` refuses to adopt, `harness-new` refuses to bootstrap. Version control is not a
+ * separate act from scaffolding a starting point, it is *part of* one — an app you cannot undo a
+ * change to is not somewhere safe to experiment, which is the entire promise the starter makes. And
+ * it is what turns `harness-new --push` from an error into a next step.
+ *
+ * Already a repository? Left completely alone, initial commit and all. Someone running the starter
+ * inside existing work is not asking for their history to be touched.
+ */
+export function initGit(dest, { run = (cmd, args) => execFileSync(cmd, args, { cwd: dest, stdio: "pipe" }) } = {}) {
+  if (existsSync(join(dest, ".git"))) return { initialised: false, reason: "already a git repository" };
+  run("git", ["init", "-q", "-b", "main"]);
+  run("git", ["add", "-A"]);
+  // -c rather than `git config`: the identity is for THIS commit, not written into the new repo, so
+  // the person's own name lands on everything they do next rather than a placeholder they inherit.
+  run("git", ["-c", "user.name=starter", "-c", "user.email=starter@localhost", "commit", "-qm", "chore: the starter, before anything of mine"]);
+  return { initialised: true };
+}
+
+/**
  * Write the starter. NEVER clobbers without `--force` — the same rule the bootstrap follows, and for
  * the same reason: an existing file is a decision somebody made.
  */
@@ -89,6 +114,13 @@ if (process.argv[1]?.endsWith("starter.mjs")) {
   console.log(`\n  ✦ ${kind === "hello" ? "Hello" : "To-do"} starter${dryRun ? " — DRY RUN, nothing written" : ""}\n`);
   for (const f of wrote) console.log(`      + ${f}`);
   for (const f of skipped) console.log(`      · ${f}  (already there — yours wins)`);
+
+  if (process.argv.includes("--git") && !dryRun) {
+    const { initialised, reason } = initGit(process.cwd());
+    console.log(initialised ? "\n      ✓ git repository, first commit made — every change from here is undoable" : `\n      · ${reason} — left untouched`);
+    console.log("\n  Give it a home on GitHub when you want one:\n");
+    console.log("      harness-new <name> --push .\n");
+  }
 
   if (kind === "hello") {
     console.log(`
