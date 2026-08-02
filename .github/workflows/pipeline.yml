@@ -98,6 +98,24 @@ jobs:
     # Merged commits are already verified, so this path only ships.
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
+    # `id-token: write` is what lets npm TRUSTED PUBLISHING work: GitHub mints a short-lived,
+    # job-scoped OIDC token that npm verifies against the publisher configured on the package. No
+    # long-lived secret exists to leak, rotate, or forget — which matters more here than convenience,
+    # because npm revoked all classic tokens in December 2025 and capped write-capable granular
+    # tokens at 90 days. A token-based setup is a rotation treadmill with an expiry that will fail on
+    # a day nobody chose.
+    #
+    # It also buys PROVENANCE for free: publishing this way attaches a signed attestation tying the
+    # tarball to this repository, this workflow and this commit. A token cannot produce that.
+    #
+    # THIS JOB MUST NOT BECOME A REUSABLE WORKFLOW. npm validates the CALLING workflow's filename
+    # against the trusted-publisher config, so a `workflow_call` indirection reports a mismatch. The
+    # verify half is reusable on purpose; this half deliberately is not.
+    permissions:
+      contents: write # semantic-release creates tags and GitHub releases
+      issues: write # and comments on the issues a release closes
+      pull-requests: write
+      id-token: write # npm trusted publishing
     steps:
       - uses: actions/checkout@v5
         with:
@@ -109,11 +127,23 @@ jobs:
         with:
           node-version: '24'
           cache: npm
+          # Required for auth to resolve at publish time, for both OIDC and token paths.
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
         run: npm ci
 
+      # THE FIRST RELEASE IS THE ONE EXCEPTION, and it is a chicken-and-egg rather than an oversight:
+      # a trusted publisher is configured ON a package, so it cannot be configured for a name that has
+      # never been published. Release #1 therefore needs NPM_TOKEN — a granular token, scoped to
+      # @ejclark/*, Bypass 2FA enabled — set as a repository secret.
+      #
+      # AFTER that release lands: configure the trusted publisher on npmjs.com (ejclark /
+      # dungeon-crawler / pipeline.yml / no environment), then DELETE the secret. semantic-release
+      # prefers OIDC when no token is present, so removing it is the whole migration. Leaving it in
+      # place would keep a 90-day expiry pointed at the release path for no benefit.
       - name: Semantic Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npx semantic-release
