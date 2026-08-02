@@ -10,52 +10,58 @@
 // DEVELOPMENT experience — hot reload while you edit a view — and the shipped path stays installable
 // by anyone who typed `npm start`.
 //
-// NO BABEL, NO LOADERS TO SPEAK OF. rspack's builtin SWC handles the JSX-free modern JS here, and a
-// toolchain that needs a chain of transforms is one nobody can debug at 6pm.
+// EVERY LINE HERE IS A DEVIATION FROM A DEFAULT, AND HAS TO EARN IT. A config option is a decision
+// the system failed to make, and one that merely restates a default is worse than absent: it reads
+// as a considered choice, so the next person leaves it alone, and it silently pins behaviour when
+// the tool improves underneath. This file was cut from twice its length by deleting everything that
+// rspack already does — including a `resolve.extensions` that was quietly NARROWING resolution and
+// would have broken the first `.json` import anybody tried.
 import { rspack } from "@rspack/core";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 
-// The API server's port. The UI is on 4173 — the address people already have — and the data server
+// The API server's port. The UI keeps 4173 — the address people already have — and the data server
 // moves to 4174, so the URL nobody has to relearn is the one that still works.
 const API = process.env.HARNESS_API ?? "http://127.0.0.1:4174";
 
 export default {
-  context: HERE,
   entry: { main: "./web/main.js" },
-  output: {
-    path: resolve(HERE, "web/dist"),
-    filename: "[name].js",
-    clean: true,
-  },
-  resolve: { extensions: [".js"] },
-  module: {
-    rules: [
-      // CSS goes through rspack's own pipeline so editing a token hot-swaps the stylesheet instead
-      // of reloading the page — which is the difference between adjusting a colour and losing your
-      // scroll position twenty times in a row.
-      { test: /\.css$/, type: "css" },
-    ],
-  },
+
+  // Not the default `dist/`: the client app is one part of a repository that is mostly not a client
+  // app, and a top-level `dist/` in a plugin marketplace reads like the marketplace's own build.
+  //
+  // fileURLToPath and NOT `new URL(...).pathname`, which was the first version of this line and is
+  // wrong on Windows: it yields `/C:/Users/...`, with a leading slash before the drive letter, which
+  // is not a path any Windows API accepts. The shorter expression reads fine on the machine that
+  // wrote it and breaks on the machine that did not.
+  output: { path: resolve(HERE, "web/dist") },
+
+  // NOT a default, verified by deleting it: without this the build fails on the first `@import`-less
+  // plain stylesheet with "you may need an appropriate loader". Native CSS, so no loader chain and
+  // no extract plugin — editing a token hot-swaps the stylesheet instead of reloading the page.
   experiments: { css: true },
-  plugins: [
-    new rspack.HtmlRspackPlugin({
-      template: "./web/index.html",
-      title: "harness",
-    }),
-  ],
+  // And the rule as well: `experiments.css` alone was not enough — verified by trying it. Both are
+  // required for a plain `.css` import to resolve.
+  module: { rules: [{ test: /\.css$/, type: "css" }] },
+
+  plugins: [new rspack.HtmlRspackPlugin({ template: "./web/index.html" })],
+
   devServer: {
-    port: 4173,
-    host: "127.0.0.1", //  same rule as the server it fronts — a repo map is nobody else's business
-    hot: true,
-    open: true, //  the tab opens itself here too, so `npm run dev` matches `npm start`
-    client: { overlay: { errors: true, warnings: false } },
+    // THE ONE SECURITY PROPERTY, STATED RATHER THAN INHERITED. The default is already loopback-only,
+    // so this line changes nothing today — and it stays anyway. A repository map names every file and
+    // its debt, which is a description of somebody's codebase that has no business being reachable
+    // from another machine; that guarantee is not one to hold on the strength of an upstream default
+    // that a major version could widen without anybody here noticing. The server it fronts pins the
+    // same address for the same reason.
+    host: "127.0.0.1",
+
+    // Opens the tab, which is the point — `npm run dev` should match `npm start`. Not a default.
+    open: true,
+
     // The API is the other server. Proxied rather than CORS'd, so the app makes same-origin requests
     // and the production path — where one server does both — needs no different code.
-    proxy: [{ context: ["/api", "/rev"], target: API, changeOrigin: false }],
+    proxy: [{ context: ["/api", "/rev"], target: API }],
   },
-  devtool: "source-map",
-  stats: { preset: "errors-warnings", timings: true },
 };
