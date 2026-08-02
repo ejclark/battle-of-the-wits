@@ -45,6 +45,25 @@ Assume more are hiding.
    A gate that cannot measure must not render a verdict in either direction.
 5. Implementation lives in `plugins/harness-gates/lib/*.mjs`; `bin/` holds only the thin launcher.
 
+## A change goes home to the repository it is about
+
+The container pulls repositories in; it must never absorb them. Every change belongs to exactly one
+repo, and which one is decided by what the change is *about*, never by which checkout was open:
+
+- **Improving the harness** — a gate, an agent, a view, doctrine — is a PR to **dungeon-crawler**.
+- **Improving an imported project** is a PR to **that project's own remote**, from its checkout under
+  `.harness/workspace/<repo>/<branch>`. Where there is no push access, `harness-import --fork` makes
+  the fork the origin and the source the upstream, and the PR flows fork → source.
+- **A project's own state — budgets, exemptions, its `harness.json`** — goes to the project. That is
+  the one rule this whole repository is built on, restated at the point it is easiest to break:
+  fixing a target repo's debt by editing something here would make the harness carry a value that is
+  true of one project, which is the drift there is no second instance to catch.
+
+The failure this prevents is a slow one. A fix made in the wrong checkout still works today — the
+gates go green, the picture renders — and the divergence only surfaces when the next repository is
+imported and inherits a decision nobody meant to make for it. When a change touches both sides,
+split it: the mechanism lands here, the declaration lands there, and each is reviewable alone.
+
 ## Ship loop
 
 - Branch off latest `origin/main` before editing; small focused PRs; squash-merge on green.

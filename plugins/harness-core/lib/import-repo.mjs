@@ -20,6 +20,7 @@
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
+import { forkRepo } from "./github.mjs";
 import { HARNESS_ROOT, WORKSPACE, assertContained, isImported, pathFor, workspaceRoot } from "./workspace.mjs";
 
 const HARNESS = HARNESS_ROOT;
@@ -56,6 +57,46 @@ function defaultRun(cmd, args) {
   return execFileSync(cmd, args, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
 }
 
+/**
+ * Fork `owner/repo`, then import THE FORK — with `upstream` pointing back at the source.
+ *
+ * The collaboration path for a repository the runner cannot push to: the fork is the new GitHub
+ * project, branches land on it, and PRs flow from fork to source. The upstream remote is added so
+ * the checkout can track the real repository's movement; nothing here fetches or merges it —
+ * keeping a fork current is work with a judgement in it, and it stays with whoever is working.
+ *
+ * THE CLONE RETRIES, THE API IS NEVER POLLED. GitHub answers a fork request before the fork is
+ * fully materialised, so the first clone can meet an empty repository. The clone is the thing
+ * actually being waited on and it fails cheaply, so it is what retries — three attempts, short
+ * fixed waits, then an honest error naming the fork so the human can simply re-run.
+ */
+export async function forkAndImport(ownerRepo, { branch, harnessRoot = HARNESS, run = defaultRun, fork = forkRepo, sleep = defaultSleep } = {}) {
+  const [owner, repo] = String(ownerRepo).split("/");
+  if (!owner || !repo) throw new Error(`expected owner/repo, got "${ownerRepo}"`);
+
+  const made = await fork(owner, repo);
+  const want = branch ?? made.defaultBranch;
+  const dir = pathFor(nameOf(made.fullName), want, { harnessRoot });
+  assertContained(dir, harnessRoot);
+  if (isImported(dir)) return { dir, fullName: made.fullName, cloned: false, reason: "already imported" };
+
+  mkdirSync(dirname(dir), { recursive: true });
+  let lastErr;
+  for (const wait of [0, 2000, 5000]) {
+    if (wait) await sleep(wait);
+    try {
+      run("git", ["clone", "--branch", want, "--single-branch", made.cloneUrl, dir]);
+      run("git", ["-C", dir, "remote", "add", "upstream", `https://github.com/${owner}/${repo}.git`]);
+      return { dir, fullName: made.fullName, cloned: true };
+    } catch (err) {
+      lastErr = err;
+    }
+  }
+  throw new Error(`the fork ${made.fullName} exists but could not be cloned after 3 attempts — re-run in a moment.\n  ${lastErr?.message ?? ""}`);
+}
+
+const defaultSleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
 // ── CLI ────────────────────────────────────────────────────────────────────────
 if (process.argv[1]?.endsWith("import-repo.mjs")) {
   const argv = process.argv.slice(2);
@@ -68,11 +109,31 @@ if (process.argv[1]?.endsWith("import-repo.mjs")) {
     process.exit(0);
   }
   if (!source) {
-    console.log("\n  harness-import <url-or-path> [--branch NAME] [--where] [--dry-run]\n");
+    console.log("\n  harness-import <url-or-path> [--branch NAME] [--where] [--dry-run]");
+    console.log("  harness-import --fork <owner/repo> [--branch NAME]   # fork first, import the fork\n");
     console.log(`  Workspace: ${workspaceRoot()}`);
     console.log(`  Always ${WORKSPACE}/<repo>/<branch>, inside this checkout — gitignored and excluded`);
     console.log("  from every gate, so an imported repository's debt is never reported as ours.\n");
+    console.log("  --fork is the collaboration path for a repository you cannot push to: the fork is");
+    console.log("  the project your branches land on, `upstream` points at the source, and PRs flow");
+    console.log("  fork → source. Needs GH_TOKEN/GITHUB_TOKEN — the harness carries no credential.\n");
     process.exit(argv.length ? 1 : 0);
+  }
+
+  if (argv.includes("--fork")) {
+    try {
+      const { dir, fullName, cloned, reason } = await forkAndImport(source, { branch: at("--branch") ?? undefined });
+      console.log(`\n  ${cloned ? "✓ forked and imported" : `· ${reason}`}  ${fullName}`);
+      console.log(`      ${dir}`);
+      console.log(`      origin → your fork · upstream → ${source}\n`);
+      console.log("  Branch there, push to origin, and open the PR against upstream:\n");
+      console.log(`      cd ${dir}`);
+      console.log(`      git switch -c <branch> && …work… && git push -u origin <branch>\n`);
+    } catch (err) {
+      console.error(`\n  ✗ ${err.message}\n`);
+      process.exit(1);
+    }
+    process.exit(0);
   }
 
   const target = pathFor(nameOf(source), branch);
