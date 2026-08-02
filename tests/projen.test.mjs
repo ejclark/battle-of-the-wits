@@ -244,6 +244,45 @@ test("git hooks are written executable — a hook git cannot run enforces nothin
   assert.equal(readJson(dir, "package.json").scripts.prepare, "husky");
 });
 
+test("the adopter's workflow CALLS the pipeline and pins an immutable ref", () => {
+  const dir = scratch();
+  odd(dir).synth();
+  const wf = readFileSync(join(dir, ".github/workflows/verify.yml"), "utf8");
+
+  // Scoped to the `uses:` LINE, not the whole file. The first version matched anywhere and caught
+  // the file's own comment explaining why `@main` is wrong — a true statement failing a correct
+  // implementation. The ref is the only thing that grants anything, so it is the only thing to check.
+  const uses = wf.split("\n").filter((l) => l.trim().startsWith("uses:"));
+  assert.equal(uses.length, 1, "one call, so there is one ref to reason about");
+  assert.match(uses[0], /ejclark\/dungeon-crawler\/\.github\/workflows\/verify\.yml@/, "it must call, not copy");
+  // A moving ref would let upstream change what runs with this repository's credentials at any
+  // time — the harness doing, in someone else's repo, what its own preflight forbids here (idea #30).
+  assert.doesNotMatch(uses[0], /@(main|master|HEAD)\s*$/, "a moving ref is a standing grant over the adopter's CI");
+  assert.match(uses[0], /@v\d+\.\d+\.\d+\s*$/, "pinned to an immutable release tag");
+  assert.ok(wf.split("\n").length < 25, "the adopter's file stays small enough to actually read");
+});
+
+test("the reusable pipeline exists upstream and declares workflow_call", () => {
+  const upstream = readFileSync(join(import.meta.dirname, "../.github/workflows/verify.yml"), "utf8");
+  assert.match(upstream, /workflow_call:/, "a caller with nothing to call is a green check that never runs");
+  assert.doesNotMatch(upstream, /secrets:\s*inherit/, "a verify run needs no secret and must not ask for one");
+  // Never piped: a pipeline exits with the last command's status and would report a red gate green.
+  assert.doesNotMatch(upstream, /npm run \$\{\{ inputs\.verify-script \}\}\s*\|/, "verify must not be piped");
+});
+
+test("docker is opt-in — a Dockerfile nobody asked for is an opinion, not a default", () => {
+  const off = scratch();
+  odd(off).synth();
+  assert.equal(existsSync(join(off, "Dockerfile")), false);
+
+  const on = scratch();
+  odd(on, { docker: true }).synth();
+  const dockerfile = readFileSync(join(on, "Dockerfile"), "utf8");
+  assert.match(dockerfile, /^FROM ghcr\.io\/ejclark\/dungeon-crawler\/node-base:\d/m, "the base is delegated, not pinned by hand");
+  assert.match(dockerfile, /USER node/, "never root");
+  assert.match(readFileSync(join(on, ".dockerignore"), "utf8"), /^\.env$/m, "secrets must not be baked into a layer");
+});
+
 test("harness.json is written read-only, so a hand edit is awkward before it is reverted", () => {
   const dir = scratch();
   odd(dir).synth();

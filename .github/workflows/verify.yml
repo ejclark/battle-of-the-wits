@@ -1,0 +1,73 @@
+name: harness verify
+
+# THE PIPELINE, CALLED RATHER THAN COPIED.
+#
+# A consuming repository's workflow is ~10 lines that call this one. That matters for a reason beyond
+# tidiness: it is the only way pipeline improvements reach an adopter WITHOUT the harness writing into
+# their `.github/workflows/`.
+#
+# This repository's own `preflight` refuses workflow edits to every principal including the owner,
+# because that file decides what runs with a repository's credentials. An updater that silently
+# rewrote an adopter's CI would be the harness doing, in someone else's repo, the exact thing it
+# forbids everyone from doing in their own (idea #30). A reusable workflow inverts it: the adopter's
+# file is theirs, they pinned the ref, and the ref is immutable — so an upgrade is a visible one-line
+# diff they choose to take, and nothing here can reach them until they do.
+#
+# NOTE ON `secrets`: none are declared or inherited. A reusable workflow cannot see the caller's
+# secrets unless they are passed explicitly, and nothing in a verify run should need one.
+
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        description: Node version to run the checks on.
+        type: string
+        default: '24'
+      verify-script:
+        description: The npm script that runs the full local gate.
+        type: string
+        default: verify
+      lint-pr-title:
+        description: >-
+          Lint the pull request TITLE with commitlint. The title is the text a squash-merge keeps;
+          the branch's individual commits are thrown away, so linting those checks the discarded
+          text and not the surviving text.
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0            # commitlint needs the commit range
+
+      - name: Set up Node ${{ inputs.node-version }}
+        uses: actions/setup-node@v5
+        with:
+          node-version: ${{ inputs.node-version }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # The title is passed through the ENVIRONMENT rather than interpolated into the shell. A pull
+      # request title is attacker-controlled text on a public repository, and
+      # `run: echo "${{ github.event.pull_request.title }}"` is a script injection with a friendly name.
+      - name: Lint the pull request title
+        if: ${{ inputs.lint-pr-title && github.event_name == 'pull_request' }}
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: echo "$PR_TITLE" | npx --no-install commitlint --verbose
+
+      # ONE STEP, not six. The gates run INSIDE the repo's own verify script, so they cost no extra
+      # runner minutes and cannot be skipped independently of the suite. Run directly — never piped
+      # to `tail` or `tee`, because a pipeline exits with the LAST command's status and would report
+      # a failing gate as a green check.
+      - name: Verify
+        run: npm run ${{ inputs.verify-script }}
