@@ -24,7 +24,7 @@
 //      → every path here is absolute and derived from the harness root, never from the cwd.
 //
 // A hazard with a test on it is a hazard we control. That is the whole trade.
-import { existsSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import { dirname, join, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -113,3 +113,25 @@ export function assertContained(target, harnessRoot = HARNESS_ROOT) {
 
 /** Has this repo/branch already been imported? */
 export const isImported = (dir) => existsSync(join(dir, ".git"));
+
+/**
+ * Every checkout currently in the workspace: `{ repo, branch, dir }`, sorted for stable output.
+ *
+ * A directory only counts with a `.git` inside it — a half-finished clone or a stray folder is not
+ * an import, and reporting one as such would hand a caller a root that git commands fail on. Read
+ * fresh on every call rather than cached, because the whole point of asking is that an import may
+ * just have happened.
+ */
+export function importedCheckouts(harnessRoot = HARNESS_ROOT) {
+  const ws = workspaceRoot(harnessRoot);
+  const out = [];
+  if (!existsSync(ws)) return out;
+  for (const repo of readdirSync(ws, { withFileTypes: true })) {
+    if (!repo.isDirectory()) continue;
+    for (const branch of readdirSync(join(ws, repo.name), { withFileTypes: true })) {
+      const dir = join(ws, repo.name, branch.name);
+      if (branch.isDirectory() && isImported(dir)) out.push({ repo: repo.name, branch: branch.name, dir });
+    }
+  }
+  return out.sort((a, b) => a.repo.localeCompare(b.repo) || a.branch.localeCompare(b.branch));
+}

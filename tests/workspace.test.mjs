@@ -15,7 +15,8 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from "node:os";
 import { join, dirname, sep } from "node:path";
 import { fileURLToPath } from "node:url";
-import { HARNESS_ROOT, WORKSPACE, assertContained, contains, pathFor, segment, workspaceRoot } from "../plugins/harness-core/lib/workspace.mjs";
+import { HARNESS_ROOT, WORKSPACE, assertContained, contains, importedCheckouts, pathFor, segment, workspaceRoot } from "../plugins/harness-core/lib/workspace.mjs";
+import { resolveRoot } from "../plugins/harness-core/lib/serve.mjs";
 import { importRepo, nameOf } from "../plugins/harness-core/lib/import-repo.mjs";
 
 const REPO = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -182,4 +183,60 @@ test("it clones and does not adopt", () => {
   assert.doesNotMatch(src, /run\(.*bootstrap|--auto"/, "importing must not run the adoption");
   assert.ok(existsSync(join(REPO, "plugins/harness-core/bin/harness-import")), "the launcher must exist");
   assert.ok(existsSync(join(REPO, "plugins/harness-core/bin/harness-import.cmd")), "and its Windows twin");
+});
+
+// ── the container question: which repository is the server about? ─────────────
+
+/** A fake harness root with the given imported checkouts (a `.git` dir marks a real import). */
+function harnessWith(...imports) {
+  const root = mkdtempSync(join(tmpdir(), "harness-root-"));
+  for (const [repo, branch] of imports) {
+    mkdirSync(join(pathFor(repo, branch, { harnessRoot: root }), ".git"), { recursive: true });
+  }
+  return root;
+}
+
+test("importedCheckouts reports real imports and ignores debris", () => {
+  const root = harnessWith(["skynet-capital", "main"], ["widget-shop", "main"]);
+  // Debris: a directory with no .git is a half-finished clone or a stray folder, not an import.
+  mkdirSync(join(workspaceRoot(root), "stray", "main"), { recursive: true });
+  assert.deepEqual(
+    importedCheckouts(root).map((c) => c.repo),
+    ["skynet-capital", "widget-shop"],
+    "two imports, the .git-less directory excluded",
+  );
+  assert.deepEqual(importedCheckouts(mkdtempSync(join(tmpdir(), "harness-root-"))), [], "no workspace at all is an answer, not a crash");
+});
+
+test("an explicit --root wins from any cwd", () => {
+  const root = harnessWith(["skynet-capital", "main"]);
+  const { root: chosen, why } = resolveRoot(["--root", "/somewhere/else"], root, root, importedCheckouts(root));
+  assert.match(chosen.split(sep).join("/"), /somewhere\/else$/);
+  assert.equal(why, "--root");
+});
+
+test("started inside some other repository, the server serves THAT — the adopter path, unchanged", () => {
+  const root = harnessWith(["skynet-capital", "main"]);
+  const elsewhere = mkdtempSync(join(tmpdir(), "adopter-"));
+  assert.equal(resolveRoot([], elsewhere, root, importedCheckouts(root)).root, elsewhere);
+});
+
+test("at the harness root with exactly one import, the import is the subject", () => {
+  // The container intent: a repository pulled into scope is the thing being worked on, and one
+  // import is unambiguous evidence of which. `npm start` shows the work, not the container.
+  const root = harnessWith(["skynet-capital", "main"]);
+  const { root: chosen, why } = resolveRoot([], root, root, importedCheckouts(root));
+  assert.equal(chosen, pathFor("skynet-capital", "main", { harnessRoot: root }));
+  assert.match(why, /skynet-capital/);
+});
+
+test("zero or several imports fall back to the harness rather than guessing", () => {
+  // Picking one of three imports by any tiebreak would be the harness inventing an answer the
+  // human never gave. The chooser is printed by the CLI instead; here the rule just holds.
+  const none = harnessWith();
+  assert.equal(resolveRoot([], none, none, importedCheckouts(none)).root, none);
+  const many = harnessWith(["a", "main"], ["b", "main"]);
+  const { root: chosen, why } = resolveRoot([], many, many, importedCheckouts(many));
+  assert.equal(chosen, many);
+  assert.match(why, /--root/, "the several-imports answer must point at the flag that resolves it");
 });

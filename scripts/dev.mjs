@@ -77,5 +77,11 @@ console.log("      the data is re-derived per request, so a refresh is enough.\n
 
 // The data server does not open a tab; the bundler's dev server does, and two tabs for one command
 // is the kind of small rudeness that makes a tool feel unfinished.
-run("data server", process.execPath, [join(REPO, "plugins/harness-core/lib/serve.mjs"), "--port", String(apiPort), "--no-open"]);
+//
+// `--root` passes through untouched: WHICH repository the page is about is the data server's
+// decision (explicit flag, else the one imported checkout, else the harness — see serve.mjs), and
+// the UI follows automatically because it only ever talks to the API it is proxied to.
+const rootAt = argv.indexOf("--root");
+const rootArgs = rootAt >= 0 && argv[rootAt + 1] ? ["--root", argv[rootAt + 1]] : [];
+run("data server", process.execPath, [join(REPO, "plugins/harness-core/lib/serve.mjs"), "--port", String(apiPort), "--no-open", ...rootArgs]);
 run("ui server", rspackBin, ["serve", "--port", String(uiPort)], { HARNESS_API: `http://127.0.0.1:${apiPort}` });

@@ -24,6 +24,7 @@
 // install before it renders anything is a visualiser nobody opens twice.
 import { spawn } from "node:child_process";
 import { createServer } from "node:http";
+import { resolve as resolvePath } from "node:path";
 import { stateOf } from "./api.mjs";
 import { cityDocument } from "./city.mjs";
 import { historyDocument } from "./history.mjs";
@@ -31,6 +32,7 @@ import { mapDocument } from "./cartography.mjs";
 import { overviewDocument } from "./overview.mjs";
 import { gitOut, repoNameOf } from "./render.mjs";
 import { towerDocument } from "./tower.mjs";
+import { HARNESS_ROOT, importedCheckouts } from "./workspace.mjs";
 
 const HOST = "127.0.0.1"; //  never a public interface — see above; deliberately not configurable
 
@@ -151,11 +153,38 @@ function openBrowser(url) {
   }
 }
 
+/**
+ * Which repository this server is ABOUT — the container question, answered from evidence.
+ *
+ * The harness is a container: repositories are pulled into `.harness/workspace/` and worked on
+ * there, so a person who typed `npm start` while working on an imported repo almost never means
+ * "show me the harness". The rules, in order, each one a decision the system can make itself:
+ *
+ *   1. `--root PATH` — an explicit answer wins outright, from any cwd.
+ *   2. cwd is NOT the harness root — the server was started inside some repository on purpose;
+ *      serve that. This is the path every adopter is on, and it does not change.
+ *   3. cwd IS the harness root and exactly ONE checkout is imported — that checkout is the subject.
+ *      One import is unambiguous evidence of what is being worked on.
+ *   4. Anything else — zero imports, or several — falls back to the harness itself, and when there
+ *      are several the chooser is printed rather than guessed at: picking one of three imports by
+ *      some tiebreak would be the harness inventing an answer the human never gave.
+ */
+export function resolveRoot(argv, cwd, harnessRoot, imports) {
+  const i = argv.indexOf("--root");
+  if (i >= 0 && argv[i + 1]) return { root: resolvePath(argv[i + 1]), why: "--root" };
+  if (resolvePath(cwd) !== resolvePath(harnessRoot)) return { root: cwd, why: "cwd" };
+  if (imports.length === 1) return { root: imports[0].dir, why: `the one imported checkout (${imports[0].repo} @ ${imports[0].branch})` };
+  return { root: cwd, why: imports.length ? "several imports — say which with --root" : "no imports — serving the harness itself" };
+}
+
 // ── CLI ────────────────────────────────────────────────────────────────────────
 if (process.argv[1]?.endsWith("serve.mjs")) {
   const argv = process.argv.slice(2);
   const port = Number(argv[argv.indexOf("--port") + 1]) || 4173;
-  const root = process.cwd();
+  const imports = importedCheckouts();
+  const { root, why } = resolveRoot(argv, process.cwd(), HARNESS_ROOT, imports);
+  console.log(`\n  root: ${root}\n        (${why})`);
+  if (imports.length > 1) for (const c of imports) console.log(`        --root ${c.dir}`);
   // Opening a tab is the right default for somebody who typed `npm start` and wants to look at
   // something. It is the wrong default for CI, for a container, and for anyone who just wants the
   // process — so the escape is a flag, and CI is detected rather than left to remember the flag.
