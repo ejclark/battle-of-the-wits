@@ -6,6 +6,7 @@
   "specSuffix": ".test.mjs",
   "specExempt": [],
   "exclude": [
-    "plugins/harness-core/templates/"
+    "plugins/harness-core/templates/",
+    ".harness/"
   ]
 }
