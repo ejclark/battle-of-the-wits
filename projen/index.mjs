@@ -24,7 +24,7 @@
 //   · GENERATED — rewritten every synth, content belongs upstream. `harness.json` is one.
 //   · SEEDED — written once, NEVER clobbered, content belongs to the repo. Budgets, IDEAS.md,
 //     LESSONS.md. The harness owns their SHAPE and validates it; it must never own what is in them.
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Component, JsonFile, SampleFile, TextFile, typescript } from "projen";
@@ -198,6 +198,77 @@ export class ContextualSystemsComponent extends Component {
   }
 }
 
+/** Directories inside the package that hold agent and skill markdown, in load order. */
+const CLAUDE_SOURCES = ["../plugins/harness-core", "../plugins/harness-gates"];
+
+/**
+ * The drills and the athletes — agents and skills, delivered without a plugin marketplace.
+ *
+ * Claude Code discovers these in `.claude/agents/` and `.claude/skills/` and nowhere else. There is
+ * no npm resolution for them, which is the one thing the marketplace did that a package cannot: a
+ * plugin is copied into `~/.claude/plugins/cache` and found from there. So the package ships the
+ * markdown and this writes it into the two directories that are actually read.
+ *
+ * GENERATED, not gitignored. The alternative was a derived copy excluded from git, and committed is
+ * better on every axis that matters here: an adopter can read the drills their repo actually has,
+ * diff them when the harness moves, and the anti-tamper check catches a hand edit instead of it being
+ * silently reverted on the next install. The file says it is generated and where to change it.
+ */
+export class ClaudeComponent extends Component {
+  constructor(project) {
+    super(project, "harness-claude");
+
+    for (const base of CLAUDE_SOURCES) {
+      const agents = join(HERE, base, "agents");
+      if (existsSync(agents)) {
+        for (const f of readdirSync(agents).filter((n) => n.endsWith(".md"))) {
+          new TextFile(project, `.claude/agents/${f}`, {
+            lines: readFileSync(join(agents, f), "utf8").split("\n"),
+            readonly: true,
+            marker: false, // front-matter is parsed; a comment above it would not survive
+          });
+        }
+      }
+
+      const skills = join(HERE, base, "skills");
+      if (!existsSync(skills)) continue;
+      for (const name of readdirSync(skills)) {
+        const src = join(skills, name, "SKILL.md");
+        if (!existsSync(src)) continue;
+        new TextFile(project, `.claude/skills/${name}/SKILL.md`, {
+          lines: readFileSync(src, "utf8").split("\n"),
+          readonly: true,
+          marker: false,
+        });
+      }
+    }
+  }
+}
+
+/**
+ * The git hooks — the local half of the gate, where a slip costs seconds instead of a CI round trip.
+ *
+ * `pre-push` runs the full verify on purpose: CI is confirmation, not the first line of defence. The
+ * templates are read rather than restated, same as biome, so the bootstrap and synthesis paths cannot
+ * drift while both exist.
+ */
+export class HooksComponent extends Component {
+  constructor(project, options = {}) {
+    super(project, "harness-hooks");
+    for (const hook of ["pre-commit", "commit-msg", "pre-push", "post-commit"]) {
+      new TextFile(project, `.husky/${hook}`, {
+        lines: template(`husky/${hook}`).split("\n"),
+        executable: true,
+        readonly: true,
+        marker: false, // these are shell scripts git executes; a projen marker line is not a comment it should carry
+      });
+    }
+    project.addDevDeps(`husky@${options.huskyVersion ?? "^9.1.7"}`);
+    // `prepare` is npm's own lifecycle hook — husky installs itself on every `npm install`.
+    project.package.setScript("prepare", "husky");
+  }
+}
+
 /**
  * Sanitation — the tiers that make "extensible" and "principled" stop being opposites.
  *
@@ -280,6 +351,8 @@ export class HarnessProject extends typescript.TypeScriptProject {
     new RstestComponent(this, options);
     new GatesComponent(this, options);
     new ContextualSystemsComponent(this, options);
+    new ClaudeComponent(this);
+    new HooksComponent(this, options);
     new SanitationComponent(this);
   }
 

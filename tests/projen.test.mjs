@@ -3,7 +3,7 @@
 // Same rule as `portability.test.mjs`: a non-default layout, and every case asserts a PROPERTY that a
 // wrong implementation would break — not that synth exited 0. A synthesizer that wrote nothing would
 // pass an exit-code test perfectly.
-import { mkdtempSync, readFileSync, existsSync, writeFileSync, statSync } from "node:fs";
+import { mkdtempSync, readFileSync, readdirSync, existsSync, writeFileSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import assert from "node:assert/strict";
@@ -206,6 +206,42 @@ test("biome and rstest arrive, and bring no second linter or runner with them", 
 
   assert.ok(deps["@biomejs/biome"], "biome is the lint and format answer");
   assert.ok(deps["@rstest/core"], "rstest is the runner");
+});
+
+test("EVERY agent and skill the package ships reaches .claude/ — none may be quietly dropped", () => {
+  const dir = scratch();
+  odd(dir).synth();
+
+  // Counted from the source of truth rather than hardcoded: a component that covered five of ten
+  // would pass a spot-check forever, and the drills a repo does not have are invisible by nature.
+  const pkgRoot = join(import.meta.dirname, "..");
+  let agents = 0;
+  let skills = 0;
+  for (const base of ["plugins/harness-core", "plugins/harness-gates"]) {
+    const a = join(pkgRoot, base, "agents");
+    if (existsSync(a)) agents += readdirSync(a).filter((f) => f.endsWith(".md")).length;
+    const s = join(pkgRoot, base, "skills");
+    if (existsSync(s)) skills += readdirSync(s).filter((n) => existsSync(join(s, n, "SKILL.md"))).length;
+  }
+
+  assert.ok(agents > 0 && skills > 0, "the fixture would be vacuous if the package shipped neither");
+  assert.equal(readdirSync(join(dir, ".claude/agents")).length, agents);
+  assert.equal(readdirSync(join(dir, ".claude/skills")).length, skills);
+  assert.ok(existsSync(join(dir, ".claude/skills/decompose/SKILL.md")), "skills keep their directory shape");
+});
+
+test("git hooks are written executable — a hook git cannot run enforces nothing", () => {
+  const dir = scratch();
+  odd(dir).synth();
+
+  for (const hook of ["pre-commit", "commit-msg", "pre-push", "post-commit"]) {
+    const path = join(dir, ".husky", hook);
+    assert.ok(existsSync(path), `${hook} must exist`);
+    assert.ok(statSync(path).mode & 0o111, `${hook} must be executable`);
+  }
+  // CI is confirmation, not the first line of defence.
+  assert.match(readFileSync(join(dir, ".husky/pre-push"), "utf8"), /verify/);
+  assert.equal(readJson(dir, "package.json").scripts.prepare, "husky");
 });
 
 test("harness.json is written read-only, so a hand edit is awkward before it is reverted", () => {
