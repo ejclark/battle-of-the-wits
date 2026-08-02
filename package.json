@@ -46,15 +46,26 @@
   },
   "exports": {
     ".": "./plugins/harness-core/lib/api.mjs",
+    "./projen": "./projen/index.mjs",
     "./core/*": "./plugins/harness-core/lib/*",
     "./gates/*": "./plugins/harness-gates/lib/*",
     "./package.json": "./package.json"
   },
   "files": [
     "plugins/",
+    "projen/",
     "docs/",
     ".claude-plugin/"
   ],
+  "peerDependencies": {
+    "projen": ">=0.101.0"
+  },
+  "peerDependenciesMeta": {
+    "projen": {
+      "//": "Only the ./projen export needs it. A repo taking the gates alone — measurement before migration — must not be forced to install a synthesizer it never calls.",
+      "optional": true
+    }
+  },
   "scripts": {
     "start": "node plugins/harness-core/lib/serve.mjs",
     "dev": "node scripts/dev.mjs",
@@ -73,6 +84,7 @@
     "@rspack/core": "2.1.7",
     "@rspack/dev-server": "2.1.0",
     "knip": "^6.31.0",
+    "projen": "0.101.23",
     "semantic-release": "^25.0.0"
   }
 }
