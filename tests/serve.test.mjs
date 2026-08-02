@@ -125,7 +125,7 @@ test("a machine with no browser at all still gets a server", { concurrency: fals
   const port = 4100 + (process.pid % 400);
   const out = spawnSync(process.execPath, [join(REPO, "plugins/harness-core/lib/serve.mjs"), "--port", String(port)], {
     encoding: "utf8",
-    timeout: 4000,
+    timeout: 1500, //  the server binds in well under a second; a longer wait is dead time every run
     env: { ...process.env, PATH: "", CI: "" },
   });
   const log = `${out.stdout ?? ""}${out.stderr ?? ""}`;
