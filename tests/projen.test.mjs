@@ -3,7 +3,7 @@
 // Same rule as `portability.test.mjs`: a non-default layout, and every case asserts a PROPERTY that a
 // wrong implementation would break — not that synth exited 0. A synthesizer that wrote nothing would
 // pass an exit-code test perfectly.
-import { mkdtempSync, readFileSync, readdirSync, existsSync, writeFileSync, statSync } from "node:fs";
+import { chmodSync, mkdtempSync, readFileSync, readdirSync, existsSync, writeFileSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import assert from "node:assert/strict";
@@ -127,7 +127,17 @@ test("a generated descriptor is restored after a hand edit — the artifact is n
   odd(dir).synth();
   const path = join(dir, "harness.json");
 
-  writeFileSync(path, JSON.stringify({ sourceDir: "hand-edited" }), { mode: 0o644 });
+  // chmod FIRST, and that is the point rather than a workaround. projen writes this file 444, so a
+  // hand edit genuinely requires making it writable — a person hits the same wall. The `{ mode }`
+  // option on writeFileSync applies only when CREATING a file, so it does nothing to an existing
+  // read-only one.
+  //
+  // This test passed locally and failed in CI, and the gap is worth naming: the container runs as
+  // ROOT, and root ignores the permission bit entirely. A runner does not. Anything asserting
+  // permission behaviour is untrustworthy when developed as root.
+  assert.equal(statSync(path).mode & 0o222, 0, "projen wrote it read-only");
+  chmodSync(path, 0o644);
+  writeFileSync(path, JSON.stringify({ sourceDir: "hand-edited" }));
   odd(dir).synth();
 
   assert.equal(readJson(dir, "harness.json").sourceDir, "lib", "regeneration is what enforces, not the mode bit");
