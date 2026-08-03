@@ -43,7 +43,7 @@ export function runNpx(args, opts = {}) {
  * The documented defaults — a conventional TypeScript repository needs no `harness.json` at all.
  * Kept here, once, so "what happens when a key is absent" has a single answer rather than six.
  */
-const DEFAULTS = {
+export const DEFAULTS = {
   sourceDir: "src",
   testDir: "tests",
   specSuffix: ".spec.ts",

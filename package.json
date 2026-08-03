@@ -1,16 +1,75 @@
 {
-  "name": "dungeon-crawler",
-  "version": "1.0.0",
-  "private": true,
+  "name": "@ejclark/dungeon-crawler",
+  "//version": "NOT the published version. semantic-release computes it from commit history and writes it into the workspace immediately before packing, without committing it back — the ruleset forbids pushing a bump to main. A real number here would drift from the tags the moment one release lands, which is exactly why plugin manifests carry no version at all. The placeholder makes the field obviously not-a-claim instead of quietly wrong.",
+  "version": "0.0.0-development",
   "type": "module",
-  "description": "A portable engineering harness for Claude Code, distributed as a plugin marketplace.",
+  "description": "A portable engineering harness for Claude Code: ratcheting quality gates, corrective drills, and the background athletes that burn structural debt down.",
+  "keywords": [
+    "claude-code",
+    "quality-gates",
+    "architecture-fitness",
+    "engineering-harness"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ejclark/dungeon-crawler.git"
   },
   "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "engines": {
     "node": ">=24"
+  },
+  "//bin": "Points at the .mjs modules, NOT the sh launchers in plugins/*/bin. npm generates its own cross-platform shims from a shebang, so a consumer needs no .cmd twin — that apparatus exists for the plugin marketplace, which resolves differently. harness-ship is the exception: it is a bash program rather than a launcher, and stays POSIX-only as the ROADMAP already says.",
+  "bin": {
+    "harness-arch-scan": "./plugins/harness-gates/lib/arch-scan.mjs",
+    "harness-bootstrap": "./plugins/harness-core/lib/bootstrap.mjs",
+    "harness-city": "./plugins/harness-core/lib/city-cli.mjs",
+    "harness-claim": "./plugins/harness-gates/lib/claims.mjs",
+    "harness-clone-scan": "./plugins/harness-gates/lib/clone-scan.mjs",
+    "harness-dead-scan": "./plugins/harness-gates/lib/dead-scan.mjs",
+    "harness-dispatch": "./plugins/harness-gates/lib/dispatch.mjs",
+    "harness-dungeon": "./plugins/harness-core/lib/dungeon.mjs",
+    "harness-dupe-scan": "./plugins/harness-gates/lib/dupe-scan.mjs",
+    "harness-fleet": "./plugins/harness-gates/lib/fleet.mjs",
+    "harness-freshness": "./plugins/harness-gates/lib/freshness.mjs",
+    "harness-gear": "./plugins/harness-core/lib/gear.mjs",
+    "harness-import": "./plugins/harness-core/lib/import-repo.mjs",
+    "harness-incident-scan": "./plugins/harness-gates/lib/incident-scan.mjs",
+    "harness-log": "./plugins/harness-gates/lib/log-cli.mjs",
+    "harness-map": "./plugins/harness-core/lib/map.mjs",
+    "harness-preflight": "./plugins/harness-gates/lib/preflight.mjs",
+    "harness-report": "./plugins/harness-core/lib/report.mjs",
+    "harness-sanitation": "./plugins/harness-gates/lib/sanitation.mjs",
+    "harness-serve": "./plugins/harness-core/lib/serve.mjs",
+    "harness-shape-scan": "./plugins/harness-gates/lib/shape.mjs",
+    "harness-ship": "./plugins/harness-gates/bin/harness-ship",
+    "harness-spec-gap-scan": "./plugins/harness-gates/lib/spec-gap-scan.mjs",
+    "harness-standing": "./plugins/harness-gates/lib/standing.mjs",
+    "harness-starter": "./plugins/harness-core/lib/starter.mjs"
+  },
+  "exports": {
+    ".": "./plugins/harness-core/lib/api.mjs",
+    "./projen": "./projen/index.mjs",
+    "./core/*": "./plugins/harness-core/lib/*",
+    "./gates/*": "./plugins/harness-gates/lib/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "plugins/",
+    "projen/",
+    "docs/",
+    ".claude-plugin/"
+  ],
+  "peerDependencies": {
+    "projen": ">=0.101.0"
+  },
+  "peerDependenciesMeta": {
+    "projen": {
+      "//": "Only the ./projen export needs it. A repo taking the gates alone — measurement before migration — must not be forced to install a synthesizer it never calls.",
+      "optional": true
+    }
   },
   "scripts": {
     "start": "node plugins/harness-core/lib/serve.mjs",
@@ -30,6 +89,7 @@
     "@rspack/core": "2.1.7",
     "@rspack/dev-server": "2.1.0",
     "knip": "^6.31.0",
+    "projen": "0.101.23",
     "semantic-release": "^25.0.0"
   }
 }

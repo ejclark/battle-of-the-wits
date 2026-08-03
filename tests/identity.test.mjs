@@ -70,7 +70,13 @@ test("package.json names the repository it actually lives in", () => {
     console.error("GITHUB_REPOSITORY unset — checking internal consistency only; CI checks reality.");
   }
   assert.match(pkg.repository.url, new RegExp(`${SLUG}(\\.git)?$`), `repository.url should point at ${SLUG}`);
-  assert.equal(pkg.name, REPO_NAME, "the package name should match the repository name");
+  // The PROPERTY is that the package identifies this repository — not that the string is spelled one
+  // particular way. An npm scope is publisher identity and says nothing about which repo this is, so
+  // it is stripped before the comparison rather than being baked into the expected value. Pinning the
+  // unscoped literal would have argued against a correct change (see CLAUDE.md → "assert the property").
+  const [scope, unscoped] = pkg.name.startsWith("@") ? pkg.name.slice(1).split("/") : [null, pkg.name];
+  assert.equal(unscoped, REPO_NAME, "the package name should identify the repository it lives in");
+  if (scope) assert.ok(scope.length > 0, "a scoped name must carry a non-empty scope");
 });
 
 test("the marketplace name matches, so the install command in the README is real", () => {

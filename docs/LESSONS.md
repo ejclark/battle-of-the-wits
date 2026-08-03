@@ -605,3 +605,53 @@ Prevention ranks, best first:
   a rule that flagged every string literal in a test would be turned off in a day.
 - **SIDE QUESTS:** the four fixes are in the branch history; the vacuous-pass one is the reason this
   is `closed` rather than `ledger-only`.
+
+### a broad catch turned a missing import into plausible wrong data
+- **SHA:** `23d8bc1`   **DATE:** 2026-08-02   **STATUS:** closed
+- **SIGNAL:** three tests red immediately — but the *useful* signal was much narrower than that. Two
+  of the three were downstream noise (`ENOENT` on a file that was never written); only
+  `tests/bootstrap.test.mjs` → "a describe/it/expect runner gets the .spec.ts flavor" named the
+  actual defect. Detection lag was effectively zero because a planted test already covered the
+  behaviour. Nothing in the code itself would ever have reported it.
+- **ROOT CAUSE:** splitting `effectiveTestScript` out of `configs.mjs` into `scripts.mjs` left
+  `renderDescriptor` calling it with no import. That is a `ReferenceError` — but the call sits inside
+  a bare `catch {}` written to tolerate a missing or malformed `package.json`, and its fallback is
+  `realTest = null`, which is a **legitimate value**. So the error was absorbed into a plausible
+  answer: the repo was treated as having no test script, `specSuffix` flipped to `.test.mjs`, and the
+  gate file was named for a runner the repo does not use. A crash became wrong data, silently, in the
+  exact module whose header warns about a gate measuring the wrong thing while reporting a confident
+  number.
+- **PREVENTION:** gate — the catch is narrowed to the failure it was written for. A `ReferenceError`
+  or `TypeError` inside it is a defect in that module and is rethrown rather than swallowed
+  (`configs.mjs`, `renderDescriptor`). The generalisable rule: **a catch whose fallback is a valid
+  value must not be allowed to catch a programming error**, because the two are indistinguishable
+  afterwards.
+- **SIDE QUESTS:** the same session hit the sibling failure live — `harness-arch-scan | tail`
+  reported exit 0 on a red gate, because a pipeline exits with the last command's status. Both are
+  one shape: an error path that produces a value indistinguishable from success. Worth asking whether
+  any other bare `catch` in the scanners has a legitimate-looking fallback.
+
+### a test passed locally only because the container runs as root
+- **SHA:** `3216d77`   **DATE:** 2026-08-02   **STATUS:** closed
+- **SIGNAL:** the first CI run on the first pull request of this branch — 457 of 458 passing, with
+  `EACCES: permission denied` on a file the same test had just written locally without complaint.
+  Detection lag was one push, but only because a pull request existed; the suite had been green
+  locally through fourteen commits.
+- **ROOT CAUSE:** projen writes generated files `chmod 444`, and the test overwrote one to prove
+  regeneration restores it. `writeFileSync`'s `{ mode }` option applies only when CREATING a file, so
+  it does nothing to an existing read-only one — the write should always have failed. It did not
+  fail locally because **this container runs as root, and root ignores the permission bit entirely.**
+  A GitHub runner does not. The behaviour under test was real; the environment quietly exempted the
+  test from it. Worse, the exemption had already been OBSERVED earlier in the same session while
+  verifying that projen's read-only claim was true, and then used as a premise rather than treated as
+  a warning.
+- **PREVENTION:** doctrine — anything asserting permission, ownership or privilege behaviour is
+  untrustworthy when developed as root, because root is exempt from the thing being asserted. The
+  test now chmods the file first, which is what a person actually has to do, and asserts the 444 mode
+  explicitly so the dependency is visible rather than implicit. A gate is not proposed: the general
+  form ("detect that the dev environment is privileged and warn") would fire on every run of a
+  container that is root by design, and a warning nobody can act on is noise.
+- **SIDE QUESTS:** same family as `shellcheck` being installed in CI and absent locally, which idea
+  #26 already names — a check that only exists in one environment turns a typo into a push-and-wait
+  cycle. The generalisation is broader than tooling: **local and CI differ in privilege as well as in
+  installed tools**, and only one of those is written down anywhere.
