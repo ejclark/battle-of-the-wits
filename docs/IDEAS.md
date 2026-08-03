@@ -337,7 +337,14 @@ someone's toolchain picks depends on which file it happens to read. Small, mecha
 fixing before it is load-bearing. _(src: Claude · while: checking whether this repo has the problem
 mise solves)_
 
-**29. There is no update path for materialised files at all — evergreen starts here, not at breaking changes.**
+**29. ~~There is no update path for materialised files at all.~~ RESOLVED — the question was malformed.**
+_Shipped 2026-08-02 as projen synthesis (`docs/adr/0001`). The checksum design below is NOT what was
+built, and the difference is the useful part: it tried to tell "customised" from "merely old" AFTER
+the fact. projen removes the distinction instead — you never customise the artifact, you customise
+the generator, and regeneration IS the update path. Read the rest as the reasoning that made the
+replacement obvious, not as work outstanding._
+
+**Original entry — There is no update path for materialised files at all — evergreen starts here, not at breaking changes.**
 Tested rather than assumed. `harness-bootstrap` re-run against an adopter with existing files prints
 *"nothing to write — every file already exists · skipped (already present — yours wins)"*. **An
 adopter who ran it once has permanently frozen templates.** Not just for breaking changes — for any
@@ -359,6 +366,12 @@ none, and there has never been a breaking change in this repository's history. _
 "we need to be capable to automerge all forms of breaking changes")_
 
 **30. The evergreen-browser model is the opposite of auto-merging breaking changes.**
+_Update 2026-08-02: the hard boundary in this entry — "this harness writes `.github/workflows/`" — is
+no longer true, and that is the point. The pipeline is now a REUSABLE workflow the adopter calls at a
+ref they pin, so improvements reach them without anything rewriting their CI. The boundary is held by
+construction rather than by policy. The migration half is built too (`harness migrate`, ADR-0001), so
+"a breaking change ships with its migration" is now mechanism rather than intent. The rest stands._
+
 Worth writing down because the analogy is good and points the other way. **Chrome is evergreen
 because it almost never breaks compatibility**, not because it ships breaks faster. Silent
 auto-update is the EASY half; the hard half is "don't break the web" — deprecation cycles measured in
@@ -674,6 +687,18 @@ _(src: Claude · while: banking the lesson from the catch that hid a missing imp
 _(nothing yet)_
 
 ## Shipped (recent)
+
+- **#29, the update path** — resolved by adopting projen rather than by building the checksum design
+  it proposed. Generated files are regenerated; seeded files are never touched. *Evidence:
+  `docs/adr/0001`, `projen/index.mjs`, `tests/projen.test.mjs`.*
+- **The gates run where CI runs.** Plugin code is only reachable inside a Claude Code session, so the
+  scanners could not measure the place that most needed measuring. *Evidence: `package.json` bin
+  entries, and `skynet-capital` running them from `node_modules/.bin` with byte-identical verdicts.*
+- **Shape vs. content.** The harness owns the STRUCTURE of a repo's contextual systems and never their
+  contents — twenty new ideas are invisible, one new field is a promotion candidate. *Evidence:
+  `plugins/harness-gates/lib/shape.mjs`, `tests/shape.test.mjs`.*
+- **Config ratchets.** Locked / Ratcheted / Free, closing the hole that unrestricted overrides opened.
+  Grandfathers on day one. *Evidence: `plugins/harness-gates/lib/sanitation.mjs`.*
 
 - The contributor model — principals, zoning, standing, `/onboard`, `/intake`, and the worst-case
   catalog. The rope team and the mountain/ocean crossing entered the metaphor catalog with it.
