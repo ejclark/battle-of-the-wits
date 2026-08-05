@@ -4,6 +4,7 @@
     "plugins/harness-core/lib/bootstrap.mjs",
     "plugins/harness-core/lib/dungeon.mjs",
     "plugins/harness-core/lib/map.mjs",
+    "plugins/harness-core/lib/claude-sync-cli.mjs",
     "plugins/harness-core/lib/new-repo-cli.mjs",
     "plugins/harness-core/lib/tower-cli.mjs",
     "plugins/harness-gates/lib/arch-scan.mjs",

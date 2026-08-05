@@ -21,6 +21,7 @@ import { fileURLToPath } from "node:url";
 import { renderDescriptor, renderJscpd, renderKnip, scriptsFor } from "./configs.mjs";
 import { detect, gateSpecFor } from "./detect.mjs";
 import { plan, render } from "./phases.mjs";
+import { installClaudeAssets } from "./claude-assets.mjs";
 import { mergeClaudeSettings, mergeGitignore, mergePackageJson } from "./merge.mjs";
 
 const ROOT = process.cwd();
@@ -118,6 +119,11 @@ put("docs/LESSONS.md", tpl("common/docs/LESSONS.md"));
 // settings.json accepts only `agent` and `subagentStatusLine`, never the main `statusLine`.
 // It renders in its own row above the built-in model/difficulty badges.
 put(".claude/harness-statusline.mjs", tpl("claude/harness-statusline.mjs"), { exec: true });
+
+// ── the drills, as ordinary files ──────────────────────────────────────────────
+// The vanilla integration: skills and agents that need no `/plugin install` to exist. Generated and
+// gated by `harness-claude-sync --check` — claude-assets.mjs carries why that is what makes it safe.
+installClaudeAssets(join(HERE, "../../.."), put);
 
 // Merge the statusLine into .claude/settings.json without trampling existing hooks or keys.
 const cs = mergeClaudeSettings(ROOT, { dryRun, force });

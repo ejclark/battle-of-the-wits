@@ -14,6 +14,7 @@
     "harness-bootstrap": "./plugins/harness-core/lib/bootstrap.mjs",
     "harness-city": "./plugins/harness-core/lib/city-cli.mjs",
     "harness-claim": "./plugins/harness-gates/lib/claims.mjs",
+    "harness-claude-sync": "./plugins/harness-core/lib/claude-sync-cli.mjs",
     "harness-clone-scan": "./plugins/harness-gates/lib/clone-scan.mjs",
     "harness-dead-scan": "./plugins/harness-gates/lib/dead-scan.mjs",
     "harness-dispatch": "./plugins/harness-gates/lib/dispatch.mjs",
